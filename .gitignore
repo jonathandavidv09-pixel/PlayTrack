@@ -1,0 +1,18 @@
+# Build outputs
+target/
+out/
+
+# IDE
+.idea/
+*.iml
+
+# Runtime logs
+*.err
+*.out
+
+# Generated file lists
+sources.txt
+
+# OS files
+Thumbs.db
+.DS_Store

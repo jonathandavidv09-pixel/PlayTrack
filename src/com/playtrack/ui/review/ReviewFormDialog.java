@@ -1,0 +1,640 @@
+package com.playtrack.ui.review;
+
+import com.playtrack.model.MediaItem;
+import com.playtrack.model.Review;
+import com.playtrack.service.MediaService;
+import com.playtrack.ui.components.*;
+import com.playtrack.util.SessionManager;
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
+import java.awt.geom.Path2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+
+public class ReviewFormDialog extends JDialog {
+    private MediaService mediaService = new MediaService();
+    private String category;
+    private JTextField titleField;
+    private JTextField authorField;
+    private JComboBox<String> genreBox;
+    private JTextField dateField;
+    private JTextArea reviewArea;
+    private StarRating starRating;
+    private JToggleButton favoriteToggle;
+    private Runnable onSave;
+    private JPanel posterPanel;
+    private BufferedImage selectedImage = null;
+    private String selectedImagePath = null;
+    private MediaItem editItem = null;
+    private boolean isWatchlist = false;
+
+    // Colors
+    private static final Color BG_DARK = new Color(18, 22, 34);
+    private static final Color BG_FIELD = new Color(30, 36, 52);
+    private static final Color BORDER_SUBTLE = new Color(55, 65, 85);
+
+    private void setLimit(javax.swing.text.JTextComponent comp, int limit) {
+        ((AbstractDocument) comp.getDocument()).setDocumentFilter(new DocumentFilter() {
+            public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+                if (string != null && fb.getDocument().getLength() + string.length() <= limit)
+                    super.insertString(fb, offset, string, attr);
+            }
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+                if (text != null && fb.getDocument().getLength() + text.length() - length <= limit)
+                    super.replace(fb, offset, length, text, attrs);
+            }
+        });
+    }
+
+    private JPanel createLabeledField(String labelText, JComponent field) {
+        JPanel panel = new JPanel(new BorderLayout(0, 4));
+        panel.setOpaque(false);
+        JLabel label = new JLabel(labelText);
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        label.setForeground(StyleConfig.TEXT_SECONDARY);
+        panel.add(label, BorderLayout.NORTH);
+        panel.add(field, BorderLayout.CENTER);
+        return panel;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  MAIN CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════
+    public ReviewFormDialog(Frame parent, String defaultCategory, Runnable onSave) {
+        super(parent, true);
+        this.onSave = onSave;
+        this.isWatchlist = (defaultCategory != null && defaultCategory.equals("Watchlist"));
+        this.category = (defaultCategory != null && !defaultCategory.equals("Watchlist")) ? defaultCategory : "Films";
+
+        setSize(440, isWatchlist ? 390 : 580);
+        setLocationRelativeTo(parent);
+        setUndecorated(true);
+        setBackground(new Color(0, 0, 0, 0));
+
+        final Color catColor = getCategoryColor(category);
+
+        // ─── Main card panel with painted background, border, glow, and icon ───
+        JPanel mainCard = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int w = getWidth(), h = getHeight();
+                int arc = 16;
+                int inset = 8;
+
+                // Outer glow
+                for (int i = 4; i >= 1; i--) {
+                    g2.setColor(new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 6 * i));
+                    g2.setStroke(new BasicStroke(i * 2.5f));
+                    g2.draw(new RoundRectangle2D.Float(inset - i, inset - i, w - (inset - i) * 2, h - (inset - i) * 2, arc + i * 2, arc + i * 2));
+                }
+
+                // Card fill
+                g2.setColor(BG_DARK);
+                g2.fill(new RoundRectangle2D.Float(inset, inset, w - inset * 2, h - inset * 2, arc, arc));
+
+                // Card border
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.setColor(new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 120));
+                g2.draw(new RoundRectangle2D.Float(inset + 0.5f, inset + 0.5f, w - inset * 2 - 1, h - inset * 2 - 1, arc, arc));
+
+                // ── Category icon at top center ──
+                int cx = w / 2;
+                int iconTop = inset - 4;
+                // Clear space behind icon
+                g2.setColor(BG_DARK);
+                g2.fillRect(cx - 24, iconTop - 4, 48, 28);
+
+                String iconCat = isWatchlist ? "Films" : category;
+                UIUtils.drawCategoryIcon(g2, iconCat, cx, iconTop + 10, 24, catColor);
+
+                g2.dispose();
+            }
+        };
+        mainCard.setOpaque(false);
+        mainCard.setBorder(BorderFactory.createEmptyBorder(28, 28, 24, 28));
+
+        // ─── Content inside the card ───
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setOpaque(false);
+
+        // ═══ TOP: Poster + Meta side by side ═══
+        JPanel topSection = new JPanel(new BorderLayout(16, 0));
+        topSection.setOpaque(false);
+        topSection.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // ── LEFT: Poster ──
+        posterPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                int w = getWidth(), h = getHeight();
+
+                if (selectedImage != null) {
+                    g2.setClip(new RoundRectangle2D.Float(0, 0, w, h, 12, 12));
+                    double scale = Math.max((double) w / selectedImage.getWidth(), (double) h / selectedImage.getHeight());
+                    int dw = (int) (selectedImage.getWidth() * scale);
+                    int dh = (int) (selectedImage.getHeight() * scale);
+                    g2.drawImage(selectedImage, (w - dw) / 2, (h - dh) / 2, dw, dh, null);
+                } else {
+                    // Dark rounded rect background
+                    g2.setColor(BG_FIELD);
+                    g2.fill(new RoundRectangle2D.Float(0, 0, w, h, 12, 12));
+                    g2.setColor(new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 50));
+                    g2.setStroke(new BasicStroke(1f));
+                    g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, 12, 12));
+
+                    // Category icon
+                    int cx = w / 2, cy = h / 2 - 20;
+                    String iconCat = isWatchlist ? "Films" : category;
+                    Color iconColor = new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 160);
+                    UIUtils.drawCategoryIcon(g2, iconCat, cx, cy, 40, iconColor);
+
+                    // Upload text
+                    g2.setColor(new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 180));
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 9));
+                    FontMetrics fm = g2.getFontMetrics();
+                    String line1 = "UPLOAD";
+                    String line2 = category.equals("Books") ? "COVER" : (category.equals("Games") ? "BOX ART" : "POSTER");
+                    g2.drawString(line1, (w - fm.stringWidth(line1)) / 2, cy + 22);
+                    g2.drawString(line2, (w - fm.stringWidth(line2)) / 2, cy + 34);
+
+                    // Plus icon
+                    g2.setColor(new Color(255, 255, 255, 140));
+                    g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    int py = cy + 48;
+                    g2.drawLine(cx - 7, py, cx + 7, py);
+                    g2.drawLine(cx, py - 7, cx, py + 7);
+                }
+                g2.dispose();
+            }
+        };
+        posterPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        posterPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Images", "jpg", "jpeg", "png", "gif", "webp"));
+                if (chooser.showOpenDialog(ReviewFormDialog.this) == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        java.io.File file = chooser.getSelectedFile();
+                        selectedImagePath = file.getAbsolutePath();
+                        selectedImage = ImageIO.read(file);
+                        posterPanel.repaint();
+                    } catch (Exception ex) { ex.printStackTrace(); }
+                }
+            }
+        });
+        int posterW = isWatchlist ? 170 : 160;
+        int posterH = isWatchlist ? 255 : 240;
+        posterPanel.setPreferredSize(new Dimension(posterW, posterH));
+        posterPanel.setMinimumSize(new Dimension(posterW, posterH));
+        posterPanel.setMaximumSize(new Dimension(posterW, posterH));
+        posterPanel.setOpaque(false);
+        topSection.add(posterPanel, BorderLayout.WEST);
+
+        // ── RIGHT: Meta fields ──
+        JPanel meta = new JPanel();
+        meta.setLayout(new BoxLayout(meta, BoxLayout.Y_AXIS));
+        meta.setOpaque(false);
+
+        // Title
+        String titleLabelText = category.equals("Books") ? "Book Title" : (category.equals("Games") ? "Game Title" : "Film Title");
+        String titlePlaceholder = category.equals("Books") ? "Enter book title..." : (category.equals("Games") ? "Enter game title..." : "Enter film title...");
+        titleField = createField(titlePlaceholder);
+        setLimit(titleField, 100);
+        titleField.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { posterPanel.repaint(); }
+            public void removeUpdate(DocumentEvent e) { posterPanel.repaint(); }
+            public void changedUpdate(DocumentEvent e) { posterPanel.repaint(); }
+        });
+        addFieldToPanel(meta, titleLabelText, titleField);
+
+        // Author (Books only)
+        if (category.equals("Books")) {
+            authorField = createField("Enter author name...");
+            setLimit(authorField, 70);
+            addFieldToPanel(meta, "Author Name", authorField);
+        }
+
+        // Genre
+        genreBox = new JComboBox<>(getGenresForCategory(category));
+        styleComboBox(genreBox);
+        // Always show genre for watchlist add form too
+        addFieldToPanel(meta, "Genre", genreBox);
+
+        // Date
+        if (!isWatchlist) {
+            String dateLabelText = category.equals("Games") ? "Played On" : (category.equals("Books") ? "Finished On" : "Watched On");
+            String datePlaceholder = category.equals("Games") ? "Select played date." : 
+                                    (category.equals("Books") ? "Select finished date." : 
+                                    "Select watch date.");
+            dateField = new DatePickerField(datePlaceholder);
+            addFieldToPanel(meta, dateLabelText, dateField);
+        }
+
+        // Rating & Favorite row
+        if (!isWatchlist) {
+            meta.add(Box.createVerticalStrut(4));
+            JPanel ratingRow = new JPanel(new GridBagLayout());
+            ratingRow.setOpaque(false);
+            ratingRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+            ratingRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+            GridBagConstraints rc = new GridBagConstraints();
+
+            // Rating label
+            rc.gridx = 0; rc.gridy = 0;
+            rc.anchor = GridBagConstraints.WEST;
+            rc.insets = new Insets(0, 0, 0, 4);
+            JLabel rLbl = new JLabel("Rating");
+            rLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            rLbl.setForeground(StyleConfig.TEXT_SECONDARY);
+            ratingRow.add(rLbl, rc);
+
+            // Stars
+            rc.gridx = 1;
+            rc.insets = new Insets(0, 0, 0, 0);
+            starRating = new StarRating(0, true, 16);
+            ratingRow.add(starRating, rc);
+
+            // Flexible spacer
+            rc.gridx = 2;
+            rc.weightx = 1.0;
+            rc.fill = GridBagConstraints.HORIZONTAL;
+            ratingRow.add(Box.createHorizontalGlue(), rc);
+
+            // Favorite label
+            rc.gridx = 3;
+            rc.weightx = 0;
+            rc.fill = GridBagConstraints.NONE;
+            rc.insets = new Insets(0, 0, 0, 4);
+            JLabel fLbl = new JLabel("Favorite");
+            fLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            fLbl.setForeground(StyleConfig.TEXT_SECONDARY);
+            ratingRow.add(fLbl, rc);
+
+            // Heart icon
+            rc.gridx = 4;
+            rc.insets = new Insets(0, 0, 0, 0);
+            favoriteToggle = createHeartToggle(catColor);
+            ratingRow.add(favoriteToggle, rc);
+
+            meta.add(ratingRow);
+        }
+
+
+        topSection.add(meta, BorderLayout.CENTER);
+
+        int topHeight = isWatchlist ? 290 : 260; // Increased height to accommodate Genre
+        topSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, topHeight));
+        topSection.setPreferredSize(new Dimension(Integer.MAX_VALUE, topHeight));
+        content.add(topSection);
+        content.add(Box.createVerticalStrut(16));
+
+        // ═══ REVIEW SECTION ═══
+        if (!isWatchlist) {
+            String reviewTitle = category.equals("Books") ? "Your Thoughts" :
+                                 (category.equals("Games") ? "Gameplay Experience" : "Your Review");
+            JLabel revLabel = new JLabel(reviewTitle);
+            revLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            revLabel.setForeground(catColor);
+            revLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            content.add(revLabel);
+            content.add(Box.createVerticalStrut(6));
+
+            // Review text area inside a custom bordered wrapper panel
+            reviewArea = new JTextArea(5, 20) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    if (getText().isEmpty() && !isFocusOwner()) {
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                        g2.setColor(new Color(85, 95, 115));
+                        FontMetrics fm = g2.getFontMetrics();
+                        String ph = "Enter your thoughts here...";
+                        g2.drawString(ph, getInsets().left, getInsets().top + fm.getAscent());
+                        g2.dispose();
+                    }
+                }
+            };
+            reviewArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            reviewArea.setLineWrap(true);
+            reviewArea.setWrapStyleWord(true);
+            reviewArea.setBackground(BG_FIELD);
+            reviewArea.setForeground(StyleConfig.TEXT_COLOR);
+            reviewArea.setCaretColor(StyleConfig.TEXT_COLOR);
+            reviewArea.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+            setLimit(reviewArea, 500);
+
+            reviewArea.addFocusListener(new java.awt.event.FocusAdapter() {
+                @Override public void focusGained(java.awt.event.FocusEvent e) { repaint(); }
+                @Override public void focusLost(java.awt.event.FocusEvent e) { repaint(); }
+            });
+
+            JScrollPane reviewScroll = new JScrollPane(reviewArea);
+            reviewScroll.setOpaque(false);
+            reviewScroll.getViewport().setOpaque(false);
+            reviewScroll.setBorder(null);
+            reviewScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+            // Wrapper panel that draws the clean rounded border
+            JPanel reviewWrapper = new JPanel(new BorderLayout()) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    // Fill
+                    g2.setColor(BG_FIELD);
+                    g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
+                    // Border
+                    g2.setColor(BORDER_SUBTLE);
+                    g2.setStroke(new BasicStroke(1f));
+                    g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 10, 10));
+                    g2.dispose();
+                }
+            };
+            reviewWrapper.setOpaque(false);
+            reviewWrapper.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+            reviewWrapper.add(reviewScroll, BorderLayout.CENTER);
+            reviewWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+            reviewWrapper.setPreferredSize(new Dimension(380, 200));
+            reviewWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+            content.add(reviewWrapper);
+        }
+
+        // ═══ ACTION BUTTONS (bottom-right) ═══
+        JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        actionRow.setOpaque(false);
+        actionRow.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+
+        // Cancel button - custom painted with visible outline
+        JPanel cancelBtn = new JPanel() {
+            private boolean hover = false;
+            {
+                setOpaque(false);
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+                setPreferredSize(new Dimension(90, 32));
+                addMouseListener(new java.awt.event.MouseAdapter() {
+                    public void mouseEntered(java.awt.event.MouseEvent e) { hover = true; repaint(); }
+                    public void mouseExited(java.awt.event.MouseEvent e) { hover = false; repaint(); }
+                    public void mouseClicked(java.awt.event.MouseEvent e) { dispose(); }
+                });
+            }
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+                // Background
+                g2.setColor(hover ? new Color(45, 52, 70) : new Color(35, 42, 58));
+                g2.fill(new RoundRectangle2D.Float(0, 0, w, h, 12, 12));
+                // Border
+                g2.setColor(new Color(90, 100, 120));
+                g2.setStroke(new BasicStroke(1.2f));
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, 12, 12));
+                // Text
+                g2.setColor(StyleConfig.TEXT_COLOR);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                FontMetrics fm = g2.getFontMetrics();
+                int tx = (w - fm.stringWidth("Cancel")) / 2;
+                int ty = (h + fm.getAscent() - fm.getDescent()) / 2;
+                g2.drawString("Cancel", tx, ty);
+                g2.dispose();
+            }
+        };
+        actionRow.add(cancelBtn);
+
+        // Save button
+        RoundedButton saveBtn = new RoundedButton("Save", catColor, 12);
+        saveBtn.setPreferredSize(new Dimension(90, 32));
+        saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        saveBtn.setForeground(Color.WHITE);
+        saveBtn.addActionListener(e -> save());
+        actionRow.add(saveBtn);
+
+        mainCard.add(content, BorderLayout.CENTER);
+        mainCard.add(actionRow, BorderLayout.SOUTH);
+        add(mainCard, BorderLayout.CENTER);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  EDIT CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════
+    public ReviewFormDialog(Frame parent, MediaItem item, Runnable onSave) {
+        this(parent, item.getCategory(), onSave);
+        this.editItem = item;
+        titleField.setText(item.getTitle());
+        titleField.setForeground(StyleConfig.TEXT_COLOR);
+        if (category.equals("Books") && item.getAuthor() != null && authorField != null) {
+            authorField.setText(item.getAuthor());
+        }
+        genreBox.setSelectedItem(item.getGenre());
+        if (item.getImagePath() != null) {
+            try {
+                selectedImagePath = item.getImagePath();
+                selectedImage = ImageIO.read(new java.io.File(item.getImagePath()));
+                posterPanel.repaint();
+            } catch (Exception e) {}
+        }
+        Review r = mediaService.getReviewByMedia(item.getId());
+        if (r != null) {
+            if (starRating != null) starRating.setRating(r.getRating());
+            if (reviewArea != null) reviewArea.setText(r.getReviewText());
+            if (favoriteToggle != null && r.isFavorite() && !favoriteToggle.isSelected()) {
+                favoriteToggle.doClick();
+            }
+            if (r.getWatchDate() != null) {
+                dateField.setText(r.getWatchDate());
+            }
+        }
+
+
+    }
+
+    // ─── Heart toggle button ───
+    private JToggleButton createHeartToggle(final Color accentColor) {
+        JToggleButton btn = new JToggleButton() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                boolean sel = isSelected();
+                g2.setColor(sel ? accentColor : new Color(170, 180, 195));
+
+                int w = getWidth(), h = getHeight();
+                double cx = w / 2.0, cy = h / 2.0;
+                double s = Math.min(w, h) * 0.38;
+
+                Path2D.Double heart = new Path2D.Double();
+                heart.moveTo(cx, cy + s * 0.7);
+                heart.curveTo(cx - s * 1.2, cy - s * 0.1, cx - s * 0.9, cy - s * 1.0, cx, cy - s * 0.35);
+                heart.curveTo(cx + s * 0.9, cy - s * 1.0, cx + s * 1.2, cy - s * 0.1, cx, cy + s * 0.7);
+                heart.closePath();
+
+                if (sel) {
+                    g2.fill(heart);
+                } else {
+                    g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g2.draw(heart);
+                }
+                g2.dispose();
+            }
+        };
+        btn.setPreferredSize(new Dimension(24, 24));
+        btn.setOpaque(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    // ─── Helper: add labeled field to meta panel ───
+    private void addFieldToPanel(JPanel panel, String label, JComponent field) {
+        JPanel p = createLabeledField(label, field);
+        p.setAlignmentX(Component.LEFT_ALIGNMENT);
+        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        panel.add(p);
+        panel.add(Box.createVerticalStrut(6));
+    }
+
+    // ─── Text field factory ───
+    private JTextField createField(String placeholder) {
+        JTextField field = new JTextField() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (getText().isEmpty() && !isFocusOwner() && placeholder != null) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2.setColor(new Color(85, 95, 115));
+                    FontMetrics fm = g2.getFontMetrics();
+                    g2.drawString(placeholder, getInsets().left, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                    g2.dispose();
+                }
+            }
+        };
+        field.setPreferredSize(new Dimension(200, 28));
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        field.setBackground(BG_FIELD);
+        field.setForeground(StyleConfig.TEXT_COLOR);
+        field.setCaretColor(StyleConfig.TEXT_COLOR);
+        field.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_SUBTLE, 1, true),
+            BorderFactory.createEmptyBorder(3, 10, 3, 10)
+        ));
+
+        field.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) { repaint(); }
+            @Override public void focusLost(java.awt.event.FocusEvent e) { repaint(); }
+        });
+
+        return field;
+    }
+
+    // ─── Combo box styling ───
+    private void setupStyledComboBox(JComboBox<String> box) {
+        styleComboBox(box);
+    }
+
+    private void styleComboBox(JComboBox<String> box) {
+        box.setPreferredSize(new Dimension(200, 28));
+        box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        box.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        box.setBackground(BG_FIELD);
+        box.setForeground(StyleConfig.TEXT_COLOR);
+        box.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_SUBTLE, 1, true),
+            BorderFactory.createEmptyBorder(2, 8, 2, 8)
+        ));
+        box.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                list.setBackground(BG_FIELD);
+                c.setBackground(isSelected ? new Color(50, 60, 80) : BG_FIELD);
+                c.setForeground(StyleConfig.TEXT_COLOR);
+                return c;
+            }
+        });
+        // Fix popup background to prevent black/blank space
+        Object popup = box.getUI().getAccessibleChild(box, 0);
+        if (popup instanceof javax.swing.JPopupMenu) {
+            ((javax.swing.JPopupMenu) popup).setBorder(BorderFactory.createLineBorder(BORDER_SUBTLE, 1));
+            for (Component c : ((javax.swing.JPopupMenu) popup).getComponents()) {
+                if (c instanceof JScrollPane) {
+                    ((JScrollPane) c).getViewport().setBackground(BG_FIELD);
+                }
+            }
+        }
+    }
+
+    private String[] getGenresForCategory(String category) {
+        if (category.equals("Games")) return new String[]{"Action", "RPG", "Adventure", "Strategy", "Shooter", "Action-Adventure"};
+        if (category.equals("Books")) return new String[]{"Fiction", "Non-Fiction", "Sci-Fi", "Fantasy", "Mystery"};
+        return new String[]{"Action", "Comedy", "Drama", "Sci-Fi", "Horror", "Animation"};
+    }
+
+    private Color getCategoryColor(String cat) {
+        if (cat.equals("Games")) return StyleConfig.GAME_COLOR;
+        if (cat.equals("Books")) return StyleConfig.BOOK_COLOR;
+        return StyleConfig.FILM_COLOR;
+    }
+
+    private void save() {
+        String title = titleField.getText();
+        if (title.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter a title");
+            return;
+        }
+
+        MediaItem item = (editItem != null) ? editItem : new MediaItem();
+        item.setUserId(SessionManager.getCurrentUser().getId());
+        item.setTitle(title);
+        item.setCategory(category);
+        item.setGenre((String) genreBox.getSelectedItem());
+
+        if (selectedImagePath != null) {
+            item.setImagePath(selectedImagePath);
+        }
+        if (category.equals("Books") && authorField != null) {
+            item.setAuthor(authorField.getText());
+        }
+
+        if (editItem == null) {
+            int mediaId = mediaService.addMedia(item);
+            if (mediaId != -1) { saveReviewAndClose(mediaId); }
+        } else {
+            mediaService.updateMedia(item);
+            saveReviewAndClose(item.getId());
+        }
+    }
+
+    private void saveReviewAndClose(int mediaId) {
+        Review review = new Review();
+        review.setMediaId(mediaId);
+        review.setUserId(SessionManager.getCurrentUser().getId());
+        review.setRating(starRating != null ? starRating.getRating() : 0);
+        review.setReviewText(reviewArea != null ? reviewArea.getText() : "");
+        review.setFavorite(favoriteToggle != null ? favoriteToggle.isSelected() : false);
+        review.setWatchDate(dateField != null ? dateField.getText() : null);
+        review.setWatchlist(isWatchlist);
+        mediaService.addOrUpdateReview(review);
+
+        onSave.run();
+        dispose();
+    }
+}

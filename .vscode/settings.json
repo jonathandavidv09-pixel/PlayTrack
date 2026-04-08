@@ -1,0 +1,6 @@
+{
+    "java.project.import.maven.enabled": true,
+    "java.debug.settings.onFailure.resolveMainMethod": "Manual",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.debug.settings.onBuildFailureProceed": true
+}
