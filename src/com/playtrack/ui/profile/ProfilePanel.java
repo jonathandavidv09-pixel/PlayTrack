@@ -82,7 +82,7 @@ public class ProfilePanel extends JPanel {
                     int dh = (int) (imgH * scale);
                     g2.drawImage(finalCachedAvatar, 4 + (112 - dw) / 2, 4 + (112 - dh) / 2, dw, dh, null);
                     g2.setClip(null);
-                    
+
                     // Draw anti-aliased mask border to cover jagged clipping pixels
                     g2.setColor(StyleConfig.BACKGROUND_COLOR);
                     g2.setStroke(new BasicStroke(1.5f));
@@ -134,19 +134,21 @@ public class ProfilePanel extends JPanel {
         editBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         editBtn.setForeground(StyleConfig.TEXT_SECONDARY);
         editBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
         int editBtnWidth = 115;
         int editBtnHeight = 28;
         editBtn.setBounds(190 + usernameLabel.getPreferredSize().width + 20, 46, editBtnWidth, editBtnHeight);
-        
+
         editBtn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 showEditDialog();
             }
+
             public void mouseEntered(java.awt.event.MouseEvent e) {
                 editBtn.setForeground(StyleConfig.PRIMARY_COLOR);
                 editBtn.repaint();
             }
+
             public void mouseExited(java.awt.event.MouseEvent e) {
                 editBtn.setForeground(StyleConfig.TEXT_SECONDARY);
                 editBtn.repaint();
@@ -176,7 +178,13 @@ public class ProfilePanel extends JPanel {
         MediaDAO mediaDAO = new MediaDAO();
         WatchlistDAO watchlistDAO = new WatchlistDAO();
 
-        List<MediaItem> watchlists = fetchMediaItems(reviewDAO.getWatchlists(userId, 50), mediaDAO);
+        // Batch fetch all media items once to avoid N+1 DB queries
+        java.util.Map<Integer, MediaItem> mediaMap = new java.util.HashMap<>();
+        for (MediaItem mi : mediaDAO.getMediaByUser(userId, "All")) {
+            mediaMap.put(mi.getId(), mi);
+        }
+
+        List<MediaItem> watchlists = fetchMediaItems(reviewDAO.getWatchlists(userId, 50), mediaMap);
 
         List<WatchlistItem> textWatchlists = watchlistDAO.getWatchlistByUser(userId);
         for (WatchlistItem wi : textWatchlists) {
@@ -184,26 +192,41 @@ public class ProfilePanel extends JPanel {
                     wi.getAddedDate()));
         }
 
-        List<MediaItem> favorites = fetchMediaItems(reviewDAO.getFavorites(userId, 50), mediaDAO);
-        List<MediaItem> recents = fetchMediaItems(reviewDAO.getRecentReviews(userId, 50), mediaDAO);
+        List<MediaItem> favorites = fetchMediaItems(reviewDAO.getFavorites(userId, 50), mediaMap);
+        List<MediaItem> recents = fetchMediaItems(reviewDAO.getRecentReviews(userId, 50), mediaMap);
 
         class ScrollablePanel extends JPanel implements Scrollable {
-            public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
-            public int getScrollableUnitIncrement(Rectangle r, int o, int d) { return 20; }
-            public int getScrollableBlockIncrement(Rectangle r, int o, int d) { return 60; }
-            public boolean getScrollableTracksViewportWidth() { return true; }
-            public boolean getScrollableTracksViewportHeight() { return false; }
+            public Dimension getPreferredScrollableViewportSize() {
+                return getPreferredSize();
+            }
+
+            public int getScrollableUnitIncrement(Rectangle r, int o, int d) {
+                return 20;
+            }
+
+            public int getScrollableBlockIncrement(Rectangle r, int o, int d) {
+                return 60;
+            }
+
+            public boolean getScrollableTracksViewportWidth() {
+                return true;
+            }
+
+            public boolean getScrollableTracksViewportHeight() {
+                return false;
+            }
         }
 
         JPanel content = new ScrollablePanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
-        // Remove the 50px right margin from the parent container so we can use it for the arrow
+        // Remove the 50px right margin from the parent container so we can use it for
+        // the arrow
         content.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 0));
 
         content.add(header);
         content.add(Box.createVerticalStrut(30));
-        content.add(createSection("Watchlists", false, watchlists, reviewDAO, userId));
+        content.add(createSection("Watchlists", true, watchlists, reviewDAO, userId));
         content.add(createSection("Favorites", false, favorites, reviewDAO, userId));
         content.add(createSection("Recent Activity", false, recents, reviewDAO, userId));
         content.add(Box.createVerticalGlue());
@@ -222,10 +245,11 @@ public class ProfilePanel extends JPanel {
         repaint();
     }
 
-    private List<MediaItem> fetchMediaItems(List<com.playtrack.model.Review> reviews, MediaDAO mediaDAO) {
+    private List<MediaItem> fetchMediaItems(List<com.playtrack.model.Review> reviews,
+            java.util.Map<Integer, MediaItem> mediaMap) {
         List<MediaItem> items = new ArrayList<>();
         for (com.playtrack.model.Review r : reviews) {
-            MediaItem mi = mediaDAO.getMediaById(r.getMediaId());
+            MediaItem mi = mediaMap.get(r.getMediaId());
             if (mi != null)
                 items.add(mi);
         }
@@ -234,27 +258,38 @@ public class ProfilePanel extends JPanel {
 
     private JPanel createSection(String title, boolean hasAddBtn, List<MediaItem> items, ReviewDAO reviewDAO,
             int userId) {
+        final int MAX_VISIBLE_CARDS = 16;
+        final int TWO_ROW_HEIGHT = 500;
+
+        final List<MediaItem> allItems = new ArrayList<>(items);
+        boolean hasMore = items.size() >= MAX_VISIBLE_CARDS;
+
+        // Limit to only 2 rows and 8 cards (16 cards total)
+        if (items.size() > MAX_VISIBLE_CARDS) {
+            items = items.subList(0, MAX_VISIBLE_CARDS);
+        }
+
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);
         wrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 40, 0));
-        wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 400));
         wrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel topRow = new JPanel();
         topRow.setLayout(new BoxLayout(topRow, BoxLayout.Y_AXIS));
         topRow.setOpaque(false);
-        // Apply the 50px right margin locally to topRow so the divider aligns with the 8th card
+        // Apply the 50px right margin locally to topRow so the divider aligns with the
+        // 8th card
         topRow.setBorder(BorderFactory.createEmptyBorder(0, 5, 15, 55));
         topRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel titleRow = new JPanel(new BorderLayout());
+        JPanel titleRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         titleRow.setOpaque(false);
         titleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel titleLbl = new JLabel(title);
         titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 18));
         titleLbl.setForeground(StyleConfig.TEXT_COLOR);
-        titleRow.add(titleLbl, BorderLayout.WEST);
+        titleRow.add(titleLbl);
 
         if (hasAddBtn) {
             JPanel addBtn = new JPanel() {
@@ -262,7 +297,7 @@ public class ProfilePanel extends JPanel {
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                    
+
                     int size = 26;
                     UIUtils.drawPlusIcon(g2, getWidth() / 2, getHeight() / 2, size, getForeground());
                     g2.dispose();
@@ -279,19 +314,29 @@ public class ProfilePanel extends JPanel {
                     addBtn.setForeground(StyleConfig.PRIMARY_COLOR);
                     addBtn.repaint();
                 }
+
                 public void mouseExited(java.awt.event.MouseEvent e) {
                     addBtn.setForeground(StyleConfig.TEXT_SECONDARY);
                     addBtn.repaint();
                 }
+
                 public void mouseClicked(java.awt.event.MouseEvent e) {
                     com.playtrack.ui.review.ReviewFormDialog dialog = new com.playtrack.ui.review.ReviewFormDialog(
-                        (Frame) SwingUtilities.getWindowAncestor(ProfilePanel.this), "Watchlist", ProfilePanel.this::refreshProfile);
+                            (Frame) SwingUtilities.getWindowAncestor(ProfilePanel.this), "Watchlist",
+                            ProfilePanel.this::refreshProfile);
                     dialog.setVisible(true);
                 }
             });
-            titleRow.add(addBtn, BorderLayout.EAST);
+            titleRow.add(addBtn);
         }
-        topRow.add(titleRow);
+
+        // Wrap titleRow in a BorderLayout to make it expand to full width
+        JPanel titleRowWrapper = new JPanel(new BorderLayout());
+        titleRowWrapper.setOpaque(false);
+        titleRowWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+        titleRowWrapper.add(titleRow, BorderLayout.WEST);
+
+        topRow.add(titleRowWrapper);
 
         topRow.add(Box.createVerticalStrut(8));
 
@@ -322,136 +367,153 @@ public class ProfilePanel extends JPanel {
         }
 
         JPanel rowPanel = new JPanel();
-        rowPanel.setLayout(new BoxLayout(rowPanel, BoxLayout.X_AXIS));
+        rowPanel.setLayout(
+                new com.playtrack.ui.components.WrapLayout(com.playtrack.ui.components.WrapLayout.LEFT, 20, 20));
         rowPanel.setOpaque(false);
         rowPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
         for (MediaItem mi : items) {
             rowPanel.add(new MediaCard(mi, true, false, this::refreshProfile));
-            rowPanel.add(Box.createHorizontalStrut(20));
         }
 
-        JScrollPane scrollPane = new JScrollPane(rowPanel);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setBorder(null);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-        // Restore horizontal scrollbar thickness to 8 so it is visible when activated
-        scrollPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 8));
-        scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-        scrollPane.setPreferredSize(new Dimension(1420, 320)); 
-        scrollPane.setMaximumSize(new Dimension(1420, 320));
+        wrapper.add(rowPanel, BorderLayout.CENTER);
 
-        // Forward vertical mouse wheel events to parent (main page) to prevent blocking
-        scrollPane.addMouseWheelListener(e -> {
-            Container parent = scrollPane.getParent();
-            while (parent != null && !(parent instanceof JScrollPane)) {
-                parent = parent.getParent();
-            }
-            if (parent != null) {
-                parent.dispatchEvent(SwingUtilities.convertMouseEvent(scrollPane, e, parent));
-            }
-        });
-
-        // Exact match with LibraryPanel contentWrapper spacing
-        JPanel contentWrapper = new JPanel(new BorderLayout(0, 0));
-        contentWrapper.setOpaque(false);
-
-        class ScrollArrow extends JLabel {
-            private final boolean isRight;
-
-            public ScrollArrow(boolean isRight) {
-                super(" ");
-                this.isRight = isRight;
-                setForeground(Color.WHITE); // Make arrow highly visible
-                setPreferredSize(new Dimension(45, 60));
-                setMaximumSize(new Dimension(45, 60));
-                setCursor(new Cursor(Cursor.HAND_CURSOR));
-                setToolTipText("See more");
-                
-                addMouseListener(new java.awt.event.MouseAdapter() {
-                    public void mouseClicked(java.awt.event.MouseEvent e) {
-                        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-                        updateVisibility(false); // Hide arrow once scrollbar appears
-                        scrollPane.revalidate();
-                        scrollPane.repaint();
-                        JScrollBar hb = scrollPane.getHorizontalScrollBar();
-                        hb.setValue(hb.getValue() + 555);
-                    }
-                    public void mouseEntered(java.awt.event.MouseEvent e) { 
-                        setForeground(StyleConfig.PRIMARY_COLOR); 
-                    }
-                    public void mouseExited(java.awt.event.MouseEvent e) { 
-                        setForeground(Color.WHITE); 
-                    }
-                });
-            }
-
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                
-                // Use discrete native png resolution by utilizing the larger size-bound method
-                int iconSize = 40;
-                int x = (getWidth() - iconSize) / 2;
-                int y = (getHeight() - iconSize) / 2;
-                UIUtils.drawArrowIcon(g2, x, y, iconSize, getForeground(), isRight);
-                g2.dispose();
-            }
-            
-            public void updateVisibility(boolean shouldShow) {
-                if (isVisible() != shouldShow) {
-                    setVisible(shouldShow);
-                    getParent().revalidate();
-                    getParent().repaint();
+        if (hasMore) {
+            JLabel arrowIcon = new JLabel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    int size = 28;
+                    int cx = getWidth() / 2;
+                    int cy = getHeight() / 2;
+                    UIUtils.drawArrowIcon(g2, cx - size / 2, cy - size / 2, size, getForeground(), true);
+                    g2.dispose();
                 }
-            }
+            };
+            arrowIcon.setForeground(StyleConfig.TEXT_SECONDARY);
+            arrowIcon.setPreferredSize(new Dimension(80, 40));
+            arrowIcon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 30)); // Move arrow left within icon without
+                                                                               // squishing it
+            arrowIcon.setHorizontalAlignment(SwingConstants.CENTER);
+            arrowIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            arrowIcon.setToolTipText("Show more");
+
+            JPanel arrowWrapper = new JPanel(new GridBagLayout());
+            arrowWrapper.setOpaque(false);
+            arrowWrapper.setPreferredSize(new Dimension(80, TWO_ROW_HEIGHT));
+            arrowWrapper.add(arrowIcon);
+            wrapper.add(arrowWrapper, BorderLayout.EAST);
+
+            arrowIcon.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent e) {
+                    arrowIcon.setForeground(StyleConfig.PRIMARY_COLOR);
+                    arrowIcon.repaint();
+                }
+
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    arrowIcon.setForeground(StyleConfig.TEXT_SECONDARY);
+                    arrowIcon.repaint();
+                }
+
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    wrapper.remove(arrowWrapper);
+
+                    JPanel expandedRowPanel = new JPanel();
+                    expandedRowPanel.setLayout(new GridLayout(2, 0, 20, 20));
+                    expandedRowPanel.setOpaque(false);
+                    expandedRowPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+                    for (MediaItem mi : allItems) {
+                        expandedRowPanel.add(new MediaCard(mi, true, false, ProfilePanel.this::refreshProfile));
+                    }
+
+                    JPanel alignPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
+                    alignPanel.setOpaque(false);
+                    alignPanel.add(expandedRowPanel);
+
+                    JScrollPane scrollPane = new JScrollPane(alignPanel);
+                    scrollPane.setOpaque(false);
+                    scrollPane.getViewport().setOpaque(false);
+
+                    // Add the margin back strictly to match the divider's 55px right margin,
+                    // preventing the carousel from expanding past the layout bounds!
+                    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 55));
+                    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
+                    scrollPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 10));
+                    scrollPane.getHorizontalScrollBar().setUnitIncrement(24);
+
+                    // Disable mouse wheel integration so vertical scrolling passes through
+                    scrollPane.setWheelScrollingEnabled(false);
+                    scrollPane.addMouseWheelListener(evt -> {
+                        JScrollPane parentScroll = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class,
+                                scrollPane);
+                        if (parentScroll != null) {
+                            java.awt.event.MouseWheelEvent mwe = (java.awt.event.MouseWheelEvent) evt;
+                            java.awt.event.MouseWheelEvent cloned = new java.awt.event.MouseWheelEvent(
+                                    parentScroll, mwe.getID(), mwe.getWhen(), mwe.getModifiersEx(),
+                                    0, 0, mwe.getXOnScreen(), mwe.getYOnScreen(),
+                                    mwe.getClickCount(), mwe.isPopupTrigger(), mwe.getScrollType(),
+                                    mwe.getScrollAmount(), mwe.getWheelRotation(), mwe.getPreciseWheelRotation());
+                            parentScroll.dispatchEvent(cloned);
+                        }
+                    });
+
+                    // Implementing smooth hold-and-drag panning
+                    java.awt.event.MouseAdapter dragScroll = new java.awt.event.MouseAdapter() {
+                        private Point origin;
+
+                        @Override
+                        public void mousePressed(java.awt.event.MouseEvent e) {
+                            origin = e.getLocationOnScreen();
+                        }
+
+                        @Override
+                        public void mouseDragged(java.awt.event.MouseEvent e) {
+                            if (origin != null) {
+                                JViewport viewport = scrollPane.getViewport();
+                                Point viewPos = viewport.getViewPosition();
+                                int dx = origin.x - e.getLocationOnScreen().x;
+                                int newX = Math.max(0, viewPos.x + dx);
+                                newX = Math.min(newX, viewport.getViewSize().width - viewport.getWidth());
+                                viewport.setViewPosition(new Point(newX, viewPos.y));
+                                origin = e.getLocationOnScreen();
+                            }
+                        }
+
+                        @Override
+                        public void mouseReleased(java.awt.event.MouseEvent e) {
+                            origin = null;
+                        }
+                    };
+
+                    alignPanel.addMouseListener(dragScroll);
+                    alignPanel.addMouseMotionListener(dragScroll);
+                    expandedRowPanel.addMouseListener(dragScroll);
+                    expandedRowPanel.addMouseMotionListener(dragScroll);
+
+                    // Apply drag panning locally to all cards so grabbhing a card works
+                    for (Component c : expandedRowPanel.getComponents()) {
+                        c.addMouseListener(dragScroll);
+                        c.addMouseMotionListener(dragScroll);
+                    }
+
+                    wrapper.remove(rowPanel);
+                    wrapper.add(scrollPane, BorderLayout.CENTER);
+
+                    wrapper.revalidate();
+                    wrapper.repaint();
+                }
+            });
         }
-        
-        ScrollArrow rightArrow = new ScrollArrow(true);
-        
-        JPanel arrowContainer = new JPanel();
-        arrowContainer.setLayout(new BoxLayout(arrowContainer, BoxLayout.Y_AXIS));
-        // Restore transparency so it does not render a default gray block
-        arrowContainer.setOpaque(false);
-        // Tightly align arrow the same as Library panel (thick right padding 80px)
-        arrowContainer.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 80));
-        arrowContainer.add(Box.createVerticalGlue());
-        arrowContainer.add(rightArrow);
-        arrowContainer.add(Box.createVerticalGlue());
 
-        scrollPane.setPreferredSize(new Dimension(1420, 320)); 
-        scrollPane.setMaximumSize(new Dimension(1420, 320));
-
-        contentWrapper.add(scrollPane, BorderLayout.CENTER);
-        contentWrapper.add(arrowContainer, BorderLayout.EAST);
-        
-        // Initial visibility configuration
-        rightArrow.updateVisibility(items.size() > 7);
-
-        // Setup scroll listener to toggle arrow visibility dynamically
-        scrollPane.getHorizontalScrollBar().addAdjustmentListener(e -> {
-            if (scrollPane.getHorizontalScrollBarPolicy() == JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
-                rightArrow.updateVisibility(false);
-            } else {
-                int val = e.getValue();
-                int max = scrollPane.getHorizontalScrollBar().getMaximum() - scrollPane.getHorizontalScrollBar().getVisibleAmount();
-                rightArrow.updateVisibility(val < max && items.size() > 7);
-            }
-        });
-
-        // Tightly constrained container matching library widths perfectly
-        contentWrapper.setPreferredSize(new Dimension(1550, 320)); 
-        contentWrapper.setMaximumSize(new Dimension(1550, 320));
-        
-        wrapper.add(contentWrapper, BorderLayout.WEST);
         return wrapper;
     }
 
-    // Removed redundant showAddWatchlistDialog as it now uses the unified ReviewFormDialog
+    // Removed redundant showAddWatchlistDialog as it now uses the unified
+    // ReviewFormDialog
 
     private void showEditDialog() {
         JDialog editDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Edit Profile", true);
@@ -572,14 +634,15 @@ public class ProfilePanel extends JPanel {
                     g2.drawImage(tempAvatarImg[0], pad + 3 + (sz - 6 - dw) / 2,
                             3 + (sz - 6 - dh) / 2, dw, dh, null);
                     g2.setClip(null);
-                    
+
                     // Mask jagged clip edges
                     g2.setColor(new Color(30, 36, 50));
                     g2.setStroke(new BasicStroke(1.5f));
                     g2.draw(new Ellipse2D.Float(pad + 3, 3, sz - 6, sz - 6));
                 } else {
                     String initial = profile.getUsername() != null && !profile.getUsername().isEmpty()
-                            ? profile.getUsername().substring(0, 1).toUpperCase() : "U";
+                            ? profile.getUsername().substring(0, 1).toUpperCase()
+                            : "U";
                     g2.setColor(StyleConfig.TEXT_SECONDARY);
                     g2.setFont(new Font("Segoe UI", Font.BOLD, 42));
                     FontMetrics fm = g2.getFontMetrics();
@@ -746,25 +809,18 @@ public class ProfilePanel extends JPanel {
 
         // Bio field with focus glow
         JTextArea bioField = new JTextArea(profile.getBio()) {
-            private boolean focused = false;
-
             {
                 addFocusListener(new java.awt.event.FocusAdapter() {
                     public void focusGained(java.awt.event.FocusEvent e) {
-                        focused = true;
                         getParent().getParent().repaint(); // repaint scroll pane wrapper
                     }
 
                     public void focusLost(java.awt.event.FocusEvent e) {
-                        focused = false;
                         getParent().getParent().repaint();
                     }
                 });
             }
 
-            public boolean isFocusHighlighted() {
-                return focused;
-            }
         };
         bioField.setRows(3);
         bioField.setOpaque(false);
@@ -785,9 +841,17 @@ public class ProfilePanel extends JPanel {
                 bioCountLabel.setForeground(len > 150 ? StyleConfig.ERROR_COLOR : StyleConfig.TEXT_LIGHT);
             }
 
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { update(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { update(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                update();
+            }
+
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                update();
+            }
+
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                update();
+            }
         });
 
         JScrollPane bioScroll = new JScrollPane(bioField) {
@@ -862,7 +926,8 @@ public class ProfilePanel extends JPanel {
             if (!newUsername.equals(profile.getUsername())) {
                 AuthService authService = new AuthService();
                 if (authService.isUsernameTaken(newUsername)) {
-                    JOptionPane.showMessageDialog(editDialog, "the username is already taken", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(editDialog, "the username is already taken", "Error",
+                            JOptionPane.ERROR_MESSAGE);
                     return;
                 }
             }

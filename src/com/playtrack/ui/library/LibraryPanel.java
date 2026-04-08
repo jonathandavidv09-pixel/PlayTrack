@@ -42,7 +42,7 @@ public class LibraryPanel extends JPanel {
     public LibraryPanel() {
         setLayout(new BorderLayout());
         setBackground(StyleConfig.BACKGROUND_COLOR);
-        setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 0));
+        setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
         // Top section
         JPanel topSection = new JPanel(new BorderLayout());
@@ -181,6 +181,12 @@ public class LibraryPanel extends JPanel {
         refreshLibrary();
     }
 
+    public void setCategory(String category) {
+        this.currentCategory = category;
+        refreshTabs();
+        refreshLibrary();
+    }
+
     public void refreshLibrary() {
         cardGrid.removeAll();
         cardGrid.setLayout(new BoxLayout(cardGrid, BoxLayout.Y_AXIS));
@@ -227,7 +233,7 @@ public class LibraryPanel extends JPanel {
             emptyContent.setLayout(new BoxLayout(emptyContent, BoxLayout.Y_AXIS));
             emptyContent.setOpaque(false);
 
-            JLabel emptyIcon = new JLabel("📭", SwingConstants.CENTER);
+            JLabel emptyIcon = new JLabel("\uD83D\uDCED", SwingConstants.CENTER);
             emptyIcon.setFont(new Font("Segoe UI", Font.PLAIN, 48));
             emptyIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
             emptyContent.add(emptyIcon);
@@ -248,6 +254,11 @@ public class LibraryPanel extends JPanel {
     private void addCategorySection(String title, List<MediaItem> items) {
         if (items == null || items.isEmpty())
             return;
+
+        final int MAX_VISIBLE_CARDS = 16; // 8 cards per row x 2 rows
+        boolean hasOverflow = items.size() > MAX_VISIBLE_CARDS;
+        // Card height = 240, vgap = 20, so 2 rows = 240 + 20 + 240 = 500
+        final int TWO_ROW_HEIGHT = 500;
 
         JPanel section = new JPanel(new BorderLayout(0, 20));
         section.setOpaque(false);
@@ -282,228 +293,90 @@ public class LibraryPanel extends JPanel {
         headerPanel.add(divider);
         section.add(headerPanel, BorderLayout.NORTH);
 
-        boolean isAllMode = "All".equals(currentCategory);
-        boolean isHorizontalRow = !"Search Results".equals(title);
-        
-        JPanel cardsPanel;
-        int requiredHeight = 280;
-        
-        if (isHorizontalRow) {
-            cardsPanel = new JPanel();
-            cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
-            // Removed 15px side padding to shift cards further left
-            cardsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-            cardsPanel.setOpaque(false);
-            
-            JPanel topRowPanel = new JPanel();
-            topRowPanel.setLayout(new BoxLayout(topRowPanel, BoxLayout.X_AXIS));
-            topRowPanel.setOpaque(false);
-            topRowPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            
-            if (isAllMode) {
-                // "All" mode: 8 cards per row, max 2 rows (16 cards total)
-                JPanel bottomRowPanel = new JPanel();
-                bottomRowPanel.setLayout(new BoxLayout(bottomRowPanel, BoxLayout.X_AXIS));
-                bottomRowPanel.setOpaque(false);
-                bottomRowPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                
-                int maxCards = Math.min(items.size(), 16);
-                for (int i = 0; i < maxCards; i++) {
-                    boolean isTopRow = i < 8;
-                    JPanel targetRow = isTopRow ? topRowPanel : bottomRowPanel;
-                    targetRow.add(new MediaCard(items.get(i), false, true, this::refreshLibrary));
-                    // Reduced strut from 25 to 20 to tighten grid matching HomePanel
-                    targetRow.add(Box.createHorizontalStrut(20));
-                }
-                
-                cardsPanel.add(topRowPanel);
-                if (maxCards > 8) {
-                    cardsPanel.add(Box.createVerticalStrut(20));
-                    cardsPanel.add(bottomRowPanel);
-                    requiredHeight = 520;
-                }
-            } else {
-                // Category mode: 2 rows, 8 cards each
-                JPanel bottomRowPanel = new JPanel();
-                bottomRowPanel.setLayout(new BoxLayout(bottomRowPanel, BoxLayout.X_AXIS));
-                bottomRowPanel.setOpaque(false);
-                bottomRowPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                
-                for (int i = 0; i < items.size(); i++) {
-                    int posInPage = i % 16;
-                    boolean isTopRow = posInPage < 8;
-                    
-                    JPanel targetRow = isTopRow ? topRowPanel : bottomRowPanel;
-                    targetRow.add(new MediaCard(items.get(i), false, true, this::refreshLibrary));
-                    targetRow.add(Box.createHorizontalStrut(25));
-                }
-                
-                cardsPanel.add(topRowPanel);
-                if (items.size() > 8) {
-                    cardsPanel.add(Box.createVerticalStrut(20));
-                    cardsPanel.add(bottomRowPanel);
-                    requiredHeight = 520;
-                }
-            }
-        } else {
-            cardsPanel = new JPanel();
-            cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
-            cardsPanel.setOpaque(false);
-            
-            JPanel currentRow = null;
-            for (int i = 0; i < items.size(); i++) {
-                if (i % 8 == 0) {
-                    currentRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
-                    currentRow.setOpaque(false);
-                    currentRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-                    if (i == 0) {
-                        currentRow.setBorder(BorderFactory.createEmptyBorder(0, -15, 0, 0));
-                    } else {
-                        currentRow.setBorder(BorderFactory.createEmptyBorder(-20, -15, 0, 0));
-                    }
-                    cardsPanel.add(currentRow);
-                }
-                if (currentRow != null) {
-                    currentRow.add(new MediaCard(items.get(i), false, true, this::refreshLibrary));
-                }
-            }
+        // Build cards panel with ALL cards
+        JPanel cardsPanel = new JPanel(new WrapLayout(WrapLayout.LEFT, 20, 20));
+        cardsPanel.setOpaque(false);
+        cardsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+        for (int i = 0; i < items.size(); i++) {
+            cardsPanel.add(new MediaCard(items.get(i), false, true, this::refreshLibrary));
         }
 
-        // Wrap in a horizontal scrollpane
-        JScrollPane scrollPane = new JScrollPane(cardsPanel);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setBorder(null);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-        // Restore horizontal scrollbar thickness to 8 so it is visible when activated on genre sections
-        scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-        scrollPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 8));
-        // Reduce scroll pane fixed width requirement tightly to 1420 (saving ~65px)
-        scrollPane.setPreferredSize(new Dimension(1420, requiredHeight));
-        scrollPane.setMaximumSize(new Dimension(1420, requiredHeight));
+        // Wrap cards in a clipping container that limits to 2 rows initially
+        JPanel cardClipWrapper = new JPanel(new BorderLayout());
+        cardClipWrapper.setOpaque(false);
+        cardClipWrapper.add(cardsPanel, BorderLayout.CENTER);
 
-        // Forward vertical mouse wheel events to parent (main page) to prevent blocking
-        scrollPane.addMouseWheelListener(e -> {
-            Container parent = scrollPane.getParent();
-            while (parent != null && !(parent instanceof JScrollPane)) {
-                parent = parent.getParent();
-            }
-            if (parent != null) {
-                // Ensure native scroll repaints correctly to avoid glitchy rendering
-                parent.dispatchEvent(SwingUtilities.convertMouseEvent(scrollPane, e, parent));
-                parent.repaint();
-            }
-        });
+        if (hasOverflow) {
+            cardClipWrapper.setPreferredSize(new Dimension(0, TWO_ROW_HEIGHT));
+            cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, TWO_ROW_HEIGHT));
+        }
 
-        // Removed hgap, we will use symmetric margins around the arrow instead
-        JPanel contentWrapper = new JPanel(new BorderLayout(0, 0));
-        contentWrapper.setOpaque(false);
+        section.add(cardClipWrapper, BorderLayout.CENTER);
 
-        // Arrow Button for navigation or horizontal scrolling
-        if (isHorizontalRow) {
-            class ScrollArrow extends JLabel {
-                private final boolean isRight;
+        // Down-arrow icon to expand/collapse when there are more than 2 rows
+        if (hasOverflow) {
+            final boolean[] expanded = {false};
 
-                public ScrollArrow(boolean isRight) {
-                    super(" ");
-                    this.isRight = isRight;
-                    setForeground(Color.WHITE);
-                    setPreferredSize(new Dimension(45, 60));
-                    setMaximumSize(new Dimension(45, 60));
-                    setCursor(new Cursor(Cursor.HAND_CURSOR));
-                    setToolTipText("All".equals(currentCategory) ? "Go to " + title : "See more");
-                    
-                    addMouseListener(new java.awt.event.MouseAdapter() {
-                        public void mouseClicked(java.awt.event.MouseEvent e) {
-                            if ("All".equals(currentCategory)) {
-                                currentCategory = title;
-                                refreshTabs();
-                                refreshLibrary();
-                            } else {
-                                scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-                                updateVisibility(false);
-                                scrollPane.revalidate();
-                                scrollPane.repaint();
-                                JScrollBar hb = scrollPane.getHorizontalScrollBar();
-                                hb.setValue(hb.getValue() + 555);
-                            }
-                        }
-                        public void mouseEntered(java.awt.event.MouseEvent e) { 
-                            setForeground(StyleConfig.PRIMARY_COLOR); 
-                        }
-                        public void mouseExited(java.awt.event.MouseEvent e) { 
-                            setForeground(Color.WHITE); 
-                        }
-                    });
-                }
-
+            JLabel arrowIcon = new JLabel() {
                 @Override
                 protected void paintComponent(Graphics g) {
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                    
-                    // Use discrete native png resolution by utilizing the larger size-bound method
-                    int iconSize = 40;
-                    int x = (getWidth() - iconSize) / 2;
-                    int y = (getHeight() - iconSize) / 2;
-                    UIUtils.drawArrowIcon(g2, x, y, iconSize, getForeground(), isRight);
+                    int size = 28;
+                    int cx = getWidth() / 2;
+                    int cy = getHeight() / 2;
+                    // down arrow when collapsed, up arrow when expanded
+                    UIUtils.drawVerticalArrowIcon(g2, cx - size / 2, cy - size / 2, size, size, getForeground(), !expanded[0]);
                     g2.dispose();
                 }
-                
-                public void updateVisibility(boolean shouldShow) {
-                    if (isVisible() != shouldShow) {
-                        setVisible(shouldShow);
-                        getParent().revalidate();
-                        getParent().repaint();
+            };
+            arrowIcon.setForeground(StyleConfig.TEXT_SECONDARY);
+            arrowIcon.setPreferredSize(new Dimension(100, 40));
+            arrowIcon.setHorizontalAlignment(SwingConstants.CENTER);
+            arrowIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            arrowIcon.setToolTipText("Show more");
+
+            arrowIcon.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    expanded[0] = !expanded[0];
+                    if (expanded[0]) {
+                        // Remove height constraint - show all cards
+                        cardClipWrapper.setPreferredSize(null);
+                        cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+                        arrowIcon.setToolTipText("Show less");
+                    } else {
+                        // Collapse back to 2 rows
+                        cardClipWrapper.setPreferredSize(new Dimension(0, TWO_ROW_HEIGHT));
+                        cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, TWO_ROW_HEIGHT));
+                        arrowIcon.setToolTipText("Show more");
+                    }
+                    arrowIcon.repaint();
+                    section.revalidate();
+                    section.repaint();
+                    // Revalidate up the hierarchy so scroll pane adjusts
+                    Container parent = section.getParent();
+                    while (parent != null) {
+                        parent.revalidate();
+                        parent.repaint();
+                        parent = parent.getParent();
                     }
                 }
-            }
-
-            ScrollArrow rightArrow = new ScrollArrow(true);
-            
-            JPanel arrowContainer = new JPanel();
-            arrowContainer.setLayout(new BoxLayout(arrowContainer, BoxLayout.Y_AXIS));
-            arrowContainer.setOpaque(false);
-            // Add thick right padding (80px) to shift arrow out of the corner, keeping a smaller left gap
-            arrowContainer.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 80));
-            arrowContainer.add(Box.createVerticalGlue());
-            arrowContainer.add(rightArrow);
-            arrowContainer.add(Box.createVerticalGlue());
-
-            // Reduce content wrapper size tightly so arrow sits leftward securely inside standard windows
-            scrollPane.setPreferredSize(new Dimension(1420, requiredHeight));
-            scrollPane.setMaximumSize(new Dimension(1420, requiredHeight));
-
-            contentWrapper.add(scrollPane, BorderLayout.CENTER);
-            contentWrapper.add(arrowContainer, BorderLayout.EAST);
-            
-            // Show arrow always in 'All' mode as a link, otherwise hide it if cards < 16
-            if ("All".equals(currentCategory)) {
-                rightArrow.updateVisibility(true);
-            } else {
-                rightArrow.updateVisibility(items.size() > 16);
-            }
-
-            // Setup scroll listener to toggle arrow visibility dynamically (if needed)
-            scrollPane.getHorizontalScrollBar().addAdjustmentListener(e -> {
-                if (!"All".equals(currentCategory)) {
-                    int val = e.getValue();
-                    int max = scrollPane.getHorizontalScrollBar().getMaximum() - scrollPane.getHorizontalScrollBar().getVisibleAmount();
-                    rightArrow.updateVisibility(val < max && items.size() > 16);
+                public void mouseEntered(java.awt.event.MouseEvent e) {
+                    arrowIcon.setForeground(StyleConfig.PRIMARY_COLOR);
+                }
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    arrowIcon.setForeground(StyleConfig.TEXT_SECONDARY);
                 }
             });
 
-            // Tightly constrained container to prevent clipping the arrow off-screen, while accounting for the extra shifted right margin
-            contentWrapper.setPreferredSize(new Dimension(1550, requiredHeight)); 
-            contentWrapper.setMaximumSize(new Dimension(1550, requiredHeight));
-        } else {
-            contentWrapper.add(scrollPane, BorderLayout.CENTER);
-            contentWrapper.setMaximumSize(new Dimension(1385, 99999));
+            JPanel arrowWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+            arrowWrapper.setOpaque(false);
+            arrowWrapper.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+            arrowWrapper.add(arrowIcon);
+            section.add(arrowWrapper, BorderLayout.SOUTH);
         }
 
-        section.add(contentWrapper, BorderLayout.WEST);
         cardGrid.add(section);
     }
 }

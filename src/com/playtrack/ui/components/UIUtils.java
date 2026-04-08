@@ -180,6 +180,7 @@ public class UIUtils {
         if ("Films".equals(category)) iconName = "film";
         else if ("Games".equals(category)) iconName = "game";
         else if ("Books".equals(category)) iconName = "book";
+        else if ("Watchlist".equals(category)) iconName = "watchlist";
 
         if (!iconName.isEmpty()) {
             BufferedImage src = getIcon(iconName);
@@ -193,7 +194,7 @@ public class UIUtils {
         drawCategoryIcon(g2, category, cx, cy, (int)(32 * scale), color);
     }
 
-    public static void drawDropdownCategoryIcon(Graphics2D g2, int cx, int cy, int iconType, Color color) {
+    public static void drawDropdownCategoryIcon(Graphics2D g2, int cx, int cy, int iconType, Color color, int size) {
         String iconName = "";
         if (iconType == 1) iconName = "film";
         else if (iconType == 2) iconName = "game";
@@ -203,7 +204,7 @@ public class UIUtils {
         if (!iconName.isEmpty()) {
             BufferedImage src = getIcon(iconName);
             if (src != null) {
-                drawTintedIcon(g2, src, cx, cy, 20, color);
+                drawTintedIcon(g2, src, cx, cy, size, color);
             }
         }
     }

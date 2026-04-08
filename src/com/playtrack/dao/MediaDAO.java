@@ -135,11 +135,18 @@ public class MediaDAO {
     }
 
     public boolean deleteMedia(int id) {
-        String sql = "DELETE FROM media_items WHERE id = ?";
-        try (Connection conn = SystemDBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            return pstmt.executeUpdate() > 0;
+        // Delete associated reviews first to prevent orphaned records
+        String deleteReviews = "DELETE FROM reviews WHERE media_id = ?";
+        String deleteMedia = "DELETE FROM media_items WHERE id = ?";
+        try (Connection conn = SystemDBConnection.getConnection()) {
+            try (PreparedStatement pstmt = conn.prepareStatement(deleteReviews)) {
+                pstmt.setInt(1, id);
+                pstmt.executeUpdate();
+            }
+            try (PreparedStatement pstmt = conn.prepareStatement(deleteMedia)) {
+                pstmt.setInt(1, id);
+                return pstmt.executeUpdate() > 0;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

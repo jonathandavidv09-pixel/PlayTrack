@@ -36,9 +36,9 @@ public class ReviewFormDialog extends JDialog {
     private boolean isWatchlist = false;
 
     // Colors
-    private static final Color BG_DARK = new Color(18, 22, 34);
-    private static final Color BG_FIELD = new Color(30, 36, 52);
-    private static final Color BORDER_SUBTLE = new Color(55, 65, 85);
+    private static final Color BG_DARK = new Color(0x181A2F);
+    private static final Color BG_FIELD = new Color(0x242E49);
+    private static final Color BORDER_SUBTLE = new Color(0x37415C);
 
     private void setLimit(javax.swing.text.JTextComponent comp, int limit) {
         ((AbstractDocument) comp.getDocument()).setDocumentFilter(new DocumentFilter() {
@@ -53,12 +53,12 @@ public class ReviewFormDialog extends JDialog {
         });
     }
 
-    private JPanel createLabeledField(String labelText, JComponent field) {
+    private JPanel createLabeledField(String labelText, JComponent field, Color catColor) {
         JPanel panel = new JPanel(new BorderLayout(0, 4));
         panel.setOpaque(false);
         JLabel label = new JLabel(labelText);
         label.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        label.setForeground(StyleConfig.TEXT_SECONDARY);
+        label.setForeground(catColor);
         panel.add(label, BorderLayout.NORTH);
         panel.add(field, BorderLayout.CENTER);
         return panel;
@@ -112,10 +112,10 @@ public class ReviewFormDialog extends JDialog {
                 int iconTop = inset - 4;
                 // Clear space behind icon
                 g2.setColor(BG_DARK);
-                g2.fillRect(cx - 24, iconTop - 4, 48, 28);
+                g2.fillRect(cx - 30, iconTop - 10, 60, 48);
 
-                String iconCat = isWatchlist ? "Films" : category;
-                UIUtils.drawCategoryIcon(g2, iconCat, cx, iconTop + 10, 24, catColor);
+                String iconCat = isWatchlist ? "Watchlist" : category;
+                UIUtils.drawCategoryIcon(g2, iconCat, cx, iconTop + 10, 36, catColor);
 
                 g2.dispose();
             }
@@ -160,7 +160,7 @@ public class ReviewFormDialog extends JDialog {
                     int cx = w / 2, cy = h / 2 - 20;
                     String iconCat = isWatchlist ? "Films" : category;
                     Color iconColor = new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 160);
-                    UIUtils.drawCategoryIcon(g2, iconCat, cx, cy, 40, iconColor);
+                    UIUtils.drawCategoryIcon(g2, iconCat, cx, cy, 60, iconColor);
 
                     // Upload text
                     g2.setColor(new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 180));
@@ -212,27 +212,28 @@ public class ReviewFormDialog extends JDialog {
         // Title
         String titleLabelText = category.equals("Books") ? "Book Title" : (category.equals("Games") ? "Game Title" : "Film Title");
         String titlePlaceholder = category.equals("Books") ? "Enter book title..." : (category.equals("Games") ? "Enter game title..." : "Enter film title...");
-        titleField = createField(titlePlaceholder);
+        titleField = createField(titlePlaceholder, catColor);
         setLimit(titleField, 100);
         titleField.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { posterPanel.repaint(); }
             public void removeUpdate(DocumentEvent e) { posterPanel.repaint(); }
             public void changedUpdate(DocumentEvent e) { posterPanel.repaint(); }
         });
-        addFieldToPanel(meta, titleLabelText, titleField);
+        addFieldToPanel(meta, titleLabelText, titleField, catColor);
 
         // Author (Books only)
         if (category.equals("Books")) {
-            authorField = createField("Enter author name...");
+            authorField = createField("Enter author name...", catColor);
             setLimit(authorField, 70);
-            addFieldToPanel(meta, "Author Name", authorField);
+            addFieldToPanel(meta, "Author Name", authorField, catColor);
         }
 
         // Genre
         genreBox = new JComboBox<>(getGenresForCategory(category));
-        styleComboBox(genreBox);
+        genreBox.setMaximumRowCount(15);
+        styleComboBox(genreBox, catColor);
         // Always show genre for watchlist add form too
-        addFieldToPanel(meta, "Genre", genreBox);
+        addFieldToPanel(meta, "Genre", genreBox, catColor);
 
         // Date
         if (!isWatchlist) {
@@ -241,7 +242,8 @@ public class ReviewFormDialog extends JDialog {
                                     (category.equals("Books") ? "Select finished date." : 
                                     "Select watch date.");
             dateField = new DatePickerField(datePlaceholder);
-            addFieldToPanel(meta, dateLabelText, dateField);
+            dateField.setForeground(catColor);
+            addFieldToPanel(meta, dateLabelText, dateField, catColor);
         }
 
         // Rating & Favorite row
@@ -259,7 +261,7 @@ public class ReviewFormDialog extends JDialog {
             rc.insets = new Insets(0, 0, 0, 4);
             JLabel rLbl = new JLabel("Rating");
             rLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-            rLbl.setForeground(StyleConfig.TEXT_SECONDARY);
+            rLbl.setForeground(catColor);
             ratingRow.add(rLbl, rc);
 
             // Stars
@@ -281,7 +283,7 @@ public class ReviewFormDialog extends JDialog {
             rc.insets = new Insets(0, 0, 0, 4);
             JLabel fLbl = new JLabel("Favorite");
             fLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-            fLbl.setForeground(StyleConfig.TEXT_SECONDARY);
+            fLbl.setForeground(catColor);
             ratingRow.add(fLbl, rc);
 
             // Heart icon
@@ -333,8 +335,8 @@ public class ReviewFormDialog extends JDialog {
             reviewArea.setLineWrap(true);
             reviewArea.setWrapStyleWord(true);
             reviewArea.setBackground(BG_FIELD);
-            reviewArea.setForeground(StyleConfig.TEXT_COLOR);
-            reviewArea.setCaretColor(StyleConfig.TEXT_COLOR);
+            reviewArea.setForeground(catColor);
+            reviewArea.setCaretColor(catColor);
             reviewArea.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
             setLimit(reviewArea, 500);
 
@@ -436,7 +438,6 @@ public class ReviewFormDialog extends JDialog {
         this(parent, item.getCategory(), onSave);
         this.editItem = item;
         titleField.setText(item.getTitle());
-        titleField.setForeground(StyleConfig.TEXT_COLOR);
         if (category.equals("Books") && item.getAuthor() != null && authorField != null) {
             authorField.setText(item.getAuthor());
         }
@@ -502,8 +503,8 @@ public class ReviewFormDialog extends JDialog {
     }
 
     // ─── Helper: add labeled field to meta panel ───
-    private void addFieldToPanel(JPanel panel, String label, JComponent field) {
-        JPanel p = createLabeledField(label, field);
+    private void addFieldToPanel(JPanel panel, String label, JComponent field, Color catColor) {
+        JPanel p = createLabeledField(label, field, catColor);
         p.setAlignmentX(Component.LEFT_ALIGNMENT);
         p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         panel.add(p);
@@ -511,7 +512,7 @@ public class ReviewFormDialog extends JDialog {
     }
 
     // ─── Text field factory ───
-    private JTextField createField(String placeholder) {
+    private JTextField createField(String placeholder, Color catColor) {
         JTextField field = new JTextField() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -519,7 +520,7 @@ public class ReviewFormDialog extends JDialog {
                 if (getText().isEmpty() && !isFocusOwner() && placeholder != null) {
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                    g2.setColor(new Color(85, 95, 115));
+                    g2.setColor(new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 120));
                     FontMetrics fm = g2.getFontMetrics();
                     g2.drawString(placeholder, getInsets().left, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                     g2.dispose();
@@ -530,8 +531,8 @@ public class ReviewFormDialog extends JDialog {
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
         field.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         field.setBackground(BG_FIELD);
-        field.setForeground(StyleConfig.TEXT_COLOR);
-        field.setCaretColor(StyleConfig.TEXT_COLOR);
+        field.setForeground(catColor);
+        field.setCaretColor(catColor);
         field.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_SUBTLE, 1, true),
             BorderFactory.createEmptyBorder(3, 10, 3, 10)
@@ -546,16 +547,16 @@ public class ReviewFormDialog extends JDialog {
     }
 
     // ─── Combo box styling ───
-    private void setupStyledComboBox(JComboBox<String> box) {
-        styleComboBox(box);
+    private void setupStyledComboBox(JComboBox<String> box, Color catColor) {
+        styleComboBox(box, catColor);
     }
 
-    private void styleComboBox(JComboBox<String> box) {
+    private void styleComboBox(JComboBox<String> box, Color catColor) {
         box.setPreferredSize(new Dimension(200, 28));
         box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
         box.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         box.setBackground(BG_FIELD);
-        box.setForeground(StyleConfig.TEXT_COLOR);
+        box.setForeground(catColor);
         box.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_SUBTLE, 1, true),
             BorderFactory.createEmptyBorder(2, 8, 2, 8)
@@ -563,10 +564,11 @@ public class ReviewFormDialog extends JDialog {
         box.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                JLabel c = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                c.setOpaque(true);
                 list.setBackground(BG_FIELD);
                 c.setBackground(isSelected ? new Color(50, 60, 80) : BG_FIELD);
-                c.setForeground(StyleConfig.TEXT_COLOR);
+                c.setForeground(catColor);
                 return c;
             }
         });
@@ -583,12 +585,45 @@ public class ReviewFormDialog extends JDialog {
     }
 
     private String[] getGenresForCategory(String category) {
-        if (category.equals("Games")) return new String[]{"Action", "RPG", "Adventure", "Strategy", "Shooter", "Action-Adventure"};
-        if (category.equals("Books")) return new String[]{"Fiction", "Non-Fiction", "Sci-Fi", "Fantasy", "Mystery"};
-        return new String[]{"Action", "Comedy", "Drama", "Sci-Fi", "Horror", "Animation"};
+        if (category.equals("Games")) return new String[]{
+            "Action", "Action-Adventure", "Adventure", "Battle Royale", "Beat 'em Up",
+            "Card Game", "City Builder", "CRPG", "Dating Sim", "Dungeon Crawler",
+            "Educational", "Fighting", "FPS", "Hack and Slash", "Horror",
+            "Idle", "JRPG", "Metroidvania", "MMORPG", "MOBA",
+            "Music / Rhythm", "Open World", "Party", "Platformer", "Puzzle",
+            "Racing", "Real-Time Strategy", "Roguelike", "Roguelite", "RPG",
+            "Sandbox", "Shooter", "Simulation", "Social Deduction", "Souls-like",
+            "Sports", "Stealth", "Strategy", "Survival", "Survival Horror",
+            "Tactical RPG", "Third-Person Shooter", "Tower Defense", "Turn-Based Strategy",
+            "Visual Novel", "Walking Simulator"
+        };
+        if (category.equals("Books")) return new String[]{
+            "Action / Adventure", "Autobiography", "Biography", "Business",
+            "Children's", "Classic", "Comedy / Humor", "Coming-of-Age", "Cookbook",
+            "Crime", "Dystopian", "Epic", "Erotica", "Essay",
+            "Fairy Tale", "Fantasy", "Graphic Novel", "Health / Wellness",
+            "Historical Fiction", "History", "Horror", "Inspirational / Motivational",
+            "Literary Fiction", "Manga", "Memoir", "Mystery",
+            "Mythology", "Non-Fiction", "Paranormal", "Philosophy",
+            "Poetry", "Political", "Psychology", "Religion / Spirituality",
+            "Romance", "Satire", "Science", "Science Fiction",
+            "Self-Help", "Short Stories", "Thriller", "Travel",
+            "True Crime", "Western", "Young Adult"
+        };
+        // Films (default)
+        return new String[]{
+            "Action", "Adventure", "Animation", "Anime", "Biography",
+            "Comedy", "Crime", "Dark Comedy", "Documentary", "Drama",
+            "Epic", "Experimental", "Family", "Fantasy", "Film Noir",
+            "Historical", "Horror", "Indie", "Martial Arts", "Musical",
+            "Mystery", "Neo-Noir", "Political", "Romance", "Romantic Comedy",
+            "Satire", "Sci-Fi", "Slasher", "Sports", "Superhero",
+            "Supernatural", "Suspense", "Thriller", "War", "Western"
+        };
     }
 
     private Color getCategoryColor(String cat) {
+        if (isWatchlist) return StyleConfig.WATCHLIST_COLOR;
         if (cat.equals("Games")) return StyleConfig.GAME_COLOR;
         if (cat.equals("Books")) return StyleConfig.BOOK_COLOR;
         return StyleConfig.FILM_COLOR;

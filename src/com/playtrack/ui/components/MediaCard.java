@@ -13,7 +13,16 @@ import java.io.File;
 
 public class MediaCard extends JPanel {
     private final MediaItem item;
-    private final MediaService mediaService = new MediaService();
+    private static final MediaService mediaService = new MediaService();
+
+    // LRU image cache to avoid re-loading and re-scaling the same poster images
+    private static final java.util.Map<String, java.awt.Image> posterCache =
+        java.util.Collections.synchronizedMap(new java.util.LinkedHashMap<String, java.awt.Image>(100, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(java.util.Map.Entry<String, java.awt.Image> eldest) {
+                return size() > 200;
+            }
+        });
     private final Runnable onRefresh;
     private final boolean showDeleteIcon;
     private boolean hovered = false;
@@ -50,10 +59,17 @@ public class MediaCard extends JPanel {
 
     private void loadPoster() {
         if (item.getImagePath() != null && !item.getImagePath().isEmpty()) {
+            String cacheKey = item.getImagePath();
+            java.awt.Image cached = posterCache.get(cacheKey);
+            if (cached != null) {
+                posterImage = cached;
+                return;
+            }
             try {
                 java.awt.image.BufferedImage rawImg = javax.imageio.ImageIO.read(new File(item.getImagePath()));
                 if (rawImg != null) {
                     posterImage = rawImg.getScaledInstance(160, 240, java.awt.Image.SCALE_SMOOTH);
+                    posterCache.put(cacheKey, posterImage);
                 }
             } catch (Exception ex) {
                 posterImage = null;
@@ -188,9 +204,17 @@ public class MediaCard extends JPanel {
 
             @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
-                // If moving into a child component (like a button), do not hide yet
-                if (contains(e.getPoint()))
-                    return;
+                // Use screen coordinates to reliably detect if mouse moved to a child
+                try {
+                    Point screenPt = e.getLocationOnScreen();
+                    Point cardLoc = getLocationOnScreen();
+                    if (screenPt.x >= cardLoc.x && screenPt.x < cardLoc.x + getWidth()
+                        && screenPt.y >= cardLoc.y && screenPt.y < cardLoc.y + getHeight()) {
+                        return; // Still within card bounds (moved to a child component)
+                    }
+                } catch (Exception ex) {
+                    // Component not showing, fall through to hide
+                }
                 hovered = false;
                 setControlsVisible(false);
                 repaint();
@@ -230,12 +254,141 @@ public class MediaCard extends JPanel {
 
     private void deleteCurrentItem() {
         String msg = (item.getId() < 0) ? "Remove this from your watchlist?" : "Delete this item from your library?";
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
-                msg,
-                "Confirm Delete",
-                JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        
+        Window parentWindow = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(parentWindow instanceof Frame ? (Frame) parentWindow : null, "Confirm Delete", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(420, 200);
+        dialog.setLocationRelativeTo(this);
+        dialog.setUndecorated(true);
+        dialog.setBackground(new Color(0, 0, 0, 0));
+        
+        final boolean[] confirmed = {false};
+
+        JPanel container = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Subtle shadow
+                for (int i = 6; i > 0; i--) {
+                    g2.setColor(new Color(0, 0, 0, 10 * i));
+                    g2.fill(new RoundRectangle2D.Float(6 - i, 6 - i, getWidth() - 12 + i * 2, getHeight() - 12 + i * 2, 28 + i, 28 + i));
+                }
+                
+                // Dark sleek background
+                g2.setColor(new Color(30, 36, 50));
+                g2.fill(new RoundRectangle2D.Float(6, 6, getWidth() - 12, getHeight() - 12, 28, 28));
+                
+                // Inner border
+                g2.setColor(new Color(255, 255, 255, 18));
+                g2.setStroke(new BasicStroke(1.2f));
+                g2.draw(new RoundRectangle2D.Float(6.5f, 6.5f, getWidth() - 13, getHeight() - 13, 27, 27));
+                g2.dispose();
+            }
+        };
+        container.setOpaque(false);
+        container.setBorder(BorderFactory.createEmptyBorder(28, 32, 28, 32));
+
+        JPanel centerPanel = new JPanel(new BorderLayout(20, 0));
+        centerPanel.setOpaque(false);
+        
+        JLabel iconLbl = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(211, 64, 69, 30));
+                g2.fillOval(0, 0, 52, 52);
+                UIUtils.drawTrashIcon(g2, 14, 14, 24, StyleConfig.PRIMARY_COLOR);
+                g2.dispose();
+            }
+        };
+        iconLbl.setPreferredSize(new Dimension(52, 52));
+        centerPanel.add(iconLbl, BorderLayout.WEST);
+        
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+        textPanel.setOpaque(false);
+        
+        JLabel titleLbl = new JLabel("Confirm Deletion");
+        titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        titleLbl.setForeground(StyleConfig.TEXT_COLOR);
+        
+        JLabel msgLbl = new JLabel("<html><p style='width:250px; line-height: 1.4;'>" + msg + " This action is permanent and cannot be undone.</p></html>");
+        msgLbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        msgLbl.setForeground(StyleConfig.TEXT_LIGHT);
+        
+        textPanel.add(titleLbl);
+        textPanel.add(Box.createVerticalStrut(6));
+        textPanel.add(msgLbl);
+        centerPanel.add(textPanel, BorderLayout.CENTER);
+        
+        container.add(centerPanel, BorderLayout.CENTER);
+        
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        btnPanel.setOpaque(false);
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+
+        class CustomButton extends JLabel {
+            private final boolean isPrimary;
+            private boolean hovered = false;
+            
+            public CustomButton(String text, boolean isPrimary) {
+                super(text, SwingConstants.CENTER);
+                this.isPrimary = isPrimary;
+                setFont(new Font("Segoe UI", Font.BOLD, 13));
+                setForeground(isPrimary ? Color.WHITE : StyleConfig.TEXT_LIGHT);
+                setPreferredSize(new Dimension(90, 36));
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+                
+                addMouseListener(new java.awt.event.MouseAdapter() {
+                    public void mouseEntered(java.awt.event.MouseEvent e) { hovered = true; repaint(); }
+                    public void mouseExited(java.awt.event.MouseEvent e) { hovered = false; repaint(); }
+                });
+            }
+            
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                if (isPrimary) {
+                    g2.setColor(hovered ? new Color(190, 50, 55) : StyleConfig.PRIMARY_COLOR);
+                    g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 16, 16));
+                } else {
+                    g2.setColor(hovered ? new Color(255, 255, 255, 15) : new Color(255, 255, 255, 5));
+                    g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 16, 16));
+                    g2.setColor(new Color(255, 255, 255, 30));
+                    g2.setStroke(new BasicStroke(1.2f));
+                    g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 15, 15));
+                }
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        }
+        
+        CustomButton cancelBtn = new CustomButton("Cancel", false);
+        cancelBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent e) { dialog.dispose(); }
+        });
+        
+        CustomButton confirmBtn = new CustomButton("Delete", true);
+        confirmBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                confirmed[0] = true;
+                dialog.dispose();
+            }
+        });
+        
+        btnPanel.add(cancelBtn);
+        btnPanel.add(confirmBtn);
+        
+        container.add(btnPanel, BorderLayout.SOUTH);
+        dialog.add(container);
+        
+        dialog.setVisible(true);
+
+        if (confirmed[0]) {
             if (item.getId() < 0) {
                 new WatchlistDAO().removeFromWatchlist(Math.abs(item.getId()));
             } else {
@@ -247,15 +400,14 @@ public class MediaCard extends JPanel {
 
     private void triggerRefresh() {
         Window window = SwingUtilities.getWindowAncestor(this);
-
         refreshComponentState();
 
-        if (onRefresh != null) {
-            onRefresh.run();
-        }
-
+        // Use refreshAll() when in MainFrame (refreshes everything once),
+        // otherwise fall back to the local callback to avoid double-refresh
         if (window instanceof com.playtrack.ui.main.MainFrame) {
             ((com.playtrack.ui.main.MainFrame) window).refreshAll();
+        } else if (onRefresh != null) {
+            onRefresh.run();
         }
     }
 

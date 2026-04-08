@@ -22,10 +22,15 @@ public class HomePanel extends JPanel {
     private SummaryService summaryService = new SummaryService();
     private JPanel statsContainer;
     private JPanel recentCardsPanel;
-    private JScrollPane recentScroll;
-    private JLabel rightArrow;
+    private JPanel cardClipWrapper;
+    private JLabel downArrow;
     private String username;
     private int userId;
+
+    // 8 cards per row x 2 rows = 16 cards max visible
+    private static final int MAX_VISIBLE_CARDS = 16;
+    // Card height=240, vgap=20 → 2 rows = 240 + 20 + 240 = 500
+    private static final int TWO_ROW_HEIGHT = 500;
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -51,12 +56,13 @@ public class HomePanel extends JPanel {
         ));
         g2.fillOval(120 - orb2 / 2, getHeight() - 120 - orb2 / 2, orb2, orb2);
 
-        // No top accent line
-
         g2.dispose();
     }
 
-    public HomePanel(Consumer<String> onAddMedia) {
+    private Consumer<String> onNavigate;
+
+    public HomePanel(Consumer<String> onAddMedia, Consumer<String> onNavigate) {
+        this.onNavigate = onNavigate;
         setLayout(new BorderLayout());
         setBackground(StyleConfig.BACKGROUND_COLOR);
 
@@ -64,8 +70,7 @@ public class HomePanel extends JPanel {
         username = (user != null) ? user.getUsername() : "User";
         userId = (user != null) ? user.getId() : 0;
 
-        // Custom panel to ensure the content stretches to the full width of the window,
-        // which guarantees that "center" alignments are real screen centers.
+        // Custom panel to ensure the content stretches to the full width of the window
         class ScrollablePanel extends JPanel implements Scrollable {
             public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
             public int getScrollableUnitIncrement(Rectangle r, int o, int d) { return 20; }
@@ -74,32 +79,35 @@ public class HomePanel extends JPanel {
             public boolean getScrollableTracksViewportHeight() { return false; }
         }
 
+        JPanel topSection = new JPanel();
+        topSection.setLayout(new BoxLayout(topSection, BoxLayout.Y_AXIS));
+        topSection.setOpaque(false);
+        topSection.setBorder(BorderFactory.createEmptyBorder(20, 50, 0, 50));
+
         JPanel mainContent = new ScrollablePanel();
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
         mainContent.setOpaque(false);
-        mainContent.setBorder(BorderFactory.createEmptyBorder(20, 50, 40, 50));
+        mainContent.setBorder(BorderFactory.createEmptyBorder(0, 50, 40, 50));
 
         JPanel welcomeRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
         welcomeRow.setOpaque(false);
         welcomeRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
         welcomeRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
         JLabel welcomeLabel = new JLabel("Welcome Back, " + username + "!", SwingConstants.CENTER);
         welcomeLabel.setFont(StyleConfig.FONT_TITLE);
         welcomeLabel.setForeground(StyleConfig.TEXT_COLOR);
         welcomeRow.add(welcomeLabel);
-        
-        mainContent.add(welcomeRow);
 
-        mainContent.add(Box.createVerticalStrut(20));
+        topSection.add(welcomeRow);
+        topSection.add(Box.createVerticalStrut(20));
 
         // Use OverlayLayout so the stats are truly centered across the full width,
         // while the "+" button floats on top at the right edge.
         JPanel statsRowWrapper = new JPanel() {
             @Override
             public boolean isOptimizedDrawingEnabled() {
-                return false; // Required for overlapping components
+                return false;
             }
         };
         statsRowWrapper.setLayout(new OverlayLayout(statsRowWrapper));
@@ -129,21 +137,20 @@ public class HomePanel extends JPanel {
             }
         });
 
-        // Button layer: right-aligned, floating on top of the centered stats
         JPanel addBtnLayer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         addBtnLayer.setOpaque(false);
         addBtnLayer.setAlignmentX(0.5f);
         addBtnLayer.setAlignmentY(0.5f);
         addBtnLayer.add(addBtn);
 
-        // Add layers: first added = on top
         statsRowWrapper.add(addBtnLayer);
         statsRowWrapper.add(statsContainer);
-        mainContent.add(statsRowWrapper);
-        mainContent.add(Box.createVerticalStrut(30));
+        topSection.add(statsRowWrapper);
+        topSection.add(Box.createVerticalStrut(30));
 
-        // Since mainContent is now FULL width, we must set recentCardsPanel and header to LEFT_ALIGNMENT,
-        // and limit their size or put them in a dedicated left-aligned flow inside the box.
+        add(topSection, BorderLayout.NORTH);
+
+        // ── Recent Activity Section ──
         JPanel recentActivityWrapper = new JPanel(new BorderLayout());
         recentActivityWrapper.setOpaque(false);
         recentActivityWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -180,108 +187,85 @@ public class HomePanel extends JPanel {
 
         recentActivityWrapper.add(headerPanel, BorderLayout.NORTH);
 
+        // Cards panel — uses WrapLayout to wrap naturally based on available width
         recentCardsPanel = new JPanel();
-        recentCardsPanel.setLayout(new BoxLayout(recentCardsPanel, BoxLayout.Y_AXIS));
+        recentCardsPanel.setLayout(new WrapLayout(WrapLayout.CENTER, 20, 20));
         recentCardsPanel.setOpaque(false);
         recentCardsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-        recentScroll = new JScrollPane(recentCardsPanel);
-        recentScroll.setOpaque(false);
-        recentScroll.getViewport().setOpaque(false);
-        recentScroll.setBorder(null);
-        // Disable horizontal scrollbar completely (as requested)
-        recentScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        recentScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-        // Vertical scrollbar invisible initially
-        recentScroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
-        recentScroll.getVerticalScrollBar().setUnitIncrement(16);
-        
-        // Allow JScrollPane to stretch exactly for 8 cards.
-        recentScroll.setPreferredSize(new Dimension(1485, 540));
-        recentScroll.setMaximumSize(new Dimension(1485, 540));
+        // Clip wrapper — limits visible height to 2 rows of cards
+        cardClipWrapper = new JPanel(new BorderLayout());
+        cardClipWrapper.setOpaque(false);
+        cardClipWrapper.add(recentCardsPanel, BorderLayout.CENTER);
 
-        // Set simple scroll mode to fix repaint smearing with transparent viewport
-        recentScroll.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-        // By default, disable native vertical mouse scrolling over the cards until they explicitly click the arrow
-        recentScroll.setWheelScrollingEnabled(false);
+        recentActivityWrapper.add(cardClipWrapper, BorderLayout.CENTER);
 
-        // Forward vertical mouse wheel events to parent ONLY IF we are not vertically scrolling ourselves
-        recentScroll.addMouseWheelListener(e -> {
-            if (recentScroll.getVerticalScrollBarPolicy() == JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED) {
-                recentScroll.repaint();
-                return; // Let JScrollPane handle the event natively
-            }
-            e.consume(); // Prevent native scrolling when disabled
-            Container parent = recentScroll.getParent();
-            while (parent != null && !(parent instanceof JScrollPane)) {
-                parent = parent.getParent();
-            }
-            if (parent != null) {
-                parent.dispatchEvent(SwingUtilities.convertMouseEvent(recentScroll, e, parent));
-            }
-        });
+        // Down-arrow icon — appears when there are more than 2 rows of cards
+        final boolean[] expanded = {false};
 
-        JPanel contentWrapper = new JPanel(new BorderLayout());
-        contentWrapper.setOpaque(false);
-        contentWrapper.add(recentScroll, BorderLayout.CENTER);
-
-        rightArrow = new JLabel() {
+        downArrow = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                int size = 36;
+                int size = 28;
                 int cx = getWidth() / 2;
                 int cy = getHeight() / 2;
-                
-                UIUtils.drawVerticalArrowIcon(g2, cx - size/2, cy - size/2, size, size, getForeground(), true);
+                // down arrow when collapsed, up arrow when expanded
+                UIUtils.drawVerticalArrowIcon(g2, cx - size / 2, cy - size / 2, size, size, getForeground(), !expanded[0]);
                 g2.dispose();
             }
         };
-        rightArrow.setForeground(StyleConfig.TEXT_SECONDARY);
-        // Smaller physical hit-box for the arrow so it stays tightly centered
-        rightArrow.setPreferredSize(new Dimension(100, 50));
-        rightArrow.setHorizontalAlignment(SwingConstants.CENTER);
-        rightArrow.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        rightArrow.setToolTipText("See more");
-        rightArrow.setVisible(false);
-        rightArrow.addMouseListener(new java.awt.event.MouseAdapter() {
+        downArrow.setForeground(StyleConfig.TEXT_SECONDARY);
+        downArrow.setPreferredSize(new Dimension(100, 40));
+        downArrow.setHorizontalAlignment(SwingConstants.CENTER);
+        downArrow.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        downArrow.setToolTipText("Show more");
+        downArrow.setVisible(false);
+
+        downArrow.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                // Height is already 540, simply enable scrolling to peek at further rows
-                recentScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-                recentScroll.setWheelScrollingEnabled(true);
-                
-                rightArrow.setVisible(false); // Hide arrow once scrollbar appears
-                
+                expanded[0] = !expanded[0];
+                if (expanded[0]) {
+                    // Remove height constraint — show all cards
+                    cardClipWrapper.setPreferredSize(null);
+                    cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+                    downArrow.setToolTipText("Show less");
+                } else {
+                    // Collapse back to 2 rows
+                    cardClipWrapper.setPreferredSize(new Dimension(0, TWO_ROW_HEIGHT));
+                    cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, TWO_ROW_HEIGHT));
+                    downArrow.setToolTipText("Show more");
+                }
+                downArrow.repaint();
                 recentActivityWrapper.revalidate();
                 recentActivityWrapper.repaint();
+                // Revalidate up the hierarchy so scroll pane adjusts
+                Container parent = recentActivityWrapper.getParent();
+                while (parent != null) {
+                    parent.revalidate();
+                    parent.repaint();
+                    parent = parent.getParent();
+                }
             }
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                rightArrow.setForeground(StyleConfig.PRIMARY_COLOR);
+                downArrow.setForeground(StyleConfig.PRIMARY_COLOR);
             }
             public void mouseExited(java.awt.event.MouseEvent e) {
-                rightArrow.setForeground(StyleConfig.TEXT_SECONDARY);
+                downArrow.setForeground(StyleConfig.TEXT_SECONDARY);
             }
         });
-        
-        // Ensure contentWrapper is tightly wrapped for BorderLayout
-        contentWrapper.setMaximumSize(new Dimension(1485, 600));
 
         JPanel arrowWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         arrowWrapper.setOpaque(false);
-        arrowWrapper.add(rightArrow);
+        arrowWrapper.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+        arrowWrapper.add(downArrow);
 
-        JPanel alignmentWrapper = new JPanel(new BorderLayout());
-        alignmentWrapper.setOpaque(false);
-        alignmentWrapper.add(contentWrapper, BorderLayout.CENTER);
-        // Add arrow directly beneath the scroll pane in the view wrapper rather than inside the scrolling canvas
-        alignmentWrapper.add(arrowWrapper, BorderLayout.SOUTH);
+        recentActivityWrapper.add(arrowWrapper, BorderLayout.SOUTH);
 
         loadRecentCards();
 
-        recentActivityWrapper.add(alignmentWrapper, BorderLayout.CENTER);
-        recentActivityWrapper.setMaximumSize(new Dimension(1485, 600));
+        recentActivityWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         mainContent.add(recentActivityWrapper);
 
         JScrollPane mainScroll = new JScrollPane(mainContent);
@@ -291,6 +275,7 @@ public class HomePanel extends JPanel {
         mainScroll.getVerticalScrollBar().setUnitIncrement(16);
         mainScroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
         mainScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        mainScroll.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
         add(mainScroll, BorderLayout.CENTER);
     }
 
@@ -299,50 +284,36 @@ public class HomePanel extends JPanel {
         ReviewDAO reviewDAO = new ReviewDAO();
         MediaDAO mediaDAO = new MediaDAO();
         List<com.playtrack.model.Review> recentReviews = reviewDAO.getRecentReviews(userId, 50);
+        // Batch fetch all media to avoid N+1 DB queries
+        java.util.Map<Integer, MediaItem> mediaMap = new java.util.HashMap<>();
+        for (MediaItem mi : mediaDAO.getMediaByUser(userId, "All")) {
+            mediaMap.put(mi.getId(), mi);
+        }
         List<MediaItem> recentItems = new ArrayList<>();
         for (com.playtrack.model.Review review : recentReviews) {
-            MediaItem mediaItem = mediaDAO.getMediaById(review.getMediaId());
+            MediaItem mediaItem = mediaMap.get(review.getMediaId());
             if (mediaItem != null) {
                 recentItems.add(mediaItem);
             }
         }
 
-        if (rightArrow != null) {
-            rightArrow.setVisible(recentItems.size() > 16);
-        }
-
-        JPanel currentRow = null;
         for (int i = 0; i < recentItems.size(); i++) {
-            if (i % 8 == 0) {
-                currentRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
-                currentRow.setOpaque(false);
-                currentRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-                // Extra padding mimicking the WrapLayout wrapping
-                if (i == 0) {
-                    currentRow.setBorder(BorderFactory.createEmptyBorder(0, -15, 0, 0));
-                } else {
-                    currentRow.setBorder(BorderFactory.createEmptyBorder(-20, -15, 0, 0));
-                }
-                recentCardsPanel.add(currentRow);
-            }
-            if (currentRow != null) {
-                currentRow.add(new MediaCard(recentItems.get(i), false, false, this::refreshRecentActivity));
-            }
+            recentCardsPanel.add(new MediaCard(recentItems.get(i), false, false, this::refreshRecentActivity));
         }
 
-        if (recentScroll != null) {
-            recentScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-            recentScroll.setWheelScrollingEnabled(false);
-            // Disable horizontal scrolling as requested
-            recentScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-            // Reset scroll position to top
-            javax.swing.SwingUtilities.invokeLater(() -> {
-                recentScroll.getViewport().setViewPosition(new Point(0, 0));
-                
-                if (rightArrow != null) {
-                    rightArrow.setVisible(recentItems.size() > 16);
-                }
-            });
+        // Show the down arrow when there are more than 16 cards (8 per row x 2 rows)
+        boolean hasOverflow = recentItems.size() > MAX_VISIBLE_CARDS;
+        if (downArrow != null) {
+            downArrow.setVisible(hasOverflow);
+        }
+
+        // Apply 2-row height clip when there's overflow
+        if (hasOverflow) {
+            cardClipWrapper.setPreferredSize(new Dimension(0, TWO_ROW_HEIGHT));
+            cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, TWO_ROW_HEIGHT));
+        } else {
+            cardClipWrapper.setPreferredSize(null);
+            cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         }
 
         recentCardsPanel.revalidate();
@@ -352,8 +323,6 @@ public class HomePanel extends JPanel {
     public void refreshRecentActivity() {
         loadRecentCards();
     }
-
-
 
     public void refreshStats() {
         statsContainer.removeAll();
@@ -395,6 +364,18 @@ public class HomePanel extends JPanel {
         };
         card.setOpaque(false);
         card.setPreferredSize(new Dimension(240, 80));
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        String catLabel = label.contains("Films") ? "Films" : (label.contains("Games") ? "Games" : "Books");
+        card.setToolTipText("Go to " + catLabel);
+        
+        card.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (onNavigate != null) {
+                    onNavigate.accept(catLabel);
+                }
+            }
+        });
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(0, 15, 0, 10);

@@ -41,7 +41,10 @@ public class MainFrame extends JFrame {
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
         
-        homePanel = new HomePanel(category -> showAddMediaDialog(category));
+        homePanel = new HomePanel(
+            category -> showAddMediaDialog(category),
+            category -> navigateToLibrary(category)
+        );
         libraryPanel = new LibraryPanel();
         summaryPanel = new SummaryPanel();
         profilePanel = new ProfilePanel();
@@ -123,6 +126,14 @@ public class MainFrame extends JFrame {
     private void showAddMediaDialog(String category) {
         ReviewFormDialog dialog = new ReviewFormDialog(this, category, () -> refreshAll());
         dialog.setVisible(true);
+    }
+
+    private void navigateToLibrary(String category) {
+        if (navbar != null) navbar.setActiveNav("Library");
+        showPage("library");
+        if (libraryPanel != null) {
+            libraryPanel.setCategory(category);
+        }
     }
 
     private void logout() {

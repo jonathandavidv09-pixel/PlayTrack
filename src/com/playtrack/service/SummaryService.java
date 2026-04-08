@@ -31,9 +31,13 @@ public class SummaryService {
 
     public double getAverageRating(int userId) {
         List<Review> reviews = reviewDAO.getRecentReviews(userId, 1000);
+        // Batch fetch all media IDs to avoid N+1 DB queries
+        java.util.Set<Integer> validMediaIds = mediaDAO.getMediaByUser(userId, "All").stream()
+            .map(MediaItem::getId)
+            .collect(java.util.stream.Collectors.toSet());
         List<Review> validReviews = reviews.stream()
             .filter(r -> r.getRating() > 0)
-            .filter(r -> mediaDAO.getMediaById(r.getMediaId()) != null)
+            .filter(r -> validMediaIds.contains(r.getMediaId()))
             .collect(Collectors.toList());
             
         if (validReviews.isEmpty()) return 0.0;
@@ -65,10 +69,13 @@ public class SummaryService {
 
     public List<RatedMedia> getTopRatedMedia(int userId, int limit) {
         List<Review> allReviews = reviewDAO.getRecentReviews(userId, 1000);
+        // Batch fetch all media items to avoid N+1 DB queries
+        java.util.Map<Integer, MediaItem> mediaMap = mediaDAO.getMediaByUser(userId, "All").stream()
+            .collect(java.util.stream.Collectors.toMap(MediaItem::getId, m -> m, (a, b) -> a));
         return allReviews.stream()
             .filter(r -> r.getRating() > 0)
             .sorted((r1, r2) -> Integer.compare(r2.getRating(), r1.getRating()))
-            .map(r -> new RatedMedia(mediaDAO.getMediaById(r.getMediaId()), r.getRating()))
+            .map(r -> new RatedMedia(mediaMap.get(r.getMediaId()), r.getRating()))
             .filter(rm -> rm.media != null)
             .limit(limit)
             .collect(Collectors.toList());

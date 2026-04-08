@@ -24,9 +24,10 @@ public class StyleConfig {
     public static final Color TEXT_LIGHT = new Color(130, 140, 155);        // Muted gray
 
     // Category colors
-    public static final Color FILM_COLOR = new Color(211, 64, 69);          // Coral Red
-    public static final Color GAME_COLOR = new Color(56, 163, 165);         // Teal
-    public static final Color BOOK_COLOR = new Color(212, 163, 55);         // Amber/Gold
+    public static final Color FILM_COLOR = new Color(0xB4182D);             // Red from palette
+    public static final Color GAME_COLOR = new Color(56, 163, 165);         // Teal (Original)
+    public static final Color BOOK_COLOR = new Color(0xFDA481);             // Peach from palette
+    public static final Color WATCHLIST_COLOR = new Color(0xB4182D);        // Red (Same as Film)
 
     // Status colors
     public static final Color SUCCESS_COLOR = new Color(46, 204, 113);      
