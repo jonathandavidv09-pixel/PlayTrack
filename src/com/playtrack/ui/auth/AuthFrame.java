@@ -1173,15 +1173,15 @@ public class AuthFrame extends JFrame {
 
             // Load the background image
             try {
-                InputStream is = getClass().getClassLoader().getResourceAsStream("resources/user_bg.jpg");
+                InputStream is = getClass().getClassLoader().getResourceAsStream("resources/auth_bg.png");
                 if (is != null) {
                     bgImage = ImageIO.read(is);
                     is.close();
                 } else {
-                    System.err.println("user_bg.jpg not found in resources");
+                    System.err.println("auth_bg.png not found in resources");
                 }
             } catch (Exception e) {
-                System.err.println("Failed to load user_bg.jpg: " + e.getMessage());
+                System.err.println("Failed to load auth_bg.png: " + e.getMessage());
             }
         }
 
