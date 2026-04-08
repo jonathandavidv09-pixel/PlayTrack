@@ -15,14 +15,37 @@ public class ProfileDropdown extends JPopupMenu {
 
     public ProfileDropdown(Runnable onProfile, Runnable onLogout) {
         setBackground(StyleConfig.BACKGROUND_COLOR);
-        setBorder(BorderFactory.createLineBorder(StyleConfig.BORDER_COLOR, 1));
-        setOpaque(true);
+        setBorder(BorderFactory.createEmptyBorder());
+        setOpaque(false);
 
         // Main container
-        JPanel container = new JPanel();
+        JPanel container = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int w = getWidth();
+                int h = getHeight();
+
+                g2.setColor(StyleConfig.BACKGROUND_COLOR);
+                g2.fillRoundRect(0, 0, w, h, 18, 18);
+
+                // Top sheen
+                g2.setClip(new java.awt.geom.RoundRectangle2D.Float(0, 0, w, 24, 18, 18));
+                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 26), 0, 24, new Color(255, 255, 255, 0)));
+                g2.fillRect(0, 0, w, 24);
+                g2.setClip(null);
+
+                // Border
+                g2.setColor(new Color(255, 255, 255, 42));
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 18, 18);
+                g2.dispose();
+            }
+        };
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
         container.setOpaque(false);
-        container.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        container.setBorder(BorderFactory.createEmptyBorder(15, 18, 15, 18));
 
         // User Info Section
         JPanel userInfoPanel = new JPanel();
@@ -43,11 +66,26 @@ public class ProfileDropdown extends JPopupMenu {
         userInfoPanel.add(emailLabel);
 
         container.add(userInfoPanel);
-        container.add(Box.createVerticalStrut(20));
+        container.add(Box.createVerticalStrut(12));
+
+        JPanel divider = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 8), getWidth(), 0, new Color(255, 255, 255, 32)));
+                g2.fillRect(0, 0, getWidth(), 1);
+                g2.dispose();
+            }
+        };
+        divider.setOpaque(false);
+        divider.setPreferredSize(new Dimension(0, 1));
+        divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+        divider.setAlignmentX(Component.LEFT_ALIGNMENT);
+        container.add(divider);
+        container.add(Box.createVerticalStrut(12));
 
         // Menu Items
-        PillButton profileBtn = new PillButton("Profile", createVectorIcon(1, StyleConfig.TEXT_COLOR),
-                StyleConfig.TEXT_COLOR, () -> {
+        PillButton profileBtn = new PillButton("Profile", 1, StyleConfig.TEXT_COLOR, StyleConfig.PRIMARY_COLOR, () -> {
                     setVisible(false);
                     onProfile.run();
                 });
@@ -55,8 +93,7 @@ public class ProfileDropdown extends JPopupMenu {
         container.add(profileBtn);
         container.add(Box.createVerticalStrut(10));
 
-        PillButton settingsBtn = new PillButton("Settings", createVectorIcon(2, StyleConfig.TEXT_COLOR),
-                StyleConfig.TEXT_COLOR, () -> {
+        PillButton settingsBtn = new PillButton("Settings", 2, StyleConfig.TEXT_COLOR, StyleConfig.SECONDARY_COLOR, () -> {
                     setVisible(false);
                     Window window = SwingUtilities.getWindowAncestor(this.getInvoker());
                     if (window instanceof Frame) {
@@ -68,8 +105,7 @@ public class ProfileDropdown extends JPopupMenu {
         container.add(Box.createVerticalStrut(10)); // Space before logout
 
         // Logout
-        PillButton logoutBtn = new PillButton("Logout", createVectorIcon(3, StyleConfig.ERROR_COLOR),
-                StyleConfig.ERROR_COLOR, () -> {
+        PillButton logoutBtn = new PillButton("Logout", 3, StyleConfig.ERROR_COLOR, StyleConfig.ERROR_COLOR, () -> {
                     setVisible(false);
                     onLogout.run();
                 });
@@ -93,9 +129,18 @@ public class ProfileDropdown extends JPopupMenu {
 
     // Custom Pill Button
     private class PillButton extends JPanel {
+        private final String text;
+        private final int iconType;
+        private final Color baseTextColor;
+        private final Color accentColor;
+        private final JLabel lbl;
         private boolean hovered = false;
 
-        public PillButton(String text, Icon icon, Color textColor, Runnable action) {
+        public PillButton(String text, int iconType, Color textColor, Color accentColor, Runnable action) {
+            this.text = text;
+            this.iconType = iconType;
+            this.baseTextColor = textColor;
+            this.accentColor = accentColor;
             setLayout(new BorderLayout());
             setOpaque(false);
             setMaximumSize(new Dimension(250, 45));
@@ -103,7 +148,7 @@ public class ProfileDropdown extends JPopupMenu {
             setMinimumSize(new Dimension(250, 45));
             setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-            JLabel lbl = new JLabel(text, icon, SwingConstants.LEFT);
+            lbl = new JLabel(text, createVectorIcon(iconType, textColor), SwingConstants.LEFT);
             lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
             lbl.setForeground(textColor);
             lbl.setIconTextGap(15);
@@ -113,11 +158,19 @@ public class ProfileDropdown extends JPopupMenu {
             addMouseListener(new MouseAdapter() {
                 public void mouseEntered(MouseEvent e) {
                     hovered = true;
+                    if ("Logout".equals(text)) {
+                        lbl.setForeground(new Color(255, 120, 120));
+                    } else {
+                        lbl.setForeground(Color.WHITE);
+                    }
+                    lbl.setIcon(createVectorIcon(iconType, lbl.getForeground()));
                     repaint();
                 }
 
                 public void mouseExited(MouseEvent e) {
                     hovered = false;
+                    lbl.setForeground(baseTextColor);
+                    lbl.setIcon(createVectorIcon(iconType, baseTextColor));
                     repaint();
                 }
 
@@ -131,12 +184,26 @@ public class ProfileDropdown extends JPopupMenu {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            Shape shape = new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
             if (hovered) {
-                g2.setColor(StyleConfig.CARD_BACKGROUND);
+                if ("Logout".equals(text)) {
+                    g2.setColor(new Color(StyleConfig.ERROR_COLOR.getRed(), StyleConfig.ERROR_COLOR.getGreen(), StyleConfig.ERROR_COLOR.getBlue(), 34));
+                } else {
+                    g2.setPaint(new GradientPaint(0, 0, new Color(65, 80, 118), getWidth(), 0, StyleConfig.CARD_BACKGROUND));
+                }
             } else {
                 g2.setColor(StyleConfig.BACKGROUND_LIGHT);
             }
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
+            g2.fill(shape);
+
+            if (hovered) {
+                g2.setColor(accentColor);
+                g2.fillRoundRect(0, 10, 4, getHeight() - 20, 4, 4);
+            }
+
+            g2.setColor(hovered ? new Color(255, 255, 255, 62) : new Color(255, 255, 255, 20));
+            g2.draw(shape);
             g2.dispose();
         }
     }

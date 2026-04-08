@@ -11,6 +11,7 @@ public class UIUtils {
 
     // Cached PNG icons map
     private static final Map<String, BufferedImage> iconCache = new HashMap<>();
+    private static BufferedImage authBackgroundImage;
 
     private static synchronized BufferedImage getIcon(String name) {
         if (!iconCache.containsKey(name)) {
@@ -36,6 +37,78 @@ public class UIUtils {
             }
         }
         return iconCache.get(name);
+    }
+
+    private static synchronized BufferedImage getAuthBackgroundImage() {
+        if (authBackgroundImage != null) {
+            return authBackgroundImage;
+        }
+        try {
+            InputStream is = UIUtils.class.getClassLoader().getResourceAsStream("resources/auth_bg.png");
+            if (is != null) {
+                authBackgroundImage = ImageIO.read(is);
+                is.close();
+                return authBackgroundImage;
+            }
+            java.io.File local = new java.io.File("src/resources/auth_bg.png");
+            if (local.exists()) {
+                authBackgroundImage = ImageIO.read(local);
+            }
+        } catch (Exception ignored) {
+            authBackgroundImage = null;
+        }
+        return authBackgroundImage;
+    }
+
+    public static void paintFadedAuthBackground(Graphics2D g2, int width, int height) {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+
+        BufferedImage bgImage = getAuthBackgroundImage();
+
+        if (bgImage != null) {
+            double panelRatio = (double) width / height;
+            double imgRatio = (double) bgImage.getWidth() / bgImage.getHeight();
+
+            int drawW;
+            int drawH;
+            int drawX;
+            int drawY;
+
+            if (panelRatio > imgRatio) {
+                drawW = width;
+                drawH = (int) (width / imgRatio);
+                drawX = 0;
+                drawY = (height - drawH) / 2;
+            } else {
+                drawH = height;
+                drawW = (int) (height * imgRatio);
+                drawX = (width - drawW) / 2;
+                drawY = 0;
+            }
+
+            Composite oldComposite = g2.getComposite();
+            // Keep image visible but still subtle.
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.34f));
+            g2.drawImage(bgImage, drawX, drawY, drawW, drawH, null);
+            g2.setComposite(oldComposite);
+        }
+
+        g2.setPaint(new GradientPaint(
+                0, 0, new Color(StyleConfig.BACKGROUND_COLOR.getRed(), StyleConfig.BACKGROUND_COLOR.getGreen(), StyleConfig.BACKGROUND_COLOR.getBlue(), 138),
+                0, height, new Color(StyleConfig.BACKGROUND_LIGHT.getRed(), StyleConfig.BACKGROUND_LIGHT.getGreen(), StyleConfig.BACKGROUND_LIGHT.getBlue(), 172)));
+        g2.fillRect(0, 0, width, height);
+
+        g2.setPaint(new GradientPaint(
+                0, 0, new Color(StyleConfig.PALETTE_WINE.getRed(), StyleConfig.PALETTE_WINE.getGreen(), StyleConfig.PALETTE_WINE.getBlue(), 28),
+                width, 0, new Color(StyleConfig.PALETTE_PEACH.getRed(), StyleConfig.PALETTE_PEACH.getGreen(), StyleConfig.PALETTE_PEACH.getBlue(), 22)));
+        g2.fillRect(0, 0, width, height);
+
+        g2.setPaint(new GradientPaint(
+                0, 0, new Color(StyleConfig.BACKGROUND_COLOR.getRed(), StyleConfig.BACKGROUND_COLOR.getGreen(), StyleConfig.BACKGROUND_COLOR.getBlue(), 10),
+                width, 0, new Color(StyleConfig.BACKGROUND_COLOR.getRed(), StyleConfig.BACKGROUND_COLOR.getGreen(), StyleConfig.BACKGROUND_COLOR.getBlue(), 70)));
+        g2.fillRect(0, 0, width, height);
     }
 
     /**
@@ -173,6 +246,28 @@ public class UIUtils {
         if (src != null) {
             drawTintedIcon(g2, src, cx, cy, size, color);
         }
+    }
+
+    public static void drawMenuIcon(Graphics2D g2, int cx, int cy, int size, Color color) {
+        BufferedImage src = getIcon("menu");
+        if (src != null) {
+            drawTintedIcon(g2, src, cx, cy, size, color);
+            return;
+        }
+
+        // Fallback if icon is missing.
+        Graphics2D iconG = (Graphics2D) g2.create();
+        iconG.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        iconG.setColor(color);
+        float stroke = Math.max(1.6f, size / 9f);
+        iconG.setStroke(new BasicStroke(stroke, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        int half = size / 2;
+        int left = cx - half + 2;
+        int right = cx + half - 2;
+        iconG.drawLine(left, cy - size / 4, right, cy - size / 4);
+        iconG.drawLine(left, cy, right, cy);
+        iconG.drawLine(left, cy + size / 4, right, cy + size / 4);
+        iconG.dispose();
     }
 
     public static void drawCategoryIcon(Graphics2D g2, String category, int cx, int cy, int size, Color color) {

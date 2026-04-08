@@ -72,9 +72,12 @@ public class RoundedButton extends JButton {
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
         Color bg;
-        if (isPressed) {
+        if (!isEnabled()) {
+            bg = new Color(90, 98, 118);
+        } else if (isPressed) {
             bg = pressedColor;
         } else if (isHovered) {
             bg = hoverColor;
@@ -82,23 +85,39 @@ public class RoundedButton extends JButton {
             bg = backgroundColor;
         }
 
+        Shape buttonShape = new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), radius, radius);
+
+        // Subtle floating shadow for better depth on modern surfaces.
+        if (isEnabled() && (isHovered || isPressed)) {
+            g2.setColor(new Color(0, 0, 0, isPressed ? 22 : 30));
+            g2.fill(new RoundRectangle2D.Float(0, 1.5f, getWidth(), getHeight() - 1.5f, radius, radius));
+        }
+
         if (isGradient && gradientEnd != null) {
-            GradientPaint gp = new GradientPaint(0, 0, bg, getWidth(), getHeight(), gradientEnd);
+            Color end = !isEnabled()
+                    ? new Color(80, 86, 104)
+                    : (isPressed ? darker(gradientEnd, 0.12f) : (isHovered ? brighter(gradientEnd, 0.08f) : gradientEnd));
+            GradientPaint gp = new GradientPaint(0, 0, bg, getWidth(), getHeight(), end);
             g2.setPaint(gp);
         } else {
             g2.setColor(bg);
         }
 
-        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), radius, radius));
+        g2.fill(buttonShape);
 
         // Subtle top highlight
-        if (isHovered && !isPressed) {
-            g2.setColor(new Color(255, 255, 255, 20));
+        if (isEnabled() && !isPressed) {
+            g2.setColor(new Color(255, 255, 255, isHovered ? 28 : 18));
             Shape oldClip = g2.getClip();
-            g2.clip(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), radius, radius));
+            g2.clip(buttonShape);
             g2.fill(new Rectangle(0, 0, getWidth(), getHeight() / 2));
             g2.setClip(oldClip);
         }
+
+        // Crisp edge for premium look.
+        g2.setColor(new Color(255, 255, 255, isHovered ? 88 : 58));
+        g2.setStroke(new BasicStroke(1f));
+        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, radius - 1, radius - 1));
 
         if ("+".equals(getText())) {
             g2.setColor(getForeground());

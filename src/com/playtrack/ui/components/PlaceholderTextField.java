@@ -59,18 +59,20 @@ public class PlaceholderTextField extends JTextField {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // Background
-        g2.setColor(StyleConfig.BACKGROUND_COLOR);
-        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 12, 12));
+        g2.setPaint(new GradientPaint(
+                0, 0, focused ? StyleConfig.INPUT_BG_FOCUS : StyleConfig.INPUT_BG,
+                0, getHeight(), StyleConfig.BACKGROUND_LIGHT));
+        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
 
         // Border
         if (focused) {
-            g2.setColor(StyleConfig.PRIMARY_COLOR);
+            g2.setColor(StyleConfig.INPUT_FOCUS);
             g2.setStroke(new BasicStroke(2f));
         } else {
-            g2.setColor(StyleConfig.BORDER_COLOR);
+            g2.setColor(StyleConfig.SURFACE_STROKE);
             g2.setStroke(new BasicStroke(1f));
         }
-        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 12, 12));
+        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 13, 13));
 
         // Icon
         if (iconText != null) {

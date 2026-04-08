@@ -149,7 +149,7 @@ public class AuthFrame extends JFrame {
                 return;
             }
 
-            if (authService.login(identifier, password)) {
+            if (authService.login(identifier, password, loginPanel.isRememberMeSelected())) {
                 onLoginSuccess.run();
                 dispose();
             } else {

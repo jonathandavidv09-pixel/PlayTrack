@@ -9,23 +9,22 @@ import java.util.Calendar;
 public class DatePickerField extends JTextField {
     private String placeholder;
     private JPopupMenu popup;
-    private Color BORDER_SUBTLE = new Color(55, 65, 85);
-    private Color BG_FIELD = new Color(30, 36, 52);
+    private Color BORDER_SUBTLE = StyleConfig.SURFACE_STROKE;
+    private Color BG_FIELD = StyleConfig.INPUT_BG;
     private Calendar currentCalendar = Calendar.getInstance();
+    private boolean hovered = false;
 
     public DatePickerField(String placeholder) {
         this.placeholder = placeholder;
 
         setPreferredSize(new Dimension(200, 28));
         setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
-        setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        setFont(new Font("Arial", Font.PLAIN, 12));
         setBackground(BG_FIELD);
         setForeground(StyleConfig.TEXT_COLOR);
         setCaretColor(StyleConfig.TEXT_COLOR);
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER_SUBTLE, 1, true),
-                BorderFactory.createEmptyBorder(3, 10, 3, 10)
-        ));
+        setOpaque(false);
+        setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 30));
         setEditable(false);
         setCursor(new Cursor(Cursor.HAND_CURSOR));
 
@@ -34,18 +33,40 @@ public class DatePickerField extends JTextField {
             public void mouseClicked(MouseEvent e) {
                 showPicker();
             }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                hovered = true;
+                repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                hovered = false;
+                repaint();
+            }
         });
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
+        g2.setPaint(new GradientPaint(
+                0, 0, hovered ? StyleConfig.INPUT_BG_FOCUS : StyleConfig.INPUT_BG,
+                0, getHeight(), StyleConfig.BACKGROUND_LIGHT));
+        g2.fill(new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
+
+        g2.setColor(hovered ? new Color(StyleConfig.SECONDARY_COLOR.getRed(), StyleConfig.SECONDARY_COLOR.getGreen(),
+                StyleConfig.SECONDARY_COLOR.getBlue(), 120) : BORDER_SUBTLE);
+        g2.draw(new java.awt.geom.RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 10, 10));
+
+        super.paintComponent(g);
+
         if (getText().isEmpty() && !isFocusOwner() && placeholder != null) {
-            g2.setColor(new Color(85, 95, 115));
+            g2.setColor(new Color(255, 255, 255, 120));
             FontMetrics fm = g2.getFontMetrics();
             g2.drawString(placeholder, getInsets().left, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
         }
@@ -55,8 +76,7 @@ public class DatePickerField extends JTextField {
         int cx = getWidth() - iconSize / 2 - 12;
         int cy = getHeight() / 2;
 
-        boolean isHovered = getMousePosition() != null;
-        Color iconColor = isHovered ? StyleConfig.PRIMARY_COLOR : new Color(110, 120, 140);
+        Color iconColor = hovered ? StyleConfig.SECONDARY_COLOR : StyleConfig.TEXT_LIGHT;
         
         UIUtils.drawCalendarIcon(g2, cx, cy, iconSize, iconColor);
 
@@ -66,11 +86,19 @@ public class DatePickerField extends JTextField {
     private void showPicker() {
         if (popup != null && popup.isVisible()) return;
         popup = new JPopupMenu();
-        popup.setBackground(BG_FIELD);
-        popup.setBorder(BorderFactory.createLineBorder(StyleConfig.PRIMARY_COLOR));
+        popup.setBackground(StyleConfig.BACKGROUND_LIGHT);
+        popup.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255, 38)));
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(BG_FIELD);
+        JPanel panel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.BACKGROUND_LIGHT, 0, getHeight(), StyleConfig.BACKGROUND_COLOR));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+            }
+        };
+        panel.setOpaque(false);
         panel.setPreferredSize(new Dimension(240, 220));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -99,7 +127,7 @@ public class DatePickerField extends JTextField {
         for (String d : days) {
             JLabel dl = new JLabel(d, SwingConstants.CENTER);
             dl.setFont(new Font("Segoe UI", Font.BOLD, 10));
-            dl.setForeground(StyleConfig.PRIMARY_COLOR);
+            dl.setForeground(StyleConfig.SECONDARY_COLOR);
             grid.add(dl);
         }
 
@@ -119,10 +147,10 @@ public class DatePickerField extends JTextField {
             btn.setContentAreaFilled(false);
             btn.setForeground(StyleConfig.TEXT_COLOR);
             btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            btn.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+            btn.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             
             btn.addMouseListener(new MouseAdapter() {
-                public void mouseEntered(MouseEvent e) { btn.setForeground(StyleConfig.PRIMARY_COLOR); }
+                public void mouseEntered(MouseEvent e) { btn.setForeground(StyleConfig.SECONDARY_COLOR); }
                 public void mouseExited(MouseEvent e) { btn.setForeground(StyleConfig.TEXT_COLOR); }
             });
 

@@ -38,12 +38,14 @@ public class HomePanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
+
         // Subtle glowing orb top-right
         int orbSize = 400;
         g2.setPaint(new RadialGradientPaint(
             getWidth() - 100f, 80f, orbSize / 2f,
             new float[]{0f, 0.4f, 1f},
-            new Color[]{new Color(211, 64, 69, 25), new Color(211, 64, 69, 8), new Color(0, 0, 0, 0)}
+            new Color[]{StyleConfig.PANEL_GLOW_SECONDARY, new Color(StyleConfig.PALETTE_PEACH.getRed(), StyleConfig.PALETTE_PEACH.getGreen(), StyleConfig.PALETTE_PEACH.getBlue(), 8), new Color(0, 0, 0, 0)}
         ));
         g2.fillOval(getWidth() - 100 - orbSize / 2, 80 - orbSize / 2, orbSize, orbSize);
 
@@ -52,7 +54,7 @@ public class HomePanel extends JPanel {
         g2.setPaint(new RadialGradientPaint(
             120f, getHeight() - 120f, orb2 / 2f,
             new float[]{0f, 0.5f, 1f},
-            new Color[]{new Color(211, 64, 69, 15), new Color(211, 64, 69, 5), new Color(0, 0, 0, 0)}
+            new Color[]{StyleConfig.PANEL_GLOW_PRIMARY, new Color(StyleConfig.PALETTE_RED.getRed(), StyleConfig.PALETTE_RED.getGreen(), StyleConfig.PALETTE_RED.getBlue(), 8), new Color(0, 0, 0, 0)}
         ));
         g2.fillOval(120 - orb2 / 2, getHeight() - 120 - orb2 / 2, orb2, orb2);
 
@@ -121,6 +123,7 @@ public class HomePanel extends JPanel {
         refreshStats();
 
         RoundedButton addBtn = new RoundedButton("+ New", StyleConfig.PRIMARY_COLOR, 45);
+        addBtn.setGradient(StyleConfig.PRIMARY_DARK);
         addBtn.setPreferredSize(new Dimension(120, 45));
         addBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
         addBtn.setForeground(Color.WHITE);
@@ -162,7 +165,7 @@ public class HomePanel extends JPanel {
 
         JLabel recentTitle = new JLabel("Recent Activity");
         recentTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        recentTitle.setForeground(StyleConfig.TEXT_COLOR);
+        recentTitle.setForeground(StyleConfig.TEXT_SECONDARY);
         recentTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         headerPanel.add(recentTitle);
 
@@ -173,9 +176,9 @@ public class HomePanel extends JPanel {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 int w = getWidth();
-                g2.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 0), w / 2, 0, StyleConfig.PRIMARY_COLOR));
+                g2.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 0), w / 2, 0, StyleConfig.SECONDARY_COLOR));
                 g2.fillRect(0, 0, w / 2, 2);
-                g2.setPaint(new GradientPaint(w / 2, 0, StyleConfig.PRIMARY_COLOR, w, 0, new Color(0, 0, 0, 0)));
+                g2.setPaint(new GradientPaint(w / 2, 0, StyleConfig.SECONDARY_COLOR, w, 0, new Color(0, 0, 0, 0)));
                 g2.fillRect(w / 2, 0, w / 2, 2);
                 g2.dispose();
             }
@@ -347,16 +350,21 @@ public class HomePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Deep premium background
-                g2.setColor(new Color(30, 35, 45));
+                for (int i = 3; i > 0; i--) {
+                    g2.setColor(new Color(0, 0, 0, 10 * i));
+                    g2.fill(new RoundRectangle2D.Float(1 - i, 1 - i, getWidth() - 2 + i * 2, getHeight() - 2 + i * 2, 24 + i, 24 + i));
+                }
+
+                // Card body
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_ELEVATED, 0, getHeight(), StyleConfig.SURFACE_COLOR));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
 
-                // Subtle glassy top highlight
-                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 12), 0, getHeight() / 2, new Color(255, 255, 255, 0)));
+                // Soft top gloss
+                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 16), 0, getHeight() / 2, new Color(255, 255, 255, 0)));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
 
-                // Clean translucent border
-                g2.setColor(new Color(255, 255, 255, 20));
+                // Border
+                g2.setColor(StyleConfig.SURFACE_STROKE);
                 g2.setStroke(new BasicStroke(1.5f));
                 g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 24, 24));
                 g2.dispose();
@@ -367,7 +375,7 @@ public class HomePanel extends JPanel {
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
         String catLabel = label.contains("Films") ? "Films" : (label.contains("Games") ? "Games" : "Books");
-        card.setToolTipText("Go to " + catLabel);
+        card.setToolTipText("Open " + catLabel + " in Library");
         
         card.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {

@@ -39,6 +39,8 @@ public class ReviewFormDialog extends JDialog {
     private static final Color BG_DARK = new Color(0x181A2F);
     private static final Color BG_FIELD = new Color(0x242E49);
     private static final Color BORDER_SUBTLE = new Color(0x37415C);
+    private static final Color INPUT_TEXT_COLOR = Color.WHITE;
+    private static final int REVIEW_CHAR_LIMIT = 500;
 
     private void setLimit(javax.swing.text.JTextComponent comp, int limit) {
         ((AbstractDocument) comp.getDocument()).setDocumentFilter(new DocumentFilter() {
@@ -242,7 +244,9 @@ public class ReviewFormDialog extends JDialog {
                                     (category.equals("Books") ? "Select finished date." : 
                                     "Select watch date.");
             dateField = new DatePickerField(datePlaceholder);
-            dateField.setForeground(catColor);
+            dateField.setForeground(INPUT_TEXT_COLOR);
+            dateField.setCaretColor(INPUT_TEXT_COLOR);
+            dateField.setFont(new Font("Arial", Font.PLAIN, 12));
             addFieldToPanel(meta, dateLabelText, dateField, catColor);
         }
 
@@ -311,8 +315,17 @@ public class ReviewFormDialog extends JDialog {
             JLabel revLabel = new JLabel(reviewTitle);
             revLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
             revLabel.setForeground(catColor);
-            revLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            content.add(revLabel);
+            JLabel reviewCountLabel = new JLabel("0/" + REVIEW_CHAR_LIMIT);
+            reviewCountLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+            reviewCountLabel.setForeground(new Color(255, 255, 255, 170));
+
+            JPanel reviewHeader = new JPanel(new BorderLayout());
+            reviewHeader.setOpaque(false);
+            reviewHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
+            reviewHeader.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+            reviewHeader.add(revLabel, BorderLayout.WEST);
+            reviewHeader.add(reviewCountLabel, BorderLayout.EAST);
+            content.add(reviewHeader);
             content.add(Box.createVerticalStrut(6));
 
             // Review text area inside a custom bordered wrapper panel
@@ -323,7 +336,7 @@ public class ReviewFormDialog extends JDialog {
                     if (getText().isEmpty() && !isFocusOwner()) {
                         Graphics2D g2 = (Graphics2D) g.create();
                         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                        g2.setColor(new Color(85, 95, 115));
+                        g2.setColor(new Color(255, 255, 255, 120));
                         FontMetrics fm = g2.getFontMetrics();
                         String ph = "Enter your thoughts here...";
                         g2.drawString(ph, getInsets().left, getInsets().top + fm.getAscent());
@@ -331,14 +344,30 @@ public class ReviewFormDialog extends JDialog {
                     }
                 }
             };
-            reviewArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            reviewArea.setFont(new Font("Arial", Font.PLAIN, 12));
             reviewArea.setLineWrap(true);
             reviewArea.setWrapStyleWord(true);
             reviewArea.setBackground(BG_FIELD);
-            reviewArea.setForeground(catColor);
-            reviewArea.setCaretColor(catColor);
+            reviewArea.setForeground(INPUT_TEXT_COLOR);
+            reviewArea.setCaretColor(INPUT_TEXT_COLOR);
             reviewArea.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-            setLimit(reviewArea, 500);
+            setLimit(reviewArea, REVIEW_CHAR_LIMIT);
+
+            reviewArea.getDocument().addDocumentListener(new DocumentListener() {
+                private void updateCount() {
+                    int count = reviewArea.getText() != null ? reviewArea.getText().length() : 0;
+                    reviewCountLabel.setText(count + "/" + REVIEW_CHAR_LIMIT);
+                    if (count >= REVIEW_CHAR_LIMIT) {
+                        reviewCountLabel.setForeground(StyleConfig.ERROR_COLOR);
+                    } else {
+                        reviewCountLabel.setForeground(new Color(255, 255, 255, 170));
+                    }
+                }
+
+                public void insertUpdate(DocumentEvent e) { updateCount(); }
+                public void removeUpdate(DocumentEvent e) { updateCount(); }
+                public void changedUpdate(DocumentEvent e) { updateCount(); }
+            });
 
             reviewArea.addFocusListener(new java.awt.event.FocusAdapter() {
                 @Override public void focusGained(java.awt.event.FocusEvent e) { repaint(); }
@@ -520,7 +549,7 @@ public class ReviewFormDialog extends JDialog {
                 if (getText().isEmpty() && !isFocusOwner() && placeholder != null) {
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                    g2.setColor(new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 120));
+                    g2.setColor(new Color(255, 255, 255, 120));
                     FontMetrics fm = g2.getFontMetrics();
                     g2.drawString(placeholder, getInsets().left, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                     g2.dispose();
@@ -529,10 +558,10 @@ public class ReviewFormDialog extends JDialog {
         };
         field.setPreferredSize(new Dimension(200, 28));
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        field.setFont(new Font("Arial", Font.PLAIN, 12));
         field.setBackground(BG_FIELD);
-        field.setForeground(catColor);
-        field.setCaretColor(catColor);
+        field.setForeground(INPUT_TEXT_COLOR);
+        field.setCaretColor(INPUT_TEXT_COLOR);
         field.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_SUBTLE, 1, true),
             BorderFactory.createEmptyBorder(3, 10, 3, 10)
@@ -554,9 +583,9 @@ public class ReviewFormDialog extends JDialog {
     private void styleComboBox(JComboBox<String> box, Color catColor) {
         box.setPreferredSize(new Dimension(200, 28));
         box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
-        box.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        box.setFont(new Font("Arial", Font.PLAIN, 12));
         box.setBackground(BG_FIELD);
-        box.setForeground(catColor);
+        box.setForeground(INPUT_TEXT_COLOR);
         box.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_SUBTLE, 1, true),
             BorderFactory.createEmptyBorder(2, 8, 2, 8)
@@ -568,7 +597,7 @@ public class ReviewFormDialog extends JDialog {
                 c.setOpaque(true);
                 list.setBackground(BG_FIELD);
                 c.setBackground(isSelected ? new Color(50, 60, 80) : BG_FIELD);
-                c.setForeground(catColor);
+                c.setForeground(INPUT_TEXT_COLOR);
                 return c;
             }
         });

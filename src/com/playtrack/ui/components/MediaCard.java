@@ -49,7 +49,7 @@ public class MediaCard extends JPanel {
         setMaximumSize(new Dimension(160, 240));
         setOpaque(false);
         setCursor(new Cursor(Cursor.HAND_CURSOR));
-        setToolTipText(item.getTitle() + (item.getGenre() != null ? " • " + item.getGenre() : ""));
+        setToolTipText(item.getTitle() + (item.getGenre() != null ? " | " + item.getGenre() : ""));
 
         loadPoster();
         refreshReviewState();
@@ -132,6 +132,18 @@ public class MediaCard extends JPanel {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                ButtonModel model = getModel();
+                boolean pressed = model.isPressed();
+                boolean rollover = model.isRollover();
+                Color bgTop = pressed ? new Color(59, 70, 96, 215)
+                        : (rollover ? new Color(67, 79, 110, 205) : new Color(21, 28, 43, 172));
+                Color bgBottom = pressed ? new Color(44, 53, 74, 225)
+                        : (rollover ? new Color(50, 61, 86, 210) : new Color(13, 18, 31, 188));
+                g2.setPaint(new GradientPaint(0, 0, bgTop, 0, getHeight(), bgBottom));
+                g2.fillOval(1, 1, getWidth() - 2, getHeight() - 2);
+                g2.setColor(new Color(255, 255, 255, 65));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawOval(1, 1, getWidth() - 3, getHeight() - 3);
                 g2.setColor(isSelected() ? StyleConfig.PRIMARY_COLOR : Color.WHITE);
 
                 int cx = getWidth() / 2;
@@ -166,6 +178,19 @@ public class MediaCard extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                ButtonModel model = getModel();
+                boolean pressed = model.isPressed();
+                boolean rollover = model.isRollover();
+                Color bgTop = pressed ? new Color(59, 70, 96, 215)
+                        : (rollover ? new Color(67, 79, 110, 205) : new Color(21, 28, 43, 172));
+                Color bgBottom = pressed ? new Color(44, 53, 74, 225)
+                        : (rollover ? new Color(50, 61, 86, 210) : new Color(13, 18, 31, 188));
+                g2.setPaint(new GradientPaint(0, 0, bgTop, 0, getHeight(), bgBottom));
+                g2.fillOval(1, 1, getWidth() - 2, getHeight() - 2);
+                g2.setColor(new Color(255, 255, 255, 65));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawOval(1, 1, getWidth() - 3, getHeight() - 3);
                 int iconSize = 18;
                 int ox = (getWidth() - iconSize) / 2;
                 int oy = (getHeight() - iconSize) / 2;
@@ -188,6 +213,7 @@ public class MediaCard extends JPanel {
         button.setContentAreaFilled(false);
         button.setBorderPainted(false);
         button.setFocusPainted(false);
+        button.setRolloverEnabled(true);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         button.setSelected(selected);
         button.setToolTipText(tooltip);
@@ -442,13 +468,13 @@ public class MediaCard extends JPanel {
 
         int w = getWidth();
         int h = getHeight();
-        int arc = 8; // Small arc for Letterboxd style
+        int arc = 14;
 
-        // Shadow/glow if hovered
+        // Category glow on hover
         if (hovered) {
             Color glowColor = getCategoryColor(item.getCategory());
-            g2.setColor(new Color(glowColor.getRed(), glowColor.getGreen(), glowColor.getBlue(), 60));
-            g2.fill(new RoundRectangle2D.Float(0, 0, w, h, arc, arc));
+            g2.setColor(new Color(glowColor.getRed(), glowColor.getGreen(), glowColor.getBlue(), 52));
+            g2.fill(new RoundRectangle2D.Float(-2, -2, w + 4, h + 4, arc + 4, arc + 4));
         }
 
         Shape clipShape = new RoundRectangle2D.Float(0, 0, w, h, arc, arc);
@@ -459,65 +485,122 @@ public class MediaCard extends JPanel {
         } else {
             // Placeholder
             Color catColor = getCategoryColor(item.getCategory());
-            g2.setColor(catColor.darker().darker());
+            g2.setPaint(new GradientPaint(0, 0,
+                    new Color(Math.max(catColor.getRed() - 45, 0), Math.max(catColor.getGreen() - 45, 0),
+                            Math.max(catColor.getBlue() - 45, 0)),
+                    0, h, new Color(Math.max(catColor.getRed() - 70, 0), Math.max(catColor.getGreen() - 70, 0),
+                            Math.max(catColor.getBlue() - 70, 0))));
             g2.fillRect(0, 0, w, h);
 
             g2.setColor(new Color(255, 255, 255, 30));
             g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             drawCategoryIcon(g2, item.getCategory(), w / 2, h / 2 - 20, false);
-
-            if (!hovered) { // Fix: Only draw title if not hovered to avoid double-rendering
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                g2.setColor(Color.WHITE);
-                FontMetrics fm = g2.getFontMetrics();
-                String title = item.getTitle();
-                int stringW = fm.stringWidth(title);
-                if (stringW > w - 20) {
-                    title = title.substring(0, Math.min(title.length(), 15)) + "...";
-                    stringW = fm.stringWidth(title);
-                }
-                g2.drawString(title, (w - stringW) / 2, h / 2 + 30);
-            }
         }
+
+        // Subtle top gloss
+        g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 18), 0, 40, new Color(255, 255, 255, 0)));
+        g2.fillRect(0, 0, w, 40);
+
+        // Bottom readability gradient
+        g2.setPaint(new GradientPaint(0, h - 92, new Color(0, 0, 0, 0), 0, h, new Color(0, 0, 0, 145)));
+        g2.fillRect(0, h - 92, w, 92);
 
         // Overlay on hover
         if (hovered) {
-            g2.setColor(new Color(0, 0, 0, 180));
+            Color catColor = getCategoryColor(item.getCategory());
+            g2.setPaint(new GradientPaint(0, 0,
+                    new Color(12, 16, 27, 182),
+                    w, h, new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 92)));
             g2.fillRect(0, 0, w, h);
 
-            // Draw title text cleanly centered
-            g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            g2.setColor(Color.WHITE);
-            FontMetrics fm = g2.getFontMetrics();
-
-            String title = item.getTitle();
-            // simple wrap calculation for max 2 lines
-            int maxWidth = w - 20;
-            if (fm.stringWidth(title) > maxWidth) {
-                int splitIndex = title.length() / 2;
-                int spaceIndex = title.lastIndexOf(" ", splitIndex);
-                if (spaceIndex == -1)
-                    spaceIndex = splitIndex;
-                String line1 = title.substring(0, spaceIndex);
-                String line2 = title.substring(spaceIndex).trim();
-                if (fm.stringWidth(line2) > maxWidth)
-                    line2 = line2.substring(0, Math.min(line2.length(), 10)) + "...";
-
-                g2.drawString(line1, (w - fm.stringWidth(line1)) / 2, 40);
-                g2.drawString(line2, (w - fm.stringWidth(line2)) / 2, 40 + fm.getHeight());
-            } else {
-                g2.drawString(title, (w - fm.stringWidth(title)) / 2, 50);
-            }
+            g2.setColor(new Color(255, 255, 255, 20));
+            g2.fillRect(0, h - 72, w, 72);
+            drawCardTitle(g2, w, 44, w - 24, item.getTitle());
         }
 
         g2.setClip(null);
 
         // Thin border
-        g2.setColor(new Color(255, 255, 255, hovered ? 80 : 30));
-        g2.setStroke(new BasicStroke(hovered ? 2f : 1f));
+        g2.setColor(new Color(255, 255, 255, hovered ? 118 : 36));
+        g2.setStroke(new BasicStroke(hovered ? 1.8f : 1f));
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, arc, arc));
 
         g2.dispose();
+    }
+
+    private void drawCardTitle(Graphics2D g2, int cardWidth, int startY, int maxWidth, String rawTitle) {
+        String title = rawTitle == null ? "" : rawTitle.trim();
+        if (title.isEmpty()) {
+            return;
+        }
+        g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        g2.setColor(Color.WHITE);
+        FontMetrics fm = g2.getFontMetrics();
+
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        if (fm.stringWidth(title) <= maxWidth) {
+            lines.add(title);
+        } else {
+            String[] words = title.split("\\s+");
+            StringBuilder line = new StringBuilder();
+            for (String word : words) {
+                String candidate = line.length() == 0 ? word : line + " " + word;
+                if (fm.stringWidth(candidate) <= maxWidth) {
+                    line.setLength(0);
+                    line.append(candidate);
+                } else {
+                    if (line.length() == 0) {
+                        lines.add(trimToWidth(word, fm, maxWidth));
+                    } else {
+                        lines.add(line.toString());
+                        line.setLength(0);
+                        line.append(word);
+                    }
+                }
+                if (lines.size() == 2) {
+                    break;
+                }
+            }
+            if (lines.size() < 2 && line.length() > 0) {
+                lines.add(line.toString());
+            }
+        }
+
+        if (lines.isEmpty()) {
+            return;
+        }
+        if (lines.size() > 2) {
+            lines = lines.subList(0, 2);
+        }
+        if (lines.size() == 2) {
+            String second = lines.get(1);
+            if (fm.stringWidth(second) > maxWidth) {
+                lines.set(1, trimToWidth(second, fm, maxWidth));
+            }
+        }
+
+        int lineHeight = fm.getHeight();
+        int y = (lines.size() == 1) ? startY : startY - (lineHeight / 2);
+        for (String line : lines) {
+            int x = (cardWidth - fm.stringWidth(line)) / 2;
+            g2.drawString(line, x, y);
+            y += lineHeight;
+        }
+    }
+
+    private String trimToWidth(String value, FontMetrics fm, int maxWidth) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        if (fm.stringWidth(value) <= maxWidth) {
+            return value;
+        }
+        String ellipsis = "...";
+        int limit = Math.max(1, value.length() - 1);
+        while (limit > 1 && fm.stringWidth(value.substring(0, limit) + ellipsis) > maxWidth) {
+            limit--;
+        }
+        return value.substring(0, limit) + ellipsis;
     }
 
     private void drawCategoryIcon(Graphics2D g2, String category, int cx, int cy, boolean mini) {

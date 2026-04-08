@@ -96,18 +96,20 @@ public class PlaceholderPasswordField extends JPasswordField {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // Background
-        g2.setColor(StyleConfig.BACKGROUND_COLOR);
-        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 12, 12));
+        g2.setPaint(new GradientPaint(
+                0, 0, focused ? StyleConfig.INPUT_BG_FOCUS : StyleConfig.INPUT_BG,
+                0, getHeight(), StyleConfig.BACKGROUND_LIGHT));
+        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
 
         // Border
         if (focused) {
-            g2.setColor(StyleConfig.PRIMARY_COLOR);
+            g2.setColor(StyleConfig.INPUT_FOCUS);
             g2.setStroke(new BasicStroke(2f));
         } else {
-            g2.setColor(StyleConfig.BORDER_COLOR);
+            g2.setColor(StyleConfig.SURFACE_STROKE);
             g2.setStroke(new BasicStroke(1f));
         }
-        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 12, 12));
+        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 13, 13));
 
         // Left Icon
         if (iconText != null) {
@@ -128,7 +130,7 @@ public class PlaceholderPasswordField extends JPasswordField {
         int eyeY = getHeight() / 2;
         eyeBounds = new Rectangle(eyeX - 15, 0, 30, getHeight());
 
-        Color eyeColor = showingPlaceholder ? StyleConfig.TEXT_LIGHT : (passwordVisible ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_SECONDARY);
+        Color eyeColor = showingPlaceholder ? StyleConfig.TEXT_LIGHT : (passwordVisible ? StyleConfig.SECONDARY_COLOR : StyleConfig.TEXT_SECONDARY);
         g3.setColor(eyeColor);
         g3.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 

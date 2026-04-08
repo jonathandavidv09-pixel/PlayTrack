@@ -67,6 +67,28 @@ public class UserDAO {
         return false;
     }
 
+    public User getUserById(int userId) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        try (Connection conn = AuthDBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new User(
+                            rs.getInt("id"),
+                            rs.getString("username"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getTimestamp("created_at")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean updateUserAndAuth(int userId, String newUsername, String newEmail, String newPasswordHash) {
         String baseSql = "UPDATE users SET username = ?, email = ? ";
         boolean updatePassword = (newPasswordHash != null && !newPasswordHash.isEmpty());

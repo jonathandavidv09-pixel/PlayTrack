@@ -251,6 +251,10 @@ public class LoginPanel extends JPanel {
         return new String(passwordField.getPassword());
     }
 
+    public boolean isRememberMeSelected() {
+        return rememberMeCheck != null && rememberMeCheck.isSelected();
+    }
+
     public void setError(String msg) {
         errorLabel.setText(msg);
     }

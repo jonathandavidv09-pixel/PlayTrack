@@ -24,17 +24,16 @@ public class LibraryPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
+
         // Subtle glowing orb top-left
         int orbSize = 350;
         g2.setPaint(new RadialGradientPaint(
             80f, 60f, orbSize / 2f,
             new float[]{0f, 0.4f, 1f},
-            new Color[]{new Color(211, 64, 69, 20), new Color(211, 64, 69, 6), new Color(0, 0, 0, 0)}
+            new Color[]{StyleConfig.PANEL_GLOW_PRIMARY, new Color(StyleConfig.PALETTE_RED.getRed(), StyleConfig.PALETTE_RED.getGreen(), StyleConfig.PALETTE_RED.getBlue(), 8), new Color(0, 0, 0, 0)}
         ));
         g2.fillOval(80 - orbSize / 2, 60 - orbSize / 2, orbSize, orbSize);
-
-        // No top accent line
-
 
         g2.dispose();
     }
@@ -136,14 +135,19 @@ public class LibraryPanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 boolean currentlyActive = currentCategory.equals(name);
+                RoundRectangle2D.Float shape = new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
                 if (currentlyActive) {
-                    g2.setColor(StyleConfig.PRIMARY_COLOR);
+                    g2.setPaint(new GradientPaint(0, 0, StyleConfig.PRIMARY_COLOR, getWidth(), 0, StyleConfig.SECONDARY_COLOR));
                 } else if (hovered) {
-                    g2.setColor(StyleConfig.SURFACE_COLOR);
+                    g2.setColor(StyleConfig.SURFACE_SOFT);
                 } else {
-                    g2.setColor(StyleConfig.CARD_BACKGROUND);
+                    g2.setColor(StyleConfig.SURFACE_ELEVATED);
                 }
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), getHeight(), getHeight()));
+                g2.fill(shape);
+
+                g2.setColor(currentlyActive ? new Color(255, 255, 255, 70) : StyleConfig.SURFACE_STROKE);
+                g2.setStroke(new BasicStroke(1f));
+                g2.draw(shape);
                 g2.dispose();
             }
         };
@@ -154,7 +158,7 @@ public class LibraryPanel extends JPanel {
 
         JLabel label = new JLabel(name, SwingConstants.CENTER);
         label.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        label.setForeground(active ? Color.WHITE : StyleConfig.TEXT_SECONDARY);
+        label.setForeground(active ? StyleConfig.TEXT_COLOR : StyleConfig.TEXT_SECONDARY);
         JPanel tabInner = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 8));
         tabInner.setOpaque(false);
         tabInner.add(label);
@@ -235,6 +239,7 @@ public class LibraryPanel extends JPanel {
 
             JLabel emptyIcon = new JLabel("\uD83D\uDCED", SwingConstants.CENTER);
             emptyIcon.setFont(new Font("Segoe UI", Font.PLAIN, 48));
+            emptyIcon.setForeground(StyleConfig.TEXT_LIGHT);
             emptyIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
             emptyContent.add(emptyIcon);
             emptyContent.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -282,7 +287,7 @@ public class LibraryPanel extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setPaint(new GradientPaint(0, 0, StyleConfig.PRIMARY_COLOR, getWidth(), 0, new Color(0, 0, 0, 0)));
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.SECONDARY_COLOR, getWidth(), 0, new Color(0, 0, 0, 0)));
                 g2.fillRect(0, 0, getWidth(), 2);
                 g2.dispose();
             }

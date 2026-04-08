@@ -20,13 +20,36 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class ProfilePanel extends JPanel {
     private ProfileService profileService = new ProfileService();
     private Profile profile;
     private JLabel usernameLabel;
     private JLabel bioLabel;
+    private String favoritesFilterCategory;
+    private String favoritesFilterGenre;
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
+
+        int orbSize = 360;
+        g2.setPaint(new RadialGradientPaint(
+                getWidth() - 120f, 100f, orbSize / 2f,
+                new float[] { 0f, 0.45f, 1f },
+                new Color[] { StyleConfig.PANEL_GLOW_SECONDARY, new Color(StyleConfig.PALETTE_PEACH.getRed(), StyleConfig.PALETTE_PEACH.getGreen(), StyleConfig.PALETTE_PEACH.getBlue(), 8), new Color(0, 0, 0, 0) }));
+        g2.fillOval(getWidth() - 120 - orbSize / 2, 100 - orbSize / 2, orbSize, orbSize);
+        g2.dispose();
+    }
 
     public ProfilePanel() {
         setLayout(new BorderLayout());
@@ -115,15 +138,15 @@ public class ProfilePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 if (getForeground().equals(StyleConfig.PRIMARY_COLOR)) {
-                    g2.setColor(new Color(211, 64, 69, 20));
+                    g2.setColor(new Color(255, 92, 109, 24));
                     g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 16, 16));
                     g2.setColor(StyleConfig.PRIMARY_COLOR);
                     g2.setStroke(new BasicStroke(1.2f));
                     g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 15, 15));
                 } else {
-                    g2.setColor(new Color(255, 255, 255, 10));
+                    g2.setColor(StyleConfig.SURFACE_ELEVATED);
                     g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 16, 16));
-                    g2.setColor(new Color(255, 255, 255, 30));
+                    g2.setColor(StyleConfig.SURFACE_STROKE);
                     g2.setStroke(new BasicStroke(1.2f));
                     g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 15, 15));
                 }
@@ -261,13 +284,16 @@ public class ProfilePanel extends JPanel {
         final int MAX_VISIBLE_CARDS = 16;
         final int TWO_ROW_HEIGHT = 500;
 
-        final List<MediaItem> allItems = new ArrayList<>(items);
-        boolean hasMore = items.size() >= MAX_VISIBLE_CARDS;
+        final List<MediaItem> sourceItems = new ArrayList<>(items);
+        boolean favoritesFiltered = "Favorites".equals(title) && favoritesFilterCategory != null;
+        List<MediaItem> visibleItems = "Favorites".equals(title) ? applyFavoritesFilter(sourceItems) : new ArrayList<>(sourceItems);
+        final List<MediaItem> allItems = new ArrayList<>(visibleItems);
 
-        // Limit to only 2 rows and 8 cards (16 cards total)
-        if (items.size() > MAX_VISIBLE_CARDS) {
-            items = items.subList(0, MAX_VISIBLE_CARDS);
+        boolean hasMore = allItems.size() >= MAX_VISIBLE_CARDS && !favoritesFiltered;
+        if (visibleItems.size() > MAX_VISIBLE_CARDS && !favoritesFiltered) {
+            visibleItems = visibleItems.subList(0, MAX_VISIBLE_CARDS);
         }
+        items = visibleItems;
 
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);
@@ -330,6 +356,56 @@ public class ProfilePanel extends JPanel {
             titleRow.add(addBtn);
         }
 
+        if ("Favorites".equals(title)) {
+            JPanel filterBtn = new JPanel() {
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    UIUtils.drawMenuIcon(g2, getWidth() / 2, getHeight() / 2, 24, getForeground());
+                    g2.dispose();
+                }
+            };
+            filterBtn.setForeground(StyleConfig.TEXT_COLOR);
+            filterBtn.setPreferredSize(new Dimension(30, 30));
+            filterBtn.setOpaque(false);
+            filterBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            filterBtn.setToolTipText("Favorite Genres by Category");
+
+            filterBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent e) {
+                    filterBtn.setForeground(StyleConfig.SECONDARY_COLOR);
+                    filterBtn.repaint();
+                }
+
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    filterBtn.setForeground(StyleConfig.TEXT_COLOR);
+                    filterBtn.repaint();
+                }
+
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    JPopupMenu popup = createFavoritesGenreMenu(sourceItems, (category, genre) -> {
+                        favoritesFilterCategory = category;
+                        favoritesFilterGenre = genre;
+                        refreshProfile();
+                    });
+                    popup.show(filterBtn, 0, filterBtn.getHeight() + 6);
+                }
+            });
+            titleRow.add(filterBtn);
+
+            if (favoritesFilterCategory != null) {
+                String filterText = favoritesFilterGenre == null
+                        ? favoritesFilterCategory
+                        : favoritesFilterCategory + " - " + favoritesFilterGenre;
+                JLabel activeFilter = new JLabel(filterText);
+                activeFilter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                activeFilter.setForeground(StyleConfig.SECONDARY_COLOR);
+                activeFilter.setBorder(BorderFactory.createEmptyBorder(2, 4, 0, 0));
+                titleRow.add(activeFilter);
+            }
+        }
+
         // Wrap titleRow in a BorderLayout to make it expand to full width
         JPanel titleRowWrapper = new JPanel(new BorderLayout());
         titleRowWrapper.setOpaque(false);
@@ -345,7 +421,7 @@ public class ProfilePanel extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setPaint(new GradientPaint(0, 0, StyleConfig.PRIMARY_COLOR, getWidth(), 0, new Color(0, 0, 0, 0)));
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.SECONDARY_COLOR, getWidth(), 0, new Color(0, 0, 0, 0)));
                 g2.fillRect(0, 0, getWidth(), 2);
                 g2.dispose();
             }
@@ -512,6 +588,148 @@ public class ProfilePanel extends JPanel {
         return wrapper;
     }
 
+    private JPopupMenu createFavoritesGenreMenu(List<MediaItem> favorites, BiConsumer<String, String> onFilterSelect) {
+        JPopupMenu popup = new JPopupMenu();
+        popup.setBackground(StyleConfig.BACKGROUND_LIGHT);
+        popup.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255, 42), 1));
+
+        JMenuItem allFavorites = new JMenuItem("All Favorites");
+        allFavorites.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        allFavorites.setForeground(StyleConfig.TEXT_COLOR);
+        allFavorites.setBackground(StyleConfig.BACKGROUND_LIGHT);
+        allFavorites.setOpaque(true);
+        allFavorites.addActionListener(e -> onFilterSelect.accept(null, null));
+        popup.add(allFavorites);
+        popup.addSeparator();
+
+        Map<String, Map<String, Integer>> byCategory = buildFavoriteGenreCounts(favorites);
+        addCategoryGenreMenuItem(popup, "Films", byCategory.get("Films"), onFilterSelect);
+        addCategoryGenreMenuItem(popup, "Games", byCategory.get("Games"), onFilterSelect);
+        addCategoryGenreMenuItem(popup, "Books", byCategory.get("Books"), onFilterSelect);
+
+        return popup;
+    }
+
+    private List<MediaItem> applyFavoritesFilter(List<MediaItem> favorites) {
+        if (favoritesFilterCategory == null) {
+            return new ArrayList<>(favorites);
+        }
+
+        List<MediaItem> filtered = new ArrayList<>();
+        for (MediaItem item : favorites) {
+            if (item == null) {
+                continue;
+            }
+            if (!favoritesFilterCategory.equals(item.getCategory())) {
+                continue;
+            }
+            if (favoritesFilterGenre == null || favoriteMatchesGenre(item, favoritesFilterGenre)) {
+                filtered.add(item);
+            }
+        }
+        return filtered;
+    }
+
+    private boolean favoriteMatchesGenre(MediaItem item, String targetGenre) {
+        if (targetGenre == null) {
+            return true;
+        }
+        String rawGenre = item.getGenre();
+        if (rawGenre == null || rawGenre.trim().isEmpty()) {
+            return "Unknown".equalsIgnoreCase(targetGenre);
+        }
+        String[] parts = rawGenre.split("\\s*,\\s*");
+        for (String part : parts) {
+            if (part != null && part.trim().equalsIgnoreCase(targetGenre)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Map<String, Map<String, Integer>> buildFavoriteGenreCounts(List<MediaItem> favorites) {
+        Map<String, Map<String, Integer>> byCategory = new LinkedHashMap<>();
+        byCategory.put("Films", new LinkedHashMap<>());
+        byCategory.put("Games", new LinkedHashMap<>());
+        byCategory.put("Books", new LinkedHashMap<>());
+
+        for (MediaItem item : favorites) {
+            if (item == null) {
+                continue;
+            }
+            String category = item.getCategory();
+            if (category == null) {
+                continue;
+            }
+            if (!byCategory.containsKey(category)) {
+                continue;
+            }
+
+            String rawGenre = item.getGenre();
+            if (rawGenre == null || rawGenre.trim().isEmpty()) {
+                byCategory.get(category).merge("Unknown", 1, Integer::sum);
+                continue;
+            }
+
+            String[] parts = rawGenre.split("\\s*,\\s*");
+            for (String part : parts) {
+                String genre = part.trim();
+                if (genre.isEmpty()) {
+                    genre = "Unknown";
+                }
+                byCategory.get(category).merge(genre, 1, Integer::sum);
+            }
+        }
+
+        return byCategory;
+    }
+
+    private void addCategoryGenreMenuItem(JPopupMenu popup, String category, Map<String, Integer> genres,
+            BiConsumer<String, String> onFilterSelect) {
+        Map<String, Integer> safeGenres = genres != null ? genres : new LinkedHashMap<>();
+        int total = safeGenres.values().stream().mapToInt(Integer::intValue).sum();
+
+        JMenu categoryMenu = new JMenu(category + " (" + total + ")");
+        categoryMenu.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        categoryMenu.setForeground(StyleConfig.TEXT_COLOR);
+        categoryMenu.setOpaque(true);
+        categoryMenu.setBackground(StyleConfig.BACKGROUND_LIGHT);
+
+        JMenuItem allInCategory = new JMenuItem("All " + category + " (" + total + ")");
+        allInCategory.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        allInCategory.setForeground(StyleConfig.TEXT_COLOR);
+        allInCategory.setOpaque(true);
+        allInCategory.setBackground(StyleConfig.BACKGROUND_LIGHT);
+        allInCategory.addActionListener(e -> onFilterSelect.accept(category, null));
+        categoryMenu.add(allInCategory);
+        categoryMenu.addSeparator();
+
+        if (safeGenres.isEmpty()) {
+            JMenuItem empty = new JMenuItem("No favorites yet");
+            empty.setEnabled(false);
+            empty.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            empty.setForeground(StyleConfig.TEXT_LIGHT);
+            empty.setOpaque(true);
+            empty.setBackground(StyleConfig.BACKGROUND_LIGHT);
+            categoryMenu.add(empty);
+        } else {
+            safeGenres.entrySet().stream()
+                    .sorted(Comparator.<Map.Entry<String, Integer>>comparingInt(Map.Entry::getValue).reversed()
+                            .thenComparing(Map.Entry::getKey))
+                    .forEach(entry -> {
+                        JMenuItem genreItem = new JMenuItem(entry.getKey() + " (" + entry.getValue() + ")");
+                        genreItem.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                        genreItem.setForeground(Color.WHITE);
+                        genreItem.setOpaque(true);
+                        genreItem.setBackground(StyleConfig.BACKGROUND_LIGHT);
+                        genreItem.addActionListener(e -> onFilterSelect.accept(category, entry.getKey()));
+                        categoryMenu.add(genreItem);
+                    });
+        }
+
+        popup.add(categoryMenu);
+    }
+
     // Removed redundant showAddWatchlistDialog as it now uses the unified
     // ReviewFormDialog
 
@@ -531,17 +749,17 @@ public class ProfilePanel extends JPanel {
 
                 // Outer soft glow
                 for (int i = 4; i > 0; i--) {
-                    g2.setColor(new Color(211, 64, 69, 8 * i));
+                    g2.setColor(new Color(255, 92, 109, 8 * i));
                     g2.fill(new RoundRectangle2D.Float(4 - i, 4 - i,
                             getWidth() - 8 + 2 * i, getHeight() - 8 + 2 * i, 28 + i * 2, 28 + i * 2));
                 }
 
                 // Main body
-                g2.setColor(new Color(34, 42, 58));
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_ELEVATED, 0, getHeight(), StyleConfig.SURFACE_COLOR));
                 g2.fill(new RoundRectangle2D.Float(4, 4, getWidth() - 8, getHeight() - 8, 28, 28));
 
                 // Subtle inner border
-                g2.setColor(new Color(255, 255, 255, 12));
+                g2.setColor(StyleConfig.SURFACE_STROKE);
                 g2.setStroke(new BasicStroke(1.2f));
                 g2.draw(new RoundRectangle2D.Float(4.5f, 4.5f, getWidth() - 9, getHeight() - 9, 27, 27));
                 g2.dispose();
@@ -556,8 +774,8 @@ public class ProfilePanel extends JPanel {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setPaint(new GradientPaint(0, 0, new Color(211, 64, 69),
-                        getWidth(), 0, new Color(180, 50, 55, 120)));
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.PRIMARY_COLOR,
+                        getWidth(), 0, new Color(94, 194, 255, 120)));
                 // Top rounded rect clipped to only show top 4px stripe
                 g2.setClip(new RoundRectangle2D.Float(0, 0, getWidth(), 28, 24, 24));
                 g2.fillRect(0, 0, getWidth(), 4);
@@ -613,14 +831,14 @@ public class ProfilePanel extends JPanel {
                 // Outer ring glow on hover
                 if (avatarHovered[0]) {
                     for (int i = 3; i > 0; i--) {
-                        g2.setColor(new Color(211, 64, 69, 20 * i));
+                        g2.setColor(new Color(255, 92, 109, 20 * i));
                         g2.setStroke(new BasicStroke(1.5f));
                         g2.draw(new Ellipse2D.Float(pad - i, -i, sz + 2 * i, sz + 2 * i));
                     }
                 }
 
                 // Background circle
-                g2.setColor(new Color(30, 36, 50));
+                g2.setColor(StyleConfig.INPUT_BG);
                 g2.fill(new Ellipse2D.Float(pad, 0, sz, sz));
 
                 // Image or initial
@@ -636,7 +854,7 @@ public class ProfilePanel extends JPanel {
                     g2.setClip(null);
 
                     // Mask jagged clip edges
-                    g2.setColor(new Color(30, 36, 50));
+                    g2.setColor(StyleConfig.INPUT_BG);
                     g2.setStroke(new BasicStroke(1.5f));
                     g2.draw(new Ellipse2D.Float(pad + 3, 3, sz - 6, sz - 6));
                 } else {
@@ -651,13 +869,13 @@ public class ProfilePanel extends JPanel {
                 }
 
                 // Subtle ring
-                g2.setColor(new Color(255, 255, 255, avatarHovered[0] ? 40 : 18));
+                g2.setColor(new Color(255, 255, 255, avatarHovered[0] ? 52 : 20));
                 g2.setStroke(new BasicStroke(2f));
                 g2.draw(new Ellipse2D.Float(pad + 1, 1, sz - 2, sz - 2));
 
                 // Camera badge (bottom-right)
                 int bx = pad + sz - 30, by = sz - 30, bsz = 28;
-                g2.setColor(avatarHovered[0] ? new Color(211, 64, 69) : new Color(60, 72, 92));
+                g2.setColor(avatarHovered[0] ? StyleConfig.PRIMARY_COLOR : StyleConfig.SURFACE_SOFT);
                 g2.fill(new Ellipse2D.Float(bx, by, bsz, bsz));
                 g2.setColor(new Color(255, 255, 255, avatarHovered[0] ? 220 : 160));
                 g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -732,7 +950,7 @@ public class ProfilePanel extends JPanel {
         // Username label
         JLabel userFieldLabel = new JLabel("<html><span style='letter-spacing: 1.5px;'>USERNAME</span></html>");
         userFieldLabel.setFont(new Font("Segoe UI Semibold", Font.BOLD, 10));
-        userFieldLabel.setForeground(new Color(140, 150, 170));
+        userFieldLabel.setForeground(StyleConfig.TEXT_LIGHT);
         userFieldLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         form.add(userFieldLabel);
         form.add(Box.createVerticalStrut(6));
@@ -761,16 +979,16 @@ public class ProfilePanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 // Background
-                g2.setColor(focused ? new Color(36, 43, 60) : new Color(28, 35, 48));
+                g2.setColor(focused ? StyleConfig.INPUT_BG_FOCUS : StyleConfig.INPUT_BG);
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
 
                 // Focus glow border
                 if (focused) {
-                    g2.setColor(new Color(211, 64, 69, 180));
+                    g2.setColor(StyleConfig.INPUT_FOCUS);
                     g2.setStroke(new BasicStroke(2f));
                     g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 13, 13));
                 } else {
-                    g2.setColor(new Color(255, 255, 255, 15));
+                    g2.setColor(StyleConfig.SURFACE_STROKE);
                     g2.setStroke(new BasicStroke(1f));
                     g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 13, 13));
                 }
@@ -801,7 +1019,7 @@ public class ProfilePanel extends JPanel {
 
         JLabel bioFieldLabel = new JLabel("<html><span style='letter-spacing: 1.5px;'>BIO</span></html>");
         bioFieldLabel.setFont(new Font("Segoe UI Semibold", Font.BOLD, 10));
-        bioFieldLabel.setForeground(new Color(140, 150, 170));
+        bioFieldLabel.setForeground(StyleConfig.TEXT_LIGHT);
         bioLabelRow.add(bioFieldLabel, BorderLayout.WEST);
         bioLabelRow.add(bioCountLabel, BorderLayout.EAST);
         form.add(bioLabelRow);
@@ -861,15 +1079,15 @@ public class ProfilePanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 boolean focused = bioField.hasFocus();
-                g2.setColor(focused ? new Color(36, 43, 60) : new Color(28, 35, 48));
+                g2.setColor(focused ? StyleConfig.INPUT_BG_FOCUS : StyleConfig.INPUT_BG);
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
 
                 if (focused) {
-                    g2.setColor(new Color(211, 64, 69, 180));
+                    g2.setColor(StyleConfig.INPUT_FOCUS);
                     g2.setStroke(new BasicStroke(2f));
                     g2.draw(new RoundRectangle2D.Float(1, 1, getWidth() - 2, getHeight() - 2, 13, 13));
                 } else {
-                    g2.setColor(new Color(255, 255, 255, 15));
+                    g2.setColor(StyleConfig.SURFACE_STROKE);
                     g2.setStroke(new BasicStroke(1f));
                     g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 13, 13));
                 }
@@ -893,7 +1111,7 @@ public class ProfilePanel extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setColor(new Color(255, 255, 255, 8));
+                g2.setColor(StyleConfig.DIVIDER_COLOR);
                 g2.fillRect(0, 0, getWidth(), 1);
                 g2.dispose();
             }
@@ -911,7 +1129,7 @@ public class ProfilePanel extends JPanel {
         buttons.setAlignmentX(Component.LEFT_ALIGNMENT);
         buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
 
-        RoundedButton cancelBtn = new RoundedButton("Cancel", new Color(58, 68, 86), 14);
+        RoundedButton cancelBtn = new RoundedButton("Cancel", StyleConfig.SURFACE_SOFT, 14);
         cancelBtn.setPreferredSize(new Dimension(110, 42));
         cancelBtn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         cancelBtn.addActionListener(e -> editDialog.dispose());

@@ -12,6 +12,23 @@ import java.util.Map;
 public class SummaryPanel extends JPanel {
     private SummaryService summaryService = new SummaryService();
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
+
+        int orb = 360;
+        g2.setPaint(new RadialGradientPaint(
+                getWidth() - 120f, 90f, orb / 2f,
+                new float[] { 0f, 0.45f, 1f },
+                new Color[] { StyleConfig.PANEL_GLOW_SECONDARY, new Color(StyleConfig.PALETTE_PEACH.getRed(), StyleConfig.PALETTE_PEACH.getGreen(), StyleConfig.PALETTE_PEACH.getBlue(), 8), new Color(0, 0, 0, 0) }));
+        g2.fillOval(getWidth() - 120 - orb / 2, 90 - orb / 2, orb, orb);
+        g2.dispose();
+    }
+
     public SummaryPanel() {
         setLayout(new BorderLayout());
         setBackground(StyleConfig.BACKGROUND_COLOR);
@@ -48,14 +65,14 @@ public class SummaryPanel extends JPanel {
 
         JLabel subtitle = new JLabel("Summary of your media activity");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        subtitle.setForeground(StyleConfig.PRIMARY_COLOR);
+        subtitle.setForeground(StyleConfig.TEXT_SECONDARY);
         subtitle.setBorder(BorderFactory.createEmptyBorder(8, 0, 20, 0));
         subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel divider = new JPanel() {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setPaint(new GradientPaint(0, 0, StyleConfig.PRIMARY_COLOR, getWidth(), 0, new Color(0, 0, 0, 0)));
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.SECONDARY_COLOR, getWidth(), 0, new Color(0, 0, 0, 0)));
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 g2.dispose();
             }
@@ -127,17 +144,22 @@ public class SummaryPanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Deep, premium background
-                g2.setColor(new Color(30, 35, 45));
+                for (int i = 3; i > 0; i--) {
+                    g2.setColor(new Color(0, 0, 0, 10 * i));
+                    g2.fill(new RoundRectangle2D.Float(1 - i, 1 - i, getWidth() - 2 + i * 2, getHeight() - 2 + i * 2, 24 + i, 24 + i));
+                }
+
+                // Card body
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_ELEVATED, 0, getHeight(), StyleConfig.SURFACE_COLOR));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
 
-                // Subtle glassy top highlight
-                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 12), 0, getHeight() / 2,
+                // Soft top gloss
+                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 14), 0, getHeight() / 2,
                         new Color(255, 255, 255, 0)));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
 
-                // Clean translucent border
-                g2.setColor(new Color(255, 255, 255, 20));
+                // Border
+                g2.setColor(StyleConfig.SURFACE_STROKE);
                 g2.setStroke(new BasicStroke(1.5f));
                 g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 24, 24));
                 g2.dispose();
@@ -232,10 +254,10 @@ public class SummaryPanel extends JPanel {
                         name = name.substring(0, 8) + "..";
                     g2.drawString(name, 0, y + 14);
 
-                    g2.setColor(new Color(255, 255, 255, 10)); // Track background
+                    g2.setColor(new Color(255, 255, 255, 12)); // Track background
                     g2.fillRoundRect(85, y + 3, barMaxWidth, 12, 12, 12);
 
-                    g2.setColor(StyleConfig.PRIMARY_COLOR); // Accent bar
+                    g2.setPaint(new GradientPaint(85, y + 3, StyleConfig.PRIMARY_COLOR, 85 + barMaxWidth, y + 3, StyleConfig.SECONDARY_COLOR));
                     int width = (int) ((double) barMaxWidth * entry.getValue() / max);
                     g2.fillRoundRect(85, y + 3, Math.max(width, 12), 12, 12, 12);
 
@@ -265,7 +287,7 @@ public class SummaryPanel extends JPanel {
 
         JPanel div = new JPanel() {
             protected void paintComponent(Graphics g) {
-                g.setColor(new Color(255, 255, 255, 30));
+                g.setColor(StyleConfig.DIVIDER_COLOR);
                 g.drawLine(0, getHeight() / 2, getWidth(), getHeight() / 2);
             }
         };
@@ -336,11 +358,13 @@ public class SummaryPanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 if (hovered) {
-                    g2.setColor(StyleConfig.PRIMARY_COLOR);
+                    g2.setPaint(new GradientPaint(0, 0, StyleConfig.PRIMARY_COLOR, getWidth(), 0, StyleConfig.SECONDARY_COLOR));
                 } else {
-                    g2.setColor(new Color(255, 255, 255, 15));
+                    g2.setColor(new Color(255, 255, 255, 13));
                 }
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 36, 36);
+                g2.setColor(hovered ? new Color(255, 255, 255, 70) : StyleConfig.SURFACE_STROKE);
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 36, 36);
 
                 g2.setColor(hovered ? Color.WHITE : StyleConfig.TEXT_COLOR);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -370,14 +394,14 @@ public class SummaryPanel extends JPanel {
         dialog.setLocationRelativeTo(this);
 
         JPanel container = new JPanel(new BorderLayout());
-        container.setBackground(new Color(25, 30, 40));
+        container.setBackground(StyleConfig.BACKGROUND_COLOR);
 
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
         header.setBorder(BorderFactory.createEmptyBorder(30, 40, 20, 40));
         JLabel title = new JLabel("Your Rated Library");
         title.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        title.setForeground(Color.WHITE);
+        title.setForeground(StyleConfig.TEXT_COLOR);
         header.add(title, BorderLayout.WEST);
 
         JPanel headerLine = new JPanel() {
@@ -394,7 +418,7 @@ public class SummaryPanel extends JPanel {
 
         JPanel list = new JPanel();
         list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
-        list.setBackground(new Color(25, 30, 40));
+        list.setBackground(StyleConfig.BACKGROUND_COLOR);
         list.setBorder(BorderFactory.createEmptyBorder(10, 40, 40, 40));
 
         List<SummaryService.RatedMedia> allMedia = summaryService.getTopRatedMedia(userId, 1000);
@@ -408,7 +432,7 @@ public class SummaryPanel extends JPanel {
 
             JLabel mediaTitle = new JLabel(item.media.getTitle());
             mediaTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
-            mediaTitle.setForeground(Color.WHITE);
+            mediaTitle.setForeground(StyleConfig.TEXT_COLOR);
             row.add(mediaTitle, BorderLayout.CENTER);
 
             StarRating stars = new StarRating(item.rating, false);
@@ -422,7 +446,7 @@ public class SummaryPanel extends JPanel {
         scroll.setBorder(null);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         scroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
-        scroll.getViewport().setBackground(new Color(25, 30, 40));
+        scroll.getViewport().setBackground(StyleConfig.BACKGROUND_COLOR);
         container.add(scroll, BorderLayout.CENTER);
 
         dialog.add(container);
@@ -444,7 +468,7 @@ public class SummaryPanel extends JPanel {
 
         JPanel div = new JPanel() {
             protected void paintComponent(Graphics g) {
-                g.setColor(new Color(255, 255, 255, 30));
+                g.setColor(StyleConfig.DIVIDER_COLOR);
                 g.drawLine(0, getHeight() / 2, getWidth(), getHeight() / 2);
             }
         };
