@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SummaryPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
     private SummaryService summaryService = new SummaryService();
 
     @Override

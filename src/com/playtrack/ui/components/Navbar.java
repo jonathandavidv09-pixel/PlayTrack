@@ -8,6 +8,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 
 public class Navbar extends JPanel {
+    private static final long serialVersionUID = 1L;
     private Runnable onHome, onLibrary, onSummary, onProfile, onLogout;
     private ProfileDropdown dropdown;
     private String activeNav = "Home";

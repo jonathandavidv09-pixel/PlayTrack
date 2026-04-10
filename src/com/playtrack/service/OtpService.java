@@ -18,6 +18,12 @@ public class OtpService {
     @Value("${spring.mail.username}")
     private String senderEmail;
 
+    @Value("${playtrack.otp.debug-log-enabled:false}")
+    private boolean debugOtpLogEnabled;
+
+    @Value("${playtrack.otp.allow-simulated-fallback:false}")
+    private boolean allowSimulatedFallback;
+
     private String currentOtp;
     private String currentEmail;
     private long otpTimestamp;
@@ -32,16 +38,21 @@ public class OtpService {
         currentOtp = String.format("%06d", random.nextInt(999999));
         currentEmail = email;
         otpTimestamp = System.currentTimeMillis();
-        
-        // Log to database so the user can see it without checking email
-        com.playtrack.util.DatabaseLogger.logOtp(email, currentOtp);
 
-        System.out.println("[OTP Service] Generated OTP for " + email + ": " + currentOtp);
+        if (debugOtpLogEnabled) {
+            // Development-only troubleshooting path.
+            com.playtrack.util.DatabaseLogger.logOtp(email, currentOtp);
+            System.out.println("[OTP Service] Generated OTP for " + email + ": " + currentOtp);
+        }
 
         try {
-            if (senderEmail == null || senderEmail.equals("your.email@gmail.com") || senderEmail.isEmpty()) {
-                System.err.println("WARNING: Using simulated OTP because spring.mail.username is not configured correctly.");
-                return true;
+            if (senderEmail == null || senderEmail.trim().isEmpty() || senderEmail.equals("your.email@gmail.com")) {
+                if (allowSimulatedFallback || debugOtpLogEnabled) {
+                    System.err.println("WARNING: Using simulated OTP because spring.mail.username is not configured.");
+                    return true;
+                }
+                System.err.println("OTP delivery is not configured. Please set SMTP environment variables.");
+                return false;
             }
 
             MimeMessage message = mailSender.createMimeMessage();

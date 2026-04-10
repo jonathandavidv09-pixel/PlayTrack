@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
 public class StatsCard extends ShadowPanel {
+    private static final long serialVersionUID = 1L;
     private Color accentColor;
     private String title;
     private int count;

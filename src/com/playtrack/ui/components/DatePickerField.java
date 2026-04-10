@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class DatePickerField extends JTextField {
+    private static final long serialVersionUID = 1L;
     private String placeholder;
     private JPopupMenu popup;
     private Color BORDER_SUBTLE = StyleConfig.SURFACE_STROKE;

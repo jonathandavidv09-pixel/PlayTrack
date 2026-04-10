@@ -19,6 +19,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 
 public class ReviewFormDialog extends JDialog {
+    private static final long serialVersionUID = 1L;
     private MediaService mediaService = new MediaService();
     private String category;
     private JTextField titleField;

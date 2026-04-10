@@ -2,12 +2,14 @@ package com.playtrack.ui.components;
 
 import java.awt.*;
 import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
 /**
  * FlowLayout subclass that fully supports wrapping of components.
  */
 public class WrapLayout extends FlowLayout {
+    private static final long serialVersionUID = 1L;
 
     public WrapLayout() {
         super();
@@ -35,10 +37,12 @@ public class WrapLayout extends FlowLayout {
 
     private Dimension layoutSize(Container target, boolean preferred) {
         synchronized (target.getTreeLock()) {
-            int targetWidth = target.getSize().width;
+            int targetWidth = resolveTargetWidth(target);
 
-            if (targetWidth == 0) {
-                targetWidth = target.getParent() != null ? target.getParent().getSize().width : Integer.MAX_VALUE;
+            // Conservative fallback before first layout pass:
+            // prefer taller wrapping over clipped content.
+            if (targetWidth <= 0) {
+                targetWidth = 320;
             }
 
             int hgap = getHgap();
@@ -46,6 +50,9 @@ public class WrapLayout extends FlowLayout {
             Insets insets = target.getInsets();
             int horizontalInsetsAndGap = insets.left + insets.right + (hgap * 2);
             int maxWidth = targetWidth - horizontalInsetsAndGap;
+            if (maxWidth <= 0) {
+                maxWidth = Integer.MAX_VALUE;
+            }
 
             Dimension dim = new Dimension(0, 0);
             int rowWidth = 0;
@@ -94,5 +101,33 @@ public class WrapLayout extends FlowLayout {
             dim.height += getVgap();
         }
         dim.height += rowHeight;
+    }
+
+    private int resolveTargetWidth(Container target) {
+        int bestWidth = Integer.MAX_VALUE;
+
+        int width = target.getSize().width;
+        if (width > 0) {
+            bestWidth = Math.min(bestWidth, width);
+        }
+
+        Container current = target;
+        while (current != null) {
+            width = current.getSize().width;
+            if (width > 0) {
+                bestWidth = Math.min(bestWidth, width);
+            }
+
+            if (current instanceof JViewport) {
+                width = ((JViewport) current).getExtentSize().width;
+                if (width > 0) {
+                    bestWidth = Math.min(bestWidth, width);
+                }
+            }
+
+            current = current.getParent();
+        }
+
+        return bestWidth == Integer.MAX_VALUE ? 0 : bestWidth;
     }
 }

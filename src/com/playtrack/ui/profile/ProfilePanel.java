@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 public class ProfilePanel extends JPanel {
+    private static final long serialVersionUID = 1L;
     private ProfileService profileService = new ProfileService();
     private Profile profile;
     private JLabel usernameLabel;
@@ -219,6 +220,7 @@ public class ProfilePanel extends JPanel {
         List<MediaItem> recents = fetchMediaItems(reviewDAO.getRecentReviews(userId, 50), mediaMap);
 
         class ScrollablePanel extends JPanel implements Scrollable {
+            private static final long serialVersionUID = 1L;
             public Dimension getPreferredScrollableViewportSize() {
                 return getPreferredSize();
             }

@@ -12,6 +12,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 
 public class RegisterPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
     private PlaceholderTextField usernameField;
     private PlaceholderTextField emailField;
     private PlaceholderPasswordField passwordField;
@@ -26,7 +27,7 @@ public class RegisterPanel extends JPanel {
     public RegisterPanel(ActionListener registerAction, ActionListener switchToLoginAction) {
         setLayout(new GridBagLayout());
         setOpaque(false);
-        setPreferredSize(new Dimension(380, 580));
+        setPreferredSize(new Dimension(420, 600));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -72,7 +73,7 @@ public class RegisterPanel extends JPanel {
         add(emailLabel, gbc);
 
         emailField = new PlaceholderTextField("Enter your Email", "✉️");
-        emailField.setPreferredSize(new Dimension(300, 42));
+        emailField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 35, 10, 35);
         add(emailField, gbc);
@@ -86,7 +87,7 @@ public class RegisterPanel extends JPanel {
         add(userLabel, gbc);
 
         usernameField = new PlaceholderTextField("Choose a Username", "👤");
-        usernameField.setPreferredSize(new Dimension(300, 42));
+        usernameField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 35, 10, 35);
         add(usernameField, gbc);
@@ -100,7 +101,7 @@ public class RegisterPanel extends JPanel {
         add(passLabel, gbc);
 
         passwordField = new PlaceholderPasswordField("Create a Password", "🔒");
-        passwordField.setPreferredSize(new Dimension(300, 42));
+        passwordField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 6;
         gbc.insets = new Insets(0, 35, 4, 35);
         add(passwordField, gbc);
@@ -137,7 +138,7 @@ public class RegisterPanel extends JPanel {
         add(confirmLabel, gbc);
 
         confirmPasswordField = new PlaceholderPasswordField("Confirm your Password", "🔒");
-        confirmPasswordField.setPreferredSize(new Dimension(300, 42));
+        confirmPasswordField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 9;
         gbc.insets = new Insets(0, 35, 12, 35);
         add(confirmPasswordField, gbc);
@@ -176,17 +177,28 @@ public class RegisterPanel extends JPanel {
         signInRow.setOpaque(false);
 
         JLabel alreadyHave = new JLabel("Already have an account?");
-        alreadyHave.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        alreadyHave.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         alreadyHave.setForeground(new Color(160, 160, 175));
         signInRow.add(alreadyHave);
 
-        JLabel signInLink = new JLabel("Sign in.");
-        signInLink.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 12));
+        final String signInText = "Sign in.";
+        JLabel signInLink = new JLabel(signInText);
+        signInLink.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
         signInLink.setForeground(new Color(80, 160, 230));
         signInLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
         signInLink.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 switchToLoginAction.actionPerformed(null);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                signInLink.setText("<html><u>" + signInText + "</u></html>");
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                signInLink.setText(signInText);
             }
         });
         signInRow.add(signInLink);

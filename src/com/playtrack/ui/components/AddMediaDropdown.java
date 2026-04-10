@@ -8,6 +8,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.util.function.Consumer;
 
 public class AddMediaDropdown extends JPopupMenu {
+    private static final long serialVersionUID = 1L;
 
     private static final Color ITEM_BG = StyleConfig.SURFACE_ELEVATED;
     private static final Color ITEM_HOVER_BG = StyleConfig.SURFACE_SOFT;
@@ -94,6 +95,7 @@ public class AddMediaDropdown extends JPopupMenu {
 
     private JPanel createItem(String text, int iconType, Runnable action) {
         class ItemPanel extends JPanel {
+            private static final long serialVersionUID = 1L;
             private boolean hovered;
             private boolean pressed;
 

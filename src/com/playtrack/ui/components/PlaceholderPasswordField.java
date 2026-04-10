@@ -6,6 +6,7 @@ import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 
 public class PlaceholderPasswordField extends JPasswordField {
+    private static final long serialVersionUID = 1L;
     private String placeholder;
     private boolean showingPlaceholder;
     private char defaultEchoChar;

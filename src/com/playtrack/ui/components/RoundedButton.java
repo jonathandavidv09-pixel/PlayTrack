@@ -7,6 +7,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 
 public class RoundedButton extends JButton {
+    private static final long serialVersionUID = 1L;
     private Color backgroundColor;
     private Color hoverColor;
     private Color pressedColor;

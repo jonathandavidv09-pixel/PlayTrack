@@ -9,6 +9,7 @@ out/
 # Runtime logs
 *.err
 *.out
+*.log
 
 # Generated file lists
 sources.txt

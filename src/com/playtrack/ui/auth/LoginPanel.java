@@ -9,6 +9,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 
 public class LoginPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
     private PlaceholderTextField usernameField;
     private PlaceholderPasswordField passwordField;
     private RoundedButton loginButton;
@@ -19,7 +20,7 @@ public class LoginPanel extends JPanel {
     public LoginPanel(ActionListener loginAction, ActionListener switchToRegisterAction, Runnable forgotPasswordAction) {
         setLayout(new GridBagLayout());
         setOpaque(false);
-        setPreferredSize(new Dimension(380, 560));
+        setPreferredSize(new Dimension(420, 530));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -66,7 +67,7 @@ public class LoginPanel extends JPanel {
         add(emailLabel, gbc);
 
         usernameField = new PlaceholderTextField("Enter your Email or Username", "✉️");
-        usernameField.setPreferredSize(new Dimension(300, 42));
+        usernameField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 35, 12, 35);
         add(usernameField, gbc);
@@ -80,7 +81,7 @@ public class LoginPanel extends JPanel {
         add(passLabel, gbc);
 
         passwordField = new PlaceholderPasswordField("Enter your Password", "🔒");
-        passwordField.setPreferredSize(new Dimension(300, 42));
+        passwordField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 35, 8, 35);
         add(passwordField, gbc);
@@ -124,7 +125,7 @@ public class LoginPanel extends JPanel {
         // ========== SIGN IN button (gradient red) ==========
         loginButton = new RoundedButton("SIGN IN", StyleConfig.PRIMARY_COLOR, 22);
         loginButton.setGradient(new Color(220, 130, 50));
-        loginButton.setPreferredSize(new Dimension(300, 44));
+        loginButton.setPreferredSize(new Dimension(330, 44));
         loginButton.setFont(new Font("Segoe UI", Font.BOLD, 15));
         loginButton.setForeground(Color.WHITE);
         loginButton.addActionListener(loginAction);
@@ -132,44 +133,38 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 15, 35);
         add(loginButton, gbc);
 
-        // ========== Divider line ==========
-        JSeparator separator = new JSeparator();
-        separator.setForeground(new Color(70, 70, 90));
-        separator.setBackground(new Color(70, 70, 90));
-        gbc.gridy = 9;
-        gbc.insets = new Insets(0, 50, 5, 50);
-        add(separator, gbc);
-
-        // ========== REGISTER OPTION ==========
-        JLabel registerOptionTitle = new JLabel("REGISTER OPTION", SwingConstants.CENTER);
-        registerOptionTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        registerOptionTitle.setForeground(new Color(160, 160, 175));
-        gbc.gridy = 10;
-        gbc.insets = new Insets(5, 35, 5, 35);
-        add(registerOptionTitle, gbc);
-
-        // "New to Playtrack? Create an account."
         JPanel createAccRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
         createAccRow.setOpaque(false);
 
         JLabel newTo = new JLabel("New to Playtrack?");
-        newTo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        newTo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         newTo.setForeground(new Color(160, 160, 175));
         createAccRow.add(newTo);
 
-        JLabel createAccLink = new JLabel("Create an account.");
-        createAccLink.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 12));
+        final String createAccountText = "Create an account.";
+        JLabel createAccLink = new JLabel(createAccountText);
+        createAccLink.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
         createAccLink.setForeground(new Color(80, 160, 230));
         createAccLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
         createAccLink.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 switchToRegisterAction.actionPerformed(null);
             }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                createAccLink.setText("<html><u>" + createAccountText + "</u></html>");
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                createAccLink.setText(createAccountText);
+            }
         });
         createAccRow.add(createAccLink);
 
-        gbc.gridy = 11;
-        gbc.insets = new Insets(0, 35, 25, 35);
+        gbc.gridy = 8;
+        gbc.insets = new Insets(6, 35, 25, 35);
         add(createAccRow, gbc);
     }
 

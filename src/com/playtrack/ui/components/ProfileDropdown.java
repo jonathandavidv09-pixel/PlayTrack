@@ -9,6 +9,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class ProfileDropdown extends JPopupMenu {
+    private static final long serialVersionUID = 1L;
 
     private JLabel usernameLabel;
     private JLabel emailLabel;
@@ -129,6 +130,7 @@ public class ProfileDropdown extends JPopupMenu {
 
     // Custom Pill Button
     private class PillButton extends JPanel {
+        private static final long serialVersionUID = 1L;
         private final String text;
         private final int iconType;
         private final Color baseTextColor;

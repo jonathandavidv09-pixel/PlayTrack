@@ -1,61 +1,74 @@
 # PlayTrack - Media Tracker Desktop Application
 
-PlayTrack is a polished Java Swing desktop application for tracking your films, games, and books. It features a modern UI, animated authentication screens, and local SQLite database storage.
+PlayTrack is a Java Swing desktop app for tracking films, games, and books with a modern UI and local SQLite storage.
 
 ## Features
 
-- **Animated Auth Screen**: Smooth sliding animation between Login and Register.
-- **MVC Architecture**: Clean separation of concerns.
-- **Dual Database System**: Separate databases for authentication (`auth.db`) and system data (`playtrack.db`).
-- **Modern UI**: Built with FlatLaf for a premium desktop look.
-- **Media Tracking**: Track Films, Games, and Books with categories, genres, and ratings.
-- **Summary Dashboard**: View your activity stats and top genres.
-- **Profile Management**: Customize your profile and bio.
+- Dual database setup (`db/auth.db` and `db/playtrack.db`)
+- Modern UI with FlatLaf styling
+- Category-based media tracking (Films, Games, Books)
+- Summary dashboard and profile management
+- OTP-based email verification for auth flows
 
 ## Tech Stack
 
-- **Language**: Java 11+
-- **UI Framework**: Java Swing
-- **Look & Feel**: FlatLaf
-- **Database**: SQLite with JDBC
-- **Architecture**: MVC (Model-View-Controller)
+- Java 21
+- Spring Boot 3
+- Java Swing
+- FlatLaf
+- SQLite (xerial JDBC)
 
-## Project Structure
+## Prerequisites
 
-```text
-PlayTrack/
-├── bin/                # Compiled class files
-├── db/                 # SQLite database files
-├── lib/                # External JAR dependencies
-├── src/                # Source code
-│   └── com/playtrack/
-│       ├── app/        # Entry point
-│       ├── config/     # Database configurations
-│       ├── dao/        # Data Access Objects
-│       ├── model/      # Data models
-│       ├── service/    # Business logic
-│       ├── ui/         # UI components and panels
-│       └── util/       # Utility classes
-├── README.md           # Project documentation
-└── run.sh              # Execution script
+- JDK 21 installed
+
+## Quick Start (Development)
+
+```bash
+./mvnw spring-boot:run
 ```
 
-## How to Run
+Windows:
 
-### Prerequisites
-- Java JDK 11 or higher installed.
+```powershell
+.\mvnw.cmd spring-boot:run
+```
 
-### Running the Application
-1. Open a terminal in the project root directory.
-2. Make the run script executable:
-   ```bash
-   chmod +x run.sh
-   ```
-3. Run the application:
-   ```bash
-   ./run.sh
-   ```
+## Build for Release
 
-## Development
+```bash
+./mvnw -DskipTests package
+```
 
-The project is ready for VS Code or any Java IDE. Simply add the JARs in the `lib` folder to your project's classpath.
+Output artifact:
+
+- `target/playtrack-app-1.0-SNAPSHOT.jar`
+
+Run packaged app:
+
+```bash
+java -jar target/playtrack-app-1.0-SNAPSHOT.jar
+```
+
+## SMTP / OTP Configuration
+
+Set these environment variables in production:
+
+- `PLAYTRACK_SMTP_HOST`
+- `PLAYTRACK_SMTP_PORT` (default `587`)
+- `PLAYTRACK_SMTP_USERNAME`
+- `PLAYTRACK_SMTP_PASSWORD`
+
+Optional development-only flags:
+
+- `PLAYTRACK_OTP_DEBUG_LOG=true` (logs OTP for debugging)
+- `PLAYTRACK_OTP_SIMULATED_FALLBACK=true` (allows fallback when SMTP is not configured)
+
+Do not commit real SMTP credentials.
+
+## Convenience Scripts
+
+- `run.bat` (Windows)
+- `run.sh` (Linux/macOS)
+
+Both scripts build the JAR automatically if missing, then run `java -jar`.

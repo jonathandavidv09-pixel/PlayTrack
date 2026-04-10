@@ -19,18 +19,17 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class HomePanel extends JPanel {
+    private static final long serialVersionUID = 1L;
     private SummaryService summaryService = new SummaryService();
     private JPanel statsContainer;
     private JPanel recentCardsPanel;
-    private JPanel cardClipWrapper;
     private JLabel downArrow;
+    private boolean recentExpanded = false;
     private String username;
     private int userId;
 
     // 8 cards per row x 2 rows = 16 cards max visible
     private static final int MAX_VISIBLE_CARDS = 16;
-    // Card height=240, vgap=20 → 2 rows = 240 + 20 + 240 = 500
-    private static final int TWO_ROW_HEIGHT = 500;
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -74,6 +73,7 @@ public class HomePanel extends JPanel {
 
         // Custom panel to ensure the content stretches to the full width of the window
         class ScrollablePanel extends JPanel implements Scrollable {
+            private static final long serialVersionUID = 1L;
             public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
             public int getScrollableUnitIncrement(Rectangle r, int o, int d) { return 20; }
             public int getScrollableBlockIncrement(Rectangle r, int o, int d) { return 60; }
@@ -192,20 +192,13 @@ public class HomePanel extends JPanel {
 
         // Cards panel — uses WrapLayout to wrap naturally based on available width
         recentCardsPanel = new JPanel();
-        recentCardsPanel.setLayout(new WrapLayout(WrapLayout.CENTER, 20, 20));
+        recentCardsPanel.setLayout(new WrapLayout(WrapLayout.LEFT, 20, 20));
         recentCardsPanel.setOpaque(false);
         recentCardsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-        // Clip wrapper — limits visible height to 2 rows of cards
-        cardClipWrapper = new JPanel(new BorderLayout());
-        cardClipWrapper.setOpaque(false);
-        cardClipWrapper.add(recentCardsPanel, BorderLayout.CENTER);
-
-        recentActivityWrapper.add(cardClipWrapper, BorderLayout.CENTER);
+        recentActivityWrapper.add(recentCardsPanel, BorderLayout.CENTER);
 
         // Down-arrow icon — appears when there are more than 2 rows of cards
-        final boolean[] expanded = {false};
-
         downArrow = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -215,7 +208,7 @@ public class HomePanel extends JPanel {
                 int cx = getWidth() / 2;
                 int cy = getHeight() / 2;
                 // down arrow when collapsed, up arrow when expanded
-                UIUtils.drawVerticalArrowIcon(g2, cx - size / 2, cy - size / 2, size, size, getForeground(), !expanded[0]);
+                UIUtils.drawVerticalArrowIcon(g2, cx - size / 2, cy - size / 2, size, size, getForeground(), !recentExpanded);
                 g2.dispose();
             }
         };
@@ -228,28 +221,8 @@ public class HomePanel extends JPanel {
 
         downArrow.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                expanded[0] = !expanded[0];
-                if (expanded[0]) {
-                    // Remove height constraint — show all cards
-                    cardClipWrapper.setPreferredSize(null);
-                    cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-                    downArrow.setToolTipText("Show less");
-                } else {
-                    // Collapse back to 2 rows
-                    cardClipWrapper.setPreferredSize(new Dimension(0, TWO_ROW_HEIGHT));
-                    cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, TWO_ROW_HEIGHT));
-                    downArrow.setToolTipText("Show more");
-                }
-                downArrow.repaint();
-                recentActivityWrapper.revalidate();
-                recentActivityWrapper.repaint();
-                // Revalidate up the hierarchy so scroll pane adjusts
-                Container parent = recentActivityWrapper.getParent();
-                while (parent != null) {
-                    parent.revalidate();
-                    parent.repaint();
-                    parent = parent.getParent();
-                }
+                recentExpanded = !recentExpanded;
+                loadRecentCards();
             }
             public void mouseEntered(java.awt.event.MouseEvent e) {
                 downArrow.setForeground(StyleConfig.PRIMARY_COLOR);
@@ -300,23 +273,21 @@ public class HomePanel extends JPanel {
             }
         }
 
-        for (int i = 0; i < recentItems.size(); i++) {
+        boolean hasOverflow = recentItems.size() > MAX_VISIBLE_CARDS;
+        if (!hasOverflow) {
+            recentExpanded = false;
+        }
+
+        int visibleCount = recentExpanded ? recentItems.size() : Math.min(MAX_VISIBLE_CARDS, recentItems.size());
+        for (int i = 0; i < visibleCount; i++) {
             recentCardsPanel.add(new MediaCard(recentItems.get(i), false, false, this::refreshRecentActivity));
         }
 
-        // Show the down arrow when there are more than 16 cards (8 per row x 2 rows)
-        boolean hasOverflow = recentItems.size() > MAX_VISIBLE_CARDS;
+        // Show the down arrow only when there are more than 16 cards.
         if (downArrow != null) {
             downArrow.setVisible(hasOverflow);
-        }
-
-        // Apply 2-row height clip when there's overflow
-        if (hasOverflow) {
-            cardClipWrapper.setPreferredSize(new Dimension(0, TWO_ROW_HEIGHT));
-            cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, TWO_ROW_HEIGHT));
-        } else {
-            cardClipWrapper.setPreferredSize(null);
-            cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+            downArrow.setToolTipText(recentExpanded ? "Show less" : "Show more");
+            downArrow.repaint();
         }
 
         recentCardsPanel.revalidate();
@@ -429,3 +400,4 @@ public class HomePanel extends JPanel {
         return card;
     }
 }
+

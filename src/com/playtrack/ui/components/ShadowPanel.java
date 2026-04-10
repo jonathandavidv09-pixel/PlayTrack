@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
 public class ShadowPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
     private int shadowSize = 5;
     private int radius = 15;
 

@@ -21,12 +21,12 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(basePackages = "com.playtrack")
 public class Main {
     public static void main(String[] args) {
-        // Start Spring Boot
+       
         ApplicationContext context = new SpringApplicationBuilder(Main.class)
                 .headless(false)
                 .run(args);
 
-        // Store context for non-Spring Swing classes
+     
         com.playtrack.util.SpringContext.setContext(context);
 
         try {
@@ -39,7 +39,7 @@ public class Main {
             UIManager.put("TextComponent.arc", 8);
             UIManager.put("ProgressBar.arc", 999);
 
-            // Modern tooltip style
+            
             UIManager.put("ToolTip.background", new ColorUIResource(36, 46, 72));
             UIManager.put("ToolTip.foreground", new ColorUIResource(255, 255, 255));
             UIManager.put("ToolTip.font", new FontUIResource("Segoe UI", java.awt.Font.PLAIN, 12));

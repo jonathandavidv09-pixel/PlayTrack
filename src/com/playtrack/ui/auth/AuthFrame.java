@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 
 public class AuthFrame extends JFrame {
+    private static final long serialVersionUID = 1L;
     private JPanel cardsPanel;
     private CardLayout cardLayout;
     private LoginPanel loginPanel;
@@ -63,47 +64,86 @@ public class AuthFrame extends JFrame {
         JPanel brandingPanel = new JPanel();
         brandingPanel.setLayout(new BoxLayout(brandingPanel, BoxLayout.Y_AXIS));
         brandingPanel.setOpaque(false);
-        brandingPanel.setBorder(BorderFactory.createEmptyBorder(25, 25, 0, 50));
+        brandingPanel.setBorder(BorderFactory.createEmptyBorder(28, 56, 0, 50));
 
-        // Logo row with actual logo.png
+        // Logo row with dark-mode logo
         JPanel logoRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         logoRow.setOpaque(false);
 
-        // Load the actual logo.png from resources
-        try {
-            InputStream logoStream = getClass().getClassLoader().getResourceAsStream("resources/logo.png");
-            if (logoStream != null) {
-                java.awt.image.BufferedImage logoImg = ImageIO.read(logoStream);
-                logoStream.close();
-                // Scale logo to fit nicely (bigger size)
-                int logoH = 100;
-                int logoW = (int) ((double) logoImg.getWidth() / logoImg.getHeight() * logoH);
-                Image scaledLogo = logoImg.getScaledInstance(logoW, logoH, Image.SCALE_SMOOTH);
-                JLabel logoLabel = new JLabel(new ImageIcon(scaledLogo));
-                logoRow.add(logoLabel);
+        // Prefer the new dark-mode logo, then fall back to the old one if needed.
+        String[] logoCandidates = { "resources/LogoDarkMode.png", "resources/logo.png" };
+        for (String logoPath : logoCandidates) {
+            try (InputStream logoStream = getClass().getClassLoader().getResourceAsStream(logoPath)) {
+                if (logoStream != null) {
+                    java.awt.image.BufferedImage logoImg = ImageIO.read(logoStream);
+                    if (logoImg != null) {
+                        // Balanced size: not too big and not too small on auth screen.
+                        int logoH = 78;
+                        int computedLogoW = (int) ((double) logoImg.getWidth() / logoImg.getHeight() * logoH);
+                        int logoW = Math.min(computedLogoW, 220);
+                        Image scaledLogo = logoImg.getScaledInstance(logoW, logoH, Image.SCALE_SMOOTH);
+                        logoRow.add(new JLabel(new ImageIcon(scaledLogo)));
+                        break;
+                    }
+                }
+            } catch (Exception ex) {
+                System.err.println("Could not load " + logoPath + ": " + ex.getMessage());
             }
-        } catch (Exception ex) {
-            // Fallback: just show text
-            System.err.println("Could not load logo.png: " + ex.getMessage());
         }
 
         logoRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         brandingPanel.add(logoRow);
-        brandingPanel.add(Box.createVerticalStrut(155));
+        brandingPanel.add(Box.createVerticalStrut(130));
 
-        // Welcome text
-        JLabel welcomeTitle = new JLabel("<html>Welcome back to<br>your Media Journal.</html>");
-        welcomeTitle.setFont(new Font("Segoe UI", Font.BOLD, 48));
-        welcomeTitle.setForeground(Color.WHITE);
-        welcomeTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        brandingPanel.add(welcomeTitle);
-        brandingPanel.add(Box.createVerticalStrut(24));
+        JLabel welcomeTo = new JLabel("Welcome to");
+        welcomeTo.setFont(new Font("Segoe UI", Font.BOLD, 44));
+        welcomeTo.setForeground(Color.WHITE);
+        welcomeTo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        brandingPanel.add(welcomeTo);
 
-        // Subtitle
+        final String brandTitleText = "PLAYTRACK";
+        final Font brandTitleFont = new Font("Segoe UI", Font.BOLD, 112);
+        JComponent playTrackGradientTitle = new JComponent() {
+            @Override
+            public Dimension getPreferredSize() {
+                FontMetrics fm = getFontMetrics(brandTitleFont);
+                return new Dimension(fm.stringWidth(brandTitleText) + 8, fm.getHeight() + 6);
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g2.setFont(brandTitleFont);
+
+                FontMetrics fm = g2.getFontMetrics();
+                int baseline = fm.getAscent();
+
+                GradientPaint titleGradient = new GradientPaint(
+                        0, 0, new Color(180, 24, 45),
+                        getWidth(), 0, new Color(253, 164, 129));
+                g2.setPaint(titleGradient);
+                g2.drawString(brandTitleText, 0, baseline);
+                g2.dispose();
+            }
+        };
+        playTrackGradientTitle.setOpaque(false);
+        playTrackGradientTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        brandingPanel.add(playTrackGradientTitle);
+        brandingPanel.add(Box.createVerticalStrut(8));
+
+        JLabel subtitleHeading = new JLabel("Your personal media journal");
+        subtitleHeading.setFont(new Font("Segoe UI", Font.BOLD, 48));
+        subtitleHeading.setForeground(new Color(230, 236, 246));
+        subtitleHeading.setAlignmentX(Component.LEFT_ALIGNMENT);
+        brandingPanel.add(subtitleHeading);
+        brandingPanel.add(Box.createVerticalStrut(18));
+
         JLabel subtitle = new JLabel(
-                "<html>Track. Review. Discover. Your entire<br>media history, curated and<br>connected.</html>");
+                "<html>Track, review, and revisit your movies,<br>games, and books in one personal media journal.</html>");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 20));
-        subtitle.setForeground(new Color(200, 200, 210, 200));
+        subtitle.setForeground(new Color(216, 224, 238, 225));
         subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         brandingPanel.add(subtitle);
 
@@ -112,7 +152,7 @@ public class AuthFrame extends JFrame {
         // --- RIGHT SIDE: Auth Form Container ---
         JPanel rightPanel = new JPanel(new GridBagLayout());
         rightPanel.setOpaque(false);
-        rightPanel.setPreferredSize(new Dimension(480, 0));
+        rightPanel.setPreferredSize(new Dimension(560, 0));
 
         cardLayout = new CardLayout();
         cardsPanel = new JPanel(cardLayout);
@@ -129,7 +169,7 @@ public class AuthFrame extends JFrame {
         rightGbc.fill = GridBagConstraints.NONE;
         rightGbc.weightx = 1;
         rightGbc.weighty = 1;
-        rightGbc.insets = new Insets(30, 10, 30, 30);
+        rightGbc.insets = new Insets(30, 10, 30, 90);
         rightPanel.add(cardsPanel, rightGbc);
 
         // Use JSplitPane-like layout with BorderLayout
@@ -207,7 +247,11 @@ public class AuthFrame extends JFrame {
 
             // Send OTP
             OtpService otpService = com.playtrack.util.SpringContext.getBean(OtpService.class);
-            otpService.sendOtp(email);
+            boolean sent = otpService.sendOtp(email);
+            if (!sent) {
+                registerPanel.setError("Unable to send verification code. Check SMTP settings and try again.");
+                return;
+            }
             String otp = otpService.getCurrentOtp();
 
             // Show OTP dialog
@@ -313,7 +357,13 @@ public class AuthFrame extends JFrame {
             sendBtn.setEnabled(false);
             sendBtn.setText("SENDING...");
             OtpService otpService = com.playtrack.util.SpringContext.getBean(OtpService.class);
-            otpService.sendOtp(email);
+            boolean sent = otpService.sendOtp(email);
+            if (!sent) {
+                errorLabel.setText("Unable to send code. Please check email settings and try again.");
+                sendBtn.setEnabled(true);
+                sendBtn.setText("SEND VERIFICATION CODE");
+                return;
+            }
             dialog.dispose();
             showForgotStep2_OtpVerify(email);
         });
@@ -411,7 +461,14 @@ public class AuthFrame extends JFrame {
         resendLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                com.playtrack.util.SpringContext.getBean(OtpService.class).sendOtp(email);
+                boolean sent = com.playtrack.util.SpringContext.getBean(OtpService.class).sendOtp(email);
+                if (!sent) {
+                    JOptionPane.showMessageDialog(dialog,
+                            "Unable to resend verification code. Check SMTP settings.",
+                            "Resend Failed",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
                 JOptionPane.showMessageDialog(dialog, "Verification code resent to " + email);
                 for (JTextField f : otpFields) f.setText("");
                 otpFields[0].requestFocusInWindow();
@@ -1093,7 +1150,14 @@ public class AuthFrame extends JFrame {
         resendLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                com.playtrack.util.SpringContext.getBean(OtpService.class).sendOtp(pendingEmail);
+                boolean sent = com.playtrack.util.SpringContext.getBean(OtpService.class).sendOtp(pendingEmail);
+                if (!sent) {
+                    JOptionPane.showMessageDialog(otpDialog,
+                            "Unable to resend verification code. Check SMTP settings.",
+                            "Resend Failed",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
                 JOptionPane.showMessageDialog(otpDialog, "Verification code resent to " + pendingEmail);
                 for (JTextField f : otpFields) f.setText("");
                 otpFields[0].requestFocusInWindow();
@@ -1165,6 +1229,7 @@ public class AuthFrame extends JFrame {
     // Inner class: Background Panel that loads auth_bg.png image
     // ============================================================
     private static class CinematicBackgroundPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
         private BufferedImage bgImage;
 
         CinematicBackgroundPanel() {

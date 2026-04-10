@@ -12,6 +12,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 
 public class MediaCard extends JPanel {
+    private static final long serialVersionUID = 1L;
     private final MediaItem item;
     private static final MediaService mediaService = new MediaService();
 
@@ -357,6 +358,7 @@ public class MediaCard extends JPanel {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
 
         class CustomButton extends JLabel {
+            private static final long serialVersionUID = 1L;
             private final boolean isPrimary;
             private boolean hovered = false;
             

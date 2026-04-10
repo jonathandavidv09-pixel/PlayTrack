@@ -12,8 +12,14 @@ import java.awt.geom.RoundRectangle2D;
 import java.util.List;
 
 public class LibraryPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
+    private static final int CARD_WIDTH = 160;
+    private static final int CARD_HEIGHT = 240;
+    private static final int CARD_GAP = 20;
     private MediaService mediaService = new MediaService();
     private JPanel cardGrid;
+    private JScrollPane libraryScroll;
+    private int sectionRowIndex = 0;
     private String currentCategory = "All";
     private PlaceholderTextField searchField;
     private JPanel tabsPanel;
@@ -68,7 +74,10 @@ public class LibraryPanel extends JPanel {
         // Search
         searchField = new PlaceholderTextField("Search your library...", "SEARCH");
         searchField.setPreferredSize(new Dimension(280, 42));
-        searchField.addActionListener(e -> refreshLibrary());
+        searchField.addActionListener(e -> {
+            refreshLibrary();
+            scrollToTop();
+        });
         filtersRow.add(searchField, BorderLayout.EAST);
 
         // Left spacer to perfectly balance BorderLayout.CENTER
@@ -81,23 +90,67 @@ public class LibraryPanel extends JPanel {
         add(topSection, BorderLayout.NORTH);
 
         // Card grid
-        cardGrid = new JPanel() {
+        class ScrollableCardGrid extends JPanel implements Scrollable {
+            private static final long serialVersionUID = 1L;
+
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-            }
-        };
-        cardGrid.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 20));
-        cardGrid.setOpaque(false);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        JScrollPane scroll = new JScrollPane(cardGrid);
+                // Repaint a stable full background every frame to prevent scroll ghosting/clipped duplicates.
+                g2.setColor(StyleConfig.BACKGROUND_COLOR);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                Point p = SwingUtilities.convertPoint(this, 0, 0, LibraryPanel.this);
+                g2.translate(-p.x, -p.y);
+                UIUtils.paintFadedAuthBackground(g2, LibraryPanel.this.getWidth(), LibraryPanel.this.getHeight());
+                g2.dispose();
+            }
+
+            @Override
+            public Dimension getPreferredScrollableViewportSize() {
+                return getPreferredSize();
+            }
+
+            @Override
+            public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+                return 20;
+            }
+
+            @Override
+            public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+                return 80;
+            }
+
+            @Override
+            public boolean getScrollableTracksViewportWidth() {
+                return true;
+            }
+
+            @Override
+            public boolean getScrollableTracksViewportHeight() {
+                return false;
+            }
+        }
+
+        cardGrid = new ScrollableCardGrid();
+        cardGrid.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 20));
+        cardGrid.setOpaque(true);
+        cardGrid.setBackground(StyleConfig.BACKGROUND_COLOR);
+
+        JScrollPane scroll = new JScrollPane();
+        this.libraryScroll = scroll;
         scroll.setOpaque(false);
-        scroll.getViewport().setOpaque(false);
         scroll.setBorder(null);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         scroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scroll.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE); // Fix smearing
+        scroll.setViewportView(cardGrid);
+        scroll.getViewport().setOpaque(true);
+        scroll.getViewport().setBackground(StyleConfig.BACKGROUND_COLOR);
+        scroll.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+
         add(scroll, BorderLayout.CENTER);
 
         refreshLibrary();
@@ -113,6 +166,7 @@ public class LibraryPanel extends JPanel {
                         currentCategory = name;
                         refreshTabs();
                         refreshLibrary();
+                        scrollToTop();
                     }
 
                     @Override
@@ -178,22 +232,70 @@ public class LibraryPanel extends JPanel {
         tabsPanel.repaint();
     }
 
+    private JLabel createSectionJumpArrow(String targetCategory) {
+        JLabel arrow = new JLabel() {
+            private boolean hovered = false;
+
+            {
+                setPreferredSize(new Dimension(32, 32));
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+                addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        currentCategory = targetCategory;
+                        if (searchField != null) {
+                            searchField.setText("");
+                        }
+                        refreshTabs();
+                        refreshLibrary();
+                    }
+
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+                        hovered = true;
+                        repaint();
+                    }
+
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        hovered = false;
+                        repaint();
+                    }
+                });
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                Color iconColor = hovered ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_SECONDARY;
+                UIUtils.drawArrowIcon(g2, 0, 0, getWidth(), getHeight(), iconColor, true);
+                g2.dispose();
+            }
+        };
+        arrow.setToolTipText("Go to " + targetCategory);
+        return arrow;
+    }
+
     public void reset() {
         currentCategory = "All";
         if (searchField != null) searchField.setText("");
         refreshTabs();
         refreshLibrary();
+        scrollToTop();
     }
 
     public void setCategory(String category) {
         this.currentCategory = category;
         refreshTabs();
         refreshLibrary();
+        scrollToTop();
     }
 
     public void refreshLibrary() {
         cardGrid.removeAll();
-        cardGrid.setLayout(new BoxLayout(cardGrid, BoxLayout.Y_AXIS));
+        cardGrid.setLayout(new GridBagLayout());
+        sectionRowIndex = 0;
 
         if (SessionManager.getCurrentUser() == null)
             return;
@@ -249,8 +351,16 @@ public class LibraryPanel extends JPanel {
             emptyText.setAlignmentX(Component.CENTER_ALIGNMENT);
             emptyContent.add(emptyText);
             emptyState.add(emptyContent);
-            cardGrid.add(emptyState);
+            addSectionToGrid(emptyState);
         }
+
+        GridBagConstraints spacer = new GridBagConstraints();
+        spacer.gridx = 0;
+        spacer.gridy = sectionRowIndex;
+        spacer.weightx = 1.0;
+        spacer.weighty = 1.0;
+        spacer.fill = GridBagConstraints.BOTH;
+        cardGrid.add(Box.createVerticalGlue(), spacer);
 
         cardGrid.revalidate();
         cardGrid.repaint();
@@ -260,13 +370,13 @@ public class LibraryPanel extends JPanel {
         if (items == null || items.isEmpty())
             return;
 
-        final int MAX_VISIBLE_CARDS = 16; // 8 cards per row x 2 rows
-        boolean hasOverflow = items.size() > MAX_VISIBLE_CARDS;
-        // Card height = 240, vgap = 20, so 2 rows = 240 + 20 + 240 = 500
-        final int TWO_ROW_HEIGHT = 500;
+        boolean isCategorySection = "Films".equals(title) || "Games".equals(title) || "Books".equals(title);
+        boolean showSectionArrow = "All".equals(currentCategory) && isCategorySection;
+        final int itemCount = items.size();
 
         JPanel section = new JPanel(new BorderLayout(0, 20));
         section.setOpaque(false);
+        section.setAlignmentX(Component.LEFT_ALIGNMENT);
         section.setBorder(BorderFactory.createEmptyBorder(0, 0, 40, 0));
 
         JPanel headerPanel = new JPanel();
@@ -298,90 +408,89 @@ public class LibraryPanel extends JPanel {
         headerPanel.add(divider);
         section.add(headerPanel, BorderLayout.NORTH);
 
-        // Build cards panel with ALL cards
-        JPanel cardsPanel = new JPanel(new WrapLayout(WrapLayout.LEFT, 20, 20));
-        cardsPanel.setOpaque(false);
-        cardsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        // Build cards with deterministic rows (same look, no wrap clipping artifacts).
+        int columns = calculateCardColumns(showSectionArrow);
+        JPanel cardsHost = new JPanel();
+        cardsHost.setOpaque(false);
+        cardsHost.setLayout(new BoxLayout(cardsHost, BoxLayout.Y_AXIS));
+        cardsHost.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        cardsHost.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        for (int i = 0; i < items.size(); i++) {
-            cardsPanel.add(new MediaCard(items.get(i), false, true, this::refreshLibrary));
+        for (int start = 0; start < itemCount; start += columns) {
+            JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, CARD_GAP, 0));
+            row.setOpaque(false);
+            row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            int end = Math.min(itemCount, start + columns);
+            for (int i = start; i < end; i++) {
+                row.add(new MediaCard(items.get(i), false, true, this::refreshLibrary));
+            }
+
+            cardsHost.add(row);
+            if (end < itemCount) {
+                cardsHost.add(Box.createVerticalStrut(CARD_GAP));
+            }
         }
 
-        // Wrap cards in a clipping container that limits to 2 rows initially
-        JPanel cardClipWrapper = new JPanel(new BorderLayout());
-        cardClipWrapper.setOpaque(false);
-        cardClipWrapper.add(cardsPanel, BorderLayout.CENTER);
+        JPanel centerRow = new JPanel(new BorderLayout(8, 0));
+        centerRow.setOpaque(false);
+        centerRow.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
-        if (hasOverflow) {
-            cardClipWrapper.setPreferredSize(new Dimension(0, TWO_ROW_HEIGHT));
-            cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, TWO_ROW_HEIGHT));
+        JPanel lanePanel = new JPanel(new BorderLayout(8, 0));
+        lanePanel.setOpaque(false);
+        lanePanel.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
+        lanePanel.add(cardsHost, BorderLayout.CENTER);
+
+        if (showSectionArrow) {
+            String targetCategory = title;
+            JPanel sectionArrowHost = new JPanel(new GridBagLayout());
+            sectionArrowHost.setOpaque(false);
+            sectionArrowHost.setPreferredSize(new Dimension(36, 0));
+            sectionArrowHost.add(createSectionJumpArrow(targetCategory));
+            lanePanel.add(sectionArrowHost, BorderLayout.EAST);
         }
 
-        section.add(cardClipWrapper, BorderLayout.CENTER);
+        centerRow.add(lanePanel, BorderLayout.CENTER);
 
-        // Down-arrow icon to expand/collapse when there are more than 2 rows
-        if (hasOverflow) {
-            final boolean[] expanded = {false};
+        section.add(centerRow, BorderLayout.CENTER);
 
-            JLabel arrowIcon = new JLabel() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    int size = 28;
-                    int cx = getWidth() / 2;
-                    int cy = getHeight() / 2;
-                    // down arrow when collapsed, up arrow when expanded
-                    UIUtils.drawVerticalArrowIcon(g2, cx - size / 2, cy - size / 2, size, size, getForeground(), !expanded[0]);
-                    g2.dispose();
-                }
-            };
-            arrowIcon.setForeground(StyleConfig.TEXT_SECONDARY);
-            arrowIcon.setPreferredSize(new Dimension(100, 40));
-            arrowIcon.setHorizontalAlignment(SwingConstants.CENTER);
-            arrowIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            arrowIcon.setToolTipText("Show more");
+        addSectionToGrid(section);
+    }
 
-            arrowIcon.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseClicked(java.awt.event.MouseEvent e) {
-                    expanded[0] = !expanded[0];
-                    if (expanded[0]) {
-                        // Remove height constraint - show all cards
-                        cardClipWrapper.setPreferredSize(null);
-                        cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-                        arrowIcon.setToolTipText("Show less");
-                    } else {
-                        // Collapse back to 2 rows
-                        cardClipWrapper.setPreferredSize(new Dimension(0, TWO_ROW_HEIGHT));
-                        cardClipWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, TWO_ROW_HEIGHT));
-                        arrowIcon.setToolTipText("Show more");
-                    }
-                    arrowIcon.repaint();
-                    section.revalidate();
-                    section.repaint();
-                    // Revalidate up the hierarchy so scroll pane adjusts
-                    Container parent = section.getParent();
-                    while (parent != null) {
-                        parent.revalidate();
-                        parent.repaint();
-                        parent = parent.getParent();
-                    }
-                }
-                public void mouseEntered(java.awt.event.MouseEvent e) {
-                    arrowIcon.setForeground(StyleConfig.PRIMARY_COLOR);
-                }
-                public void mouseExited(java.awt.event.MouseEvent e) {
-                    arrowIcon.setForeground(StyleConfig.TEXT_SECONDARY);
-                }
-            });
+    private void addSectionToGrid(Component component) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = sectionRowIndex++;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        cardGrid.add(component, gbc);
+    }
 
-            JPanel arrowWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            arrowWrapper.setOpaque(false);
-            arrowWrapper.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
-            arrowWrapper.add(arrowIcon);
-            section.add(arrowWrapper, BorderLayout.SOUTH);
+    private int calculateCardColumns(boolean showSectionArrow) {
+        int viewportWidth = 0;
+        if (libraryScroll != null && libraryScroll.getViewport() != null) {
+            viewportWidth = libraryScroll.getViewport().getWidth();
+        }
+        if (viewportWidth <= 0) {
+            viewportWidth = cardGrid != null ? cardGrid.getWidth() : 0;
+        }
+        if (viewportWidth <= 0) {
+            viewportWidth = getWidth();
+        }
+        if (viewportWidth <= 0) {
+            viewportWidth = 1200;
         }
 
-        cardGrid.add(section);
+        int reserved = showSectionArrow ? 44 : 0; // section arrow host + gap
+        int available = Math.max(CARD_WIDTH, viewportWidth - reserved - CARD_GAP);
+        return Math.max(1, (available + CARD_GAP) / (CARD_WIDTH + CARD_GAP));
+    }
+
+    private void scrollToTop() {
+        if (libraryScroll == null) {
+            return;
+        }
+        SwingUtilities.invokeLater(() -> libraryScroll.getVerticalScrollBar().setValue(0));
     }
 }

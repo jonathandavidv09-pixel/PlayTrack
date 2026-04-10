@@ -13,6 +13,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class SettingsDialog extends JDialog {
+    private static final long serialVersionUID = 1L;
     private AuthService authService = new AuthService();
     private JTextField emailField;
     private JTextField usernameField;
