@@ -79,7 +79,7 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(5, 35, 5, 35);
         add(emailLabel, gbc);
 
-        usernameField = new PlaceholderTextField("Enter your Email or Username", "✉️");
+        usernameField = new PlaceholderTextField("Enter your Email or Username", "EMAIL");
         usernameField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 35, 12, 35);
@@ -93,7 +93,7 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 5, 35);
         add(passLabel, gbc);
 
-        passwordField = new PlaceholderPasswordField("Enter your Password", "🔒");
+        passwordField = new PlaceholderPasswordField("Enter your Password", "LOCK");
         passwordField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 35, 8, 35);
@@ -131,6 +131,7 @@ public class LoginPanel extends JPanel {
         errorLabel = new JLabel("", SwingConstants.CENTER);
         errorLabel.setForeground(StyleConfig.ERROR_COLOR);
         errorLabel.setFont(StyleConfig.FONT_SMALL);
+        errorLabel.setPreferredSize(new Dimension(330, 32));
         gbc.gridy = 6;
         gbc.insets = new Insets(0, 35, 5, 35);
         add(errorLabel, gbc);
@@ -264,6 +265,41 @@ public class LoginPanel extends JPanel {
     }
 
     public void setError(String msg) {
-        errorLabel.setText(msg);
+        if (msg == null || msg.trim().isEmpty()) {
+            errorLabel.setText("");
+            return;
+        }
+        if (msg.startsWith("<html>")) {
+            errorLabel.setText(msg);
+            return;
+        }
+        String safe = msg.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        errorLabel.setText("<html><center>" + wrapForLabel(safe, 44) + "</center></html>");
+    }
+
+    private String wrapForLabel(String text, int maxCharsPerLine) {
+        String[] words = text.split("\\s+");
+        StringBuilder wrapped = new StringBuilder();
+        StringBuilder line = new StringBuilder();
+
+        for (String word : words) {
+            if (line.length() == 0) {
+                line.append(word);
+                continue;
+            }
+            if (line.length() + 1 + word.length() > maxCharsPerLine) {
+                if (wrapped.length() > 0) wrapped.append("<br>");
+                wrapped.append(line);
+                line.setLength(0);
+                line.append(word);
+            } else {
+                line.append(' ').append(word);
+            }
+        }
+        if (line.length() > 0) {
+            if (wrapped.length() > 0) wrapped.append("<br>");
+            wrapped.append(line);
+        }
+        return wrapped.toString();
     }
 }

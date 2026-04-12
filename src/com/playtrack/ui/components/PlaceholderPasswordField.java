@@ -114,10 +114,15 @@ public class PlaceholderPasswordField extends JPasswordField {
 
         
         if (iconText != null) {
-            g2.setColor(focused ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_LIGHT);
-            g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
-            FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(iconText, 14, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+            if ("LOCK".equals(iconText)) {
+                Color iconColor = focused ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_LIGHT;
+                UIUtils.drawLockIcon(g2, 14, getHeight() / 2 - 8, 16, 16, iconColor);
+            } else {
+                g2.setColor(focused ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_LIGHT);
+                g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(iconText, 14, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+            }
         }
 
         g2.dispose();

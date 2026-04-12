@@ -22,7 +22,7 @@ public class PlaceholderTextField extends JTextField {
         this.placeholder = placeholder;
         this.showingPlaceholder = true;
         this.iconText = iconText;
-        setText(placeholder);
+        super.setText(placeholder);
         setForeground(StyleConfig.TEXT_LIGHT);
         setFont(StyleConfig.FONT_NORMAL);
         setCaretColor(StyleConfig.TEXT_COLOR);
@@ -34,7 +34,7 @@ public class PlaceholderTextField extends JTextField {
             public void focusGained(FocusEvent e) {
                 focused = true;
                 if (showingPlaceholder) {
-                    setText("");
+                    superSetText("");
                     setForeground(StyleConfig.TEXT_COLOR);
                     showingPlaceholder = false;
                 }
@@ -45,13 +45,17 @@ public class PlaceholderTextField extends JTextField {
             public void focusLost(FocusEvent e) {
                 focused = false;
                 if (getText().isEmpty()) {
-                    setText(placeholder);
+                    superSetText(placeholder);
                     setForeground(StyleConfig.TEXT_LIGHT);
                     showingPlaceholder = true;
                 }
                 repaint();
             }
         });
+    }
+
+    private void superSetText(String value) {
+        super.setText(value);
     }
 
     @Override
@@ -80,6 +84,12 @@ public class PlaceholderTextField extends JTextField {
             if ("SEARCH".equals(iconText)) {
                 Color iconColor = focused ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_LIGHT;
                 UIUtils.drawSearchIcon(g2, 20 - 9, getHeight() / 2 - 9, 18, iconColor);
+            } else if ("EMAIL".equals(iconText)) {
+                Color iconColor = focused ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_LIGHT;
+                UIUtils.drawMailIcon(g2, 14, getHeight() / 2 - 8, 16, 16, iconColor);
+            } else if ("USER".equals(iconText)) {
+                Color iconColor = focused ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_LIGHT;
+                UIUtils.drawUserIcon(g2, 13, getHeight() / 2 - 9, 18, 18, iconColor);
             } else {
                 g2.setColor(focused ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_LIGHT);
                 g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));

@@ -9,7 +9,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
 import java.util.List;
+import javax.imageio.ImageIO;
 
 public class LibraryPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -100,9 +103,6 @@ public class LibraryPanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                
-                g2.setColor(StyleConfig.BACKGROUND_COLOR);
-                g2.fillRect(0, 0, getWidth(), getHeight());
                 Point p = SwingUtilities.convertPoint(this, 0, 0, LibraryPanel.this);
                 g2.translate(-p.x, -p.y);
                 UIUtils.paintFadedAuthBackground(g2, LibraryPanel.this.getWidth(), LibraryPanel.this.getHeight());
@@ -137,8 +137,7 @@ public class LibraryPanel extends JPanel {
 
         cardGrid = new ScrollableCardGrid();
         cardGrid.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 20));
-        cardGrid.setOpaque(true);
-        cardGrid.setBackground(StyleConfig.BACKGROUND_COLOR);
+        cardGrid.setOpaque(false);
 
         JScrollPane scroll = new JScrollPane();
         this.libraryScroll = scroll;
@@ -148,8 +147,7 @@ public class LibraryPanel extends JPanel {
         scroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setViewportView(cardGrid);
-        scroll.getViewport().setOpaque(true);
-        scroll.getViewport().setBackground(StyleConfig.BACKGROUND_COLOR);
+        scroll.getViewport().setOpaque(false);
         scroll.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
         scroll.getViewport().addChangeListener(e -> {
             Rectangle vr = scroll.getViewport().getViewRect();
@@ -344,9 +342,7 @@ public class LibraryPanel extends JPanel {
             emptyContent.setLayout(new BoxLayout(emptyContent, BoxLayout.Y_AXIS));
             emptyContent.setOpaque(false);
 
-            JLabel emptyIcon = new JLabel("\uD83D\uDCED", SwingConstants.CENTER);
-            emptyIcon.setFont(new Font("Segoe UI", Font.PLAIN, 48));
-            emptyIcon.setForeground(StyleConfig.TEXT_LIGHT);
+            JLabel emptyIcon = new JLabel(loadEmptyLibraryIcon(72), SwingConstants.CENTER);
             emptyIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
             emptyContent.add(emptyIcon);
             emptyContent.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -512,5 +508,30 @@ public class LibraryPanel extends JPanel {
             return;
         }
         SwingUtilities.invokeLater(() -> libraryScroll.getVerticalScrollBar().setValue(0));
+    }
+
+    private ImageIcon loadEmptyLibraryIcon(int size) {
+        String[] candidates = {
+                "resources/icons/library_empty.png",
+                "resources/icons/empty_library.png"
+        };
+        for (String path : candidates) {
+            try (InputStream is = getClass().getClassLoader().getResourceAsStream(path)) {
+                if (is == null) continue;
+                BufferedImage image = ImageIO.read(is);
+                if (image == null) continue;
+                Image scaled = image.getScaledInstance(size, size, Image.SCALE_SMOOTH);
+                return new ImageIcon(scaled);
+            } catch (Exception ignored) {
+            }
+        }
+
+        // Fallback so empty state still looks good if custom PNG is missing.
+        BufferedImage fallback = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = fallback.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        UIUtils.drawCategoryIcon(g2, "Books", size / 2, size / 2, size - 16, StyleConfig.TEXT_LIGHT);
+        g2.dispose();
+        return new ImageIcon(fallback);
     }
 }

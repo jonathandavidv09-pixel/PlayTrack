@@ -85,7 +85,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(3, 35, 4, 35);
         add(emailLabel, gbc);
 
-        emailField = new PlaceholderTextField("Enter your Email", "✉️");
+        emailField = new PlaceholderTextField("Enter your Email", "EMAIL");
         emailField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 35, 10, 35);
@@ -99,7 +99,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 4, 35);
         add(userLabel, gbc);
 
-        usernameField = new PlaceholderTextField("Choose a Username", "👤");
+        usernameField = new PlaceholderTextField("Choose a Username", "USER");
         usernameField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 35, 10, 35);
@@ -113,7 +113,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 4, 35);
         add(passLabel, gbc);
 
-        passwordField = new PlaceholderPasswordField("Create a Password", "🔒");
+        passwordField = new PlaceholderPasswordField("Create a Password", "LOCK");
         passwordField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 6;
         gbc.insets = new Insets(0, 35, 4, 35);
@@ -150,7 +150,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 4, 35);
         add(confirmLabel, gbc);
 
-        confirmPasswordField = new PlaceholderPasswordField("Confirm your Password", "🔒");
+        confirmPasswordField = new PlaceholderPasswordField("Confirm your Password", "LOCK");
         confirmPasswordField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 9;
         gbc.insets = new Insets(0, 35, 12, 35);
@@ -160,6 +160,7 @@ public class RegisterPanel extends JPanel {
         errorLabel = new JLabel("", SwingConstants.CENTER);
         errorLabel.setForeground(StyleConfig.ERROR_COLOR);
         errorLabel.setFont(StyleConfig.FONT_SMALL);
+        errorLabel.setPreferredSize(new Dimension(330, 32));
         gbc.gridy = 10;
         gbc.insets = new Insets(0, 35, 5, 35);
         add(errorLabel, gbc);
@@ -343,5 +344,42 @@ public class RegisterPanel extends JPanel {
     public String getEmail() { return emailField.getText(); }
     public String getPassword() { return new String(passwordField.getPassword()); }
     public String getConfirmPassword() { return new String(confirmPasswordField.getPassword()); }
-    public void setError(String msg) { errorLabel.setText(msg); }
+    public void setError(String msg) {
+        if (msg == null || msg.trim().isEmpty()) {
+            errorLabel.setText("");
+            return;
+        }
+        if (msg.startsWith("<html>")) {
+            errorLabel.setText(msg);
+            return;
+        }
+        String safe = msg.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        errorLabel.setText("<html><center>" + wrapForLabel(safe, 44) + "</center></html>");
+    }
+
+    private String wrapForLabel(String text, int maxCharsPerLine) {
+        String[] words = text.split("\\s+");
+        StringBuilder wrapped = new StringBuilder();
+        StringBuilder line = new StringBuilder();
+
+        for (String word : words) {
+            if (line.length() == 0) {
+                line.append(word);
+                continue;
+            }
+            if (line.length() + 1 + word.length() > maxCharsPerLine) {
+                if (wrapped.length() > 0) wrapped.append("<br>");
+                wrapped.append(line);
+                line.setLength(0);
+                line.append(word);
+            } else {
+                line.append(' ').append(word);
+            }
+        }
+        if (line.length() > 0) {
+            if (wrapped.length() > 0) wrapped.append("<br>");
+            wrapped.append(line);
+        }
+        return wrapped.toString();
+    }
 }

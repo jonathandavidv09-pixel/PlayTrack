@@ -59,10 +59,25 @@ Set these environment variables in production:
 - `PLAYTRACK_SMTP_USERNAME`
 - `PLAYTRACK_SMTP_PASSWORD`
 
+### Gmail Setup (Real OTP Email)
+
+1. Turn on 2-Step Verification for your Google account.
+2. Create a Google App Password (Mail) and use that as `PLAYTRACK_SMTP_PASSWORD`.
+3. Set environment variables (PowerShell):
+
+```powershell
+setx PLAYTRACK_SMTP_HOST "smtp.gmail.com"
+setx PLAYTRACK_SMTP_PORT "587"
+setx PLAYTRACK_SMTP_USERNAME "your-gmail@gmail.com"
+setx PLAYTRACK_SMTP_PASSWORD "your-16-char-app-password"
+```
+
+4. Close and reopen your terminal/app, then run PlayTrack again.
+
 Optional development-only flags:
 
 - `PLAYTRACK_OTP_DEBUG_LOG=true` (logs OTP for debugging)
-- `PLAYTRACK_OTP_SIMULATED_FALLBACK=true` (allows fallback when SMTP is not configured)
+- `PLAYTRACK_OTP_SIMULATED_FALLBACK=true` (allows local OTP fallback when SMTP is not configured)
 
 Do not commit real SMTP credentials.
 

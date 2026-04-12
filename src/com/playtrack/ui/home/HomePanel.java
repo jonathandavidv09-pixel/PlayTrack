@@ -91,9 +91,6 @@ public class HomePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                
-                g2.setColor(StyleConfig.BACKGROUND_COLOR);
-                g2.fillRect(0, 0, getWidth(), getHeight());
                 Point p = SwingUtilities.convertPoint(this, 0, 0, HomePanel.this);
                 g2.translate(-p.x, -p.y);
                 UIUtils.paintFadedAuthBackground(g2, HomePanel.this.getWidth(), HomePanel.this.getHeight());
@@ -113,8 +110,7 @@ public class HomePanel extends JPanel {
 
         JPanel mainContent = new ScrollablePanel();
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
-        mainContent.setOpaque(true);
-        mainContent.setBackground(StyleConfig.BACKGROUND_COLOR);
+        mainContent.setOpaque(false);
         mainContent.setBorder(BorderFactory.createEmptyBorder(0, 50, 40, 50));
 
         JPanel welcomeRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -281,8 +277,7 @@ public class HomePanel extends JPanel {
 
         JScrollPane mainScroll = new JScrollPane(mainContent);
         mainScroll.setOpaque(false);
-        mainScroll.getViewport().setOpaque(true);
-        mainScroll.getViewport().setBackground(StyleConfig.BACKGROUND_COLOR);
+        mainScroll.getViewport().setOpaque(false);
         mainScroll.setBorder(null);
         mainScroll.getVerticalScrollBar().setUnitIncrement(16);
         mainScroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
@@ -311,6 +306,45 @@ public class HomePanel extends JPanel {
             if (mediaItem != null) {
                 recentItems.add(mediaItem);
             }
+        }
+
+        if (recentItems.isEmpty()) {
+            JPanel emptyState = new JPanel();
+            emptyState.setLayout(new BoxLayout(emptyState, BoxLayout.Y_AXIS));
+            emptyState.setOpaque(false);
+            emptyState.setBorder(BorderFactory.createEmptyBorder(25, 0, 0, 0));
+
+            JLabel emptyTitle = new JLabel("No activity yet");
+            emptyTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
+            emptyTitle.setForeground(StyleConfig.TEXT_SECONDARY);
+            emptyTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+            emptyState.add(emptyTitle);
+
+            JLabel emptyHint = new JLabel("Start logging films, games, or books.");
+            emptyHint.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            emptyHint.setForeground(StyleConfig.TEXT_LIGHT);
+            emptyHint.setAlignmentX(Component.CENTER_ALIGNMENT);
+            emptyState.add(Box.createVerticalStrut(8));
+            emptyState.add(emptyHint);
+
+            GridBagConstraints emptyGbc = new GridBagConstraints();
+            emptyGbc.gridx = 0;
+            emptyGbc.gridy = 0;
+            emptyGbc.anchor = GridBagConstraints.CENTER;
+            recentCardsPanel.add(emptyState, emptyGbc);
+
+            int emptyWidth = Math.max(780, getWidth() - 140);
+            Dimension emptySize = new Dimension(emptyWidth, 170);
+            recentCardsPanel.setPreferredSize(emptySize);
+            recentCardsPanel.setMinimumSize(emptySize);
+
+            if (downArrow != null) {
+                downArrow.setVisible(false);
+            }
+
+            recentCardsPanel.revalidate();
+            recentCardsPanel.repaint();
+            return;
         }
 
         boolean hasOverflow = recentItems.size() > MAX_VISIBLE_CARDS;

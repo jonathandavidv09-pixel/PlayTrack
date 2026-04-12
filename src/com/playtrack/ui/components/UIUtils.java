@@ -319,4 +319,54 @@ public class UIUtils {
             drawTintedIcon(g2, src, cx, cy, size, color);
         }
     }
+
+    public static void drawMailIcon(Graphics2D g2, int x, int y, int width, int height, Color color) {
+        Graphics2D iconG = (Graphics2D) g2.create();
+        iconG.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        iconG.setColor(color);
+        iconG.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+        int bodyY = y + 2;
+        int bodyH = Math.max(8, height - 4);
+        iconG.drawRoundRect(x, bodyY, width, bodyH, 3, 3);
+        iconG.drawLine(x + 1, bodyY + 1, x + (width / 2), bodyY + (bodyH / 2) + 1);
+        iconG.drawLine(x + width - 1, bodyY + 1, x + (width / 2), bodyY + (bodyH / 2) + 1);
+        iconG.dispose();
+    }
+
+    public static void drawUserIcon(Graphics2D g2, int x, int y, int width, int height, Color color) {
+        Graphics2D iconG = (Graphics2D) g2.create();
+        iconG.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        iconG.setColor(color);
+        iconG.setStroke(new BasicStroke(1.9f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+        int headDiameter = Math.max(7, Math.min(width - 8, height - 10));
+        int headX = x + (width - headDiameter) / 2;
+        int headY = y + 1;
+        iconG.drawOval(headX, headY, headDiameter, headDiameter);
+
+        int shouldersWidth = Math.max(10, width - 4);
+        int shouldersHeight = Math.max(7, height - headDiameter - 1);
+        int shouldersX = x + (width - shouldersWidth) / 2;
+        int shouldersY = headY + headDiameter - 1;
+        iconG.drawArc(shouldersX, shouldersY, shouldersWidth, shouldersHeight, 205, 130);
+        iconG.dispose();
+    }
+
+    public static void drawLockIcon(Graphics2D g2, int x, int y, int width, int height, Color color) {
+        Graphics2D iconG = (Graphics2D) g2.create();
+        iconG.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        iconG.setColor(color);
+        iconG.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+        int bodyH = Math.max(8, height - 8);
+        int bodyY = y + (height - bodyH);
+        iconG.drawRoundRect(x + 1, bodyY, Math.max(8, width - 2), bodyH, 4, 4);
+
+        int shackleW = Math.max(6, width - 8);
+        int shackleX = x + ((width - shackleW) / 2);
+        int shackleY = y + 1;
+        iconG.drawArc(shackleX, shackleY, shackleW, Math.max(6, bodyY - shackleY + 2), 0, 180);
+        iconG.dispose();
+    }
 }

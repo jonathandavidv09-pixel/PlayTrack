@@ -254,18 +254,32 @@ public class AuthFrame extends JFrame {
             OtpService otpService = com.playtrack.util.SpringContext.getBean(OtpService.class);
             boolean sent = otpService.sendOtp(email);
             if (!sent) {
-                registerPanel.setError("Unable to send verification code. Check SMTP settings and try again.");
+                registerPanel.setError(otpService.getLastDeliveryMessage());
                 return;
             }
             String otp = otpService.getCurrentOtp();
+            if (otpService.wasLastDeliverySimulated()) {
+                showLocalOtpNotice(this, email, otp);
+            }
 
             
-            showOtpDialog(otp);
+            showOtpDialog(otp, otpService.wasLastDeliverySimulated());
         };
     }
 
     private void showForgotPasswordDialog() {
         showForgotStep1_EmailEntry();
+    }
+
+    private void showLocalOtpNotice(Component parent, String email, String otp) {
+        JOptionPane.showMessageDialog(
+                parent,
+                "<html><center><b>SMTP is not configured.</b><br>"
+                        + "PlayTrack generated a local verification code for this session.<br><br>"
+                        + "Code for <b>" + email + "</b>:<br>"
+                        + "<span style='font-size:18px; color:#d34045;'><b>" + otp + "</b></span></center></html>",
+                "Local OTP Mode",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
    
@@ -363,10 +377,13 @@ public class AuthFrame extends JFrame {
             OtpService otpService = com.playtrack.util.SpringContext.getBean(OtpService.class);
             boolean sent = otpService.sendOtp(email);
             if (!sent) {
-                errorLabel.setText("Unable to send code. Please check email settings and try again.");
+                errorLabel.setText(otpService.getLastDeliveryMessage());
                 sendBtn.setEnabled(true);
                 sendBtn.setText("SEND VERIFICATION CODE");
                 return;
+            }
+            if (otpService.wasLastDeliverySimulated()) {
+                showLocalOtpNotice(dialog, email, otpService.getCurrentOtp());
             }
             dialog.dispose();
             showForgotStep2_OtpVerify(email);
@@ -465,15 +482,20 @@ public class AuthFrame extends JFrame {
         resendLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                boolean sent = com.playtrack.util.SpringContext.getBean(OtpService.class).sendOtp(email);
+                OtpService otpService = com.playtrack.util.SpringContext.getBean(OtpService.class);
+                boolean sent = otpService.sendOtp(email);
                 if (!sent) {
                     JOptionPane.showMessageDialog(dialog,
-                            "Unable to resend verification code. Check SMTP settings.",
+                            otpService.getLastDeliveryMessage(),
                             "Resend Failed",
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                JOptionPane.showMessageDialog(dialog, "Verification code resent to " + email);
+                if (otpService.wasLastDeliverySimulated()) {
+                    showLocalOtpNotice(dialog, email, otpService.getCurrentOtp());
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Verification code resent to " + email);
+                }
                 for (JTextField f : otpFields) f.setText("");
                 otpFields[0].requestFocusInWindow();
             }
@@ -1063,130 +1085,110 @@ public class AuthFrame extends JFrame {
         return panel;
     }
 
-    private void showOtpDialog(String generatedOtp) {
-        
-        JDialog otpDialog = new JDialog(this, "Email Verification", true);
-        otpDialog.setSize(450, 380);
-        otpDialog.setLocationRelativeTo(this);
-        otpDialog.setResizable(false);
+    private void showOtpDialog(String generatedOtp, boolean simulatedDelivery) {
+        JDialog otpDialog = createStyledDialog("Email Verification", 470, 430);
+        JPanel dialogPanel = createDialogPanel();
+        GridBagConstraints gbc = createDialogGbc();
+        gbc.anchor = GridBagConstraints.NORTH;
 
-        JPanel dialogPanel = new JPanel(new GridBagLayout()) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setColor(new Color(25, 22, 30));
-                g2.fillRect(0, 0, getWidth(), getHeight());
-                g2.dispose();
-            }
-        };
-        dialogPanel.setOpaque(false);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 40, 5, 40);
-
-        
         JLabel emailIcon = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(StyleConfig.PRIMARY_COLOR);
+                int cx = getWidth() / 2;
+                int cy = getHeight() / 2;
+                g2.setColor(new Color(211, 64, 69, 25));
+                g2.fillOval(cx - 40, cy - 40, 80, 80);
+                g2.setColor(new Color(211, 64, 69, 50));
+                g2.fillOval(cx - 30, cy - 30, 60, 60);
+                g2.setColor(new Color(211, 64, 69));
+                g2.fillOval(cx - 22, cy - 22, 44, 44);
+                g2.setColor(Color.WHITE);
                 g2.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                int w = getWidth(), h = getHeight();
-                int pad = 20;
-                g2.drawRect(pad, pad + 10, w - pad * 2, h - pad * 2 - 10);
-                g2.drawLine(pad, pad + 10, w / 2, h / 2 + 5);
-                g2.drawLine(w / 2, h / 2 + 5, w - pad, pad + 10);
+                g2.drawRect(cx - 12, cy - 6, 24, 16);
+                g2.drawLine(cx - 12, cy - 6, cx, cy + 4);
+                g2.drawLine(cx, cy + 4, cx + 12, cy - 6);
                 g2.dispose();
             }
         };
-        emailIcon.setPreferredSize(new Dimension(100, 100));
+        emailIcon.setPreferredSize(new Dimension(86, 86));
         gbc.gridy = 0;
-        gbc.insets = new Insets(20, 40, 5, 40);
+        gbc.insets = new Insets(20, 40, 4, 40);
         dialogPanel.add(emailIcon, gbc);
 
-        
         JLabel title = new JLabel("Check Your Email", SwingConstants.CENTER);
-        title.setFont(StyleConfig.FONT_SUBTITLE);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
         title.setForeground(StyleConfig.TEXT_COLOR);
         gbc.gridy = 1;
-        gbc.insets = new Insets(5, 40, 3, 40);
+        gbc.insets = new Insets(3, 40, 2, 40);
         dialogPanel.add(title, gbc);
 
-        
         JLabel desc = new JLabel(
                 "<html><center>We've sent a verification code to<br><b>" + pendingEmail + "</b></center></html>",
                 SwingConstants.CENTER);
-        desc.setFont(StyleConfig.FONT_SMALL);
+        desc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         desc.setForeground(StyleConfig.TEXT_SECONDARY);
         gbc.gridy = 2;
-        gbc.insets = new Insets(0, 40, 5, 40);
+        gbc.insets = new Insets(0, 40, 8, 40);
         dialogPanel.add(desc, gbc);
 
-        
-        JLabel otpHint = new JLabel(
-                "<html><center>Please check your inbox (and spam folder) for the code.</center></html>",
-                SwingConstants.CENTER);
-        otpHint.setFont(StyleConfig.FONT_SMALL);
+        String otpHintText = simulatedDelivery
+                ? "<html><center>SMTP is not configured. Use this local code for now:<br><b style='color:#d34045; font-size:16px;'>"
+                        + generatedOtp + "</b></center></html>"
+                : "<html><center>Please check your inbox (and spam folder) for the code.</center></html>";
+        JLabel otpHint = new JLabel(otpHintText, SwingConstants.CENTER);
+        otpHint.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         otpHint.setForeground(StyleConfig.TEXT_SECONDARY);
         gbc.gridy = 3;
-        gbc.insets = new Insets(10, 40, 10, 40);
+        gbc.insets = new Insets(2, 40, 10, 40);
         dialogPanel.add(otpHint, gbc);
 
-        
         JTextField[] otpFields = new JTextField[6];
-        Runnable onComplete = () -> {
-            
-        };
-        JPanel otpControls = createOtpBoxRow(otpFields, onComplete);
+        JPanel otpControls = createOtpBoxRow(otpFields, () -> {
+        });
         gbc.gridy = 4;
-        gbc.insets = new Insets(5, 40, 5, 40);
+        gbc.insets = new Insets(2, 40, 8, 40);
         dialogPanel.add(otpControls, gbc);
 
-        
-        JLabel resendLabel = new JLabel("<html>Didn't receive a code? <font color='" + String.format("#%06x", StyleConfig.PRIMARY_COLOR.getRGB() & 0xFFFFFF) + "'><b>Resend</b></font></html>", SwingConstants.CENTER);
+        JLabel resendLabel = new JLabel(
+                "<html>Didn't receive a code? <font color='" + String.format("#%06x", StyleConfig.PRIMARY_COLOR.getRGB() & 0xFFFFFF) + "'><b>Resend</b></font></html>",
+                SwingConstants.CENTER);
         resendLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         resendLabel.setForeground(StyleConfig.TEXT_LIGHT);
         resendLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         resendLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                boolean sent = com.playtrack.util.SpringContext.getBean(OtpService.class).sendOtp(pendingEmail);
+                OtpService otpService = com.playtrack.util.SpringContext.getBean(OtpService.class);
+                boolean sent = otpService.sendOtp(pendingEmail);
                 if (!sent) {
                     JOptionPane.showMessageDialog(otpDialog,
-                            "Unable to resend verification code. Check SMTP settings.",
+                            otpService.getLastDeliveryMessage(),
                             "Resend Failed",
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                JOptionPane.showMessageDialog(otpDialog, "Verification code resent to " + pendingEmail);
+                if (otpService.wasLastDeliverySimulated()) {
+                    showLocalOtpNotice(otpDialog, pendingEmail, otpService.getCurrentOtp());
+                } else {
+                    JOptionPane.showMessageDialog(otpDialog, "Verification code resent to " + pendingEmail);
+                }
                 for (JTextField f : otpFields) f.setText("");
                 otpFields[0].requestFocusInWindow();
             }
         });
         gbc.gridy = 5;
-        gbc.insets = new Insets(0, 40, 10, 40);
+        gbc.insets = new Insets(0, 40, 6, 40);
         dialogPanel.add(resendLabel, gbc);
 
-        
-        JLabel errorLabel = new JLabel("", SwingConstants.CENTER);
-        errorLabel.setFont(StyleConfig.FONT_SMALL);
-        errorLabel.setForeground(StyleConfig.ERROR_COLOR);
+        JLabel errorLabel = createErrorLabel();
+        errorLabel.setPreferredSize(new Dimension(320, 20));
         gbc.gridy = 6;
-        gbc.insets = new Insets(0, 40, 5, 40);
+        gbc.insets = new Insets(0, 40, 6, 40);
         dialogPanel.add(errorLabel, gbc);
 
-        
-        JButton verifyBtn = new JButton("VERIFY & CREATE ACCOUNT");
-        verifyBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        verifyBtn.setForeground(Color.WHITE);
-        verifyBtn.setBackground(StyleConfig.PRIMARY_COLOR);
-        verifyBtn.setPreferredSize(new Dimension(300, 44));
-        verifyBtn.setFocusPainted(false);
-        verifyBtn.setBorderPainted(false);
-        verifyBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton verifyBtn = createGradientButton("VERIFY & CREATE ACCOUNT");
         verifyBtn.addActionListener(ev -> {
             StringBuilder sb = new StringBuilder();
             for (JTextField f : otpFields) sb.append(f.getText());
@@ -1214,8 +1216,13 @@ public class AuthFrame extends JFrame {
             }
         });
         gbc.gridy = 7;
-        gbc.insets = new Insets(5, 40, 20, 40);
+        gbc.insets = new Insets(3, 50, 18, 50);
         dialogPanel.add(verifyBtn, gbc);
+
+        gbc.gridy = 8;
+        gbc.weighty = 1.0;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        dialogPanel.add(Box.createVerticalGlue(), gbc);
 
         otpDialog.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
