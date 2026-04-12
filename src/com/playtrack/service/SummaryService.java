@@ -31,7 +31,7 @@ public class SummaryService {
 
     public double getAverageRating(int userId) {
         List<Review> reviews = reviewDAO.getRecentReviews(userId, 1000);
-        // Batch fetch all media IDs to avoid N+1 DB queries
+     
         java.util.Set<Integer> validMediaIds = mediaDAO.getMediaByUser(userId, "All").stream()
             .map(MediaItem::getId)
             .collect(java.util.stream.Collectors.toSet());
@@ -69,7 +69,7 @@ public class SummaryService {
 
     public List<RatedMedia> getTopRatedMedia(int userId, int limit) {
         List<Review> allReviews = reviewDAO.getRecentReviews(userId, 1000);
-        // Batch fetch all media items to avoid N+1 DB queries
+        
         java.util.Map<Integer, MediaItem> mediaMap = mediaDAO.getMediaByUser(userId, "All").stream()
             .collect(java.util.stream.Collectors.toMap(MediaItem::getId, m -> m, (a, b) -> a));
         return allReviews.stream()

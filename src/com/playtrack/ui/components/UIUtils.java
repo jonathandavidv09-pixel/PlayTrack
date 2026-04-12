@@ -9,7 +9,7 @@ import javax.imageio.ImageIO;
 
 public class UIUtils {
 
-    // Cached PNG icons map
+    
     private static final Map<String, BufferedImage> iconCache = new HashMap<>();
     private static BufferedImage authBackgroundImage;
 
@@ -89,7 +89,7 @@ public class UIUtils {
             }
 
             Composite oldComposite = g2.getComposite();
-            // Keep image visible but still subtle.
+            
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.34f));
             g2.drawImage(bgImage, drawX, drawY, drawW, drawH, null);
             g2.setComposite(oldComposite);
@@ -111,26 +111,26 @@ public class UIUtils {
         g2.fillRect(0, 0, width, height);
     }
 
-    /**
-     * Draws a tinted version of a BufferedImage centered at (cx, cy) with the given size.
-     */
+    
+
+
     private static void drawTintedIcon(Graphics2D g2, BufferedImage src, int cx, int cy, int size, Color color) {
         if (src == null) return;
-        // Scale to target size
+        
         double srcW = src.getWidth();
         double srcH = src.getHeight();
         double aspectScale = Math.min((double)size / srcW, (double)size / srcH);
         int drawW = Math.max((int) Math.round(srcW * aspectScale), 1);
         int drawH = Math.max((int) Math.round(srcH * aspectScale), 1);
 
-        // Create tinted + scaled copy
+        
         java.awt.Image scaledSrc = src.getScaledInstance(drawW, drawH, java.awt.Image.SCALE_SMOOTH);
         BufferedImage tinted = new BufferedImage(drawW, drawH, BufferedImage.TYPE_INT_ARGB);
         Graphics2D tg = tinted.createGraphics();
         tg.drawImage(scaledSrc, 0, 0, null);
         tg.dispose();
 
-        // Tint pixels
+        
         int tintRGB = (color.getRed() << 16) | (color.getGreen() << 8) | color.getBlue();
         int[] pixels =  tinted.getRGB(0, 0, drawW, drawH, null, 0, drawW);
         for (int i = 0; i < pixels.length; i++) {
@@ -141,30 +141,30 @@ public class UIUtils {
         } 
         tinted.setRGB(0, 0, drawW, drawH, pixels, 0, drawW);
 
-        // Draw centered
+        
         g2.drawImage(tinted, cx - drawW / 2, cy - drawH / 2, null);
     }
 
-    /**
-     * Draws a tinted + rotated version of a BufferedImage centered at (cx, cy) with the given size.
-     */
+    
+
+
     private static void drawTintedRotatedIcon(Graphics2D g2, BufferedImage src, int cx, int cy, int size, Color color, double angleRadians) {
         if (src == null) return;
-        // Scale to target size
+        
         double srcW = src.getWidth();
         double srcH = src.getHeight();
         double aspectScale = Math.min((double)size / srcW, (double)size / srcH);
         int drawW = Math.max((int) Math.round(srcW * aspectScale), 1);
         int drawH = Math.max((int) Math.round(srcH * aspectScale), 1);
 
-        // Create tinted + scaled copy
+        
         java.awt.Image scaledSrc = src.getScaledInstance(drawW, drawH, java.awt.Image.SCALE_SMOOTH);
         BufferedImage tinted = new BufferedImage(drawW, drawH, BufferedImage.TYPE_INT_ARGB);
         Graphics2D tg = tinted.createGraphics();
         tg.drawImage(scaledSrc, 0, 0, null);
         tg.dispose();
 
-        // Tint pixels
+        
         int tintRGB = (color.getRed() << 16) | (color.getGreen() << 8) | color.getBlue();
         int[] pixels = tinted.getRGB(0, 0, drawW, drawH, null, 0, drawW);
         for (int i = 0; i < pixels.length; i++) {
@@ -175,7 +175,7 @@ public class UIUtils {
         }
         tinted.setRGB(0, 0, drawW, drawH, pixels, 0, drawW);
 
-        // Draw centered with rotation
+        
         Graphics2D rg = (Graphics2D) g2.create();
         rg.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         rg.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -197,7 +197,7 @@ public class UIUtils {
         if (src != null) {
             int cx = x + width / 2;
             int cy = y + height / 2;
-            int size = 20; // 20 matches previous hardcoded target dimensions
+            int size = 20; 
             drawTintedIcon(g2, src, cx, cy, size, color);
         }
     }
@@ -210,12 +210,21 @@ public class UIUtils {
     }
 
     public static void drawArrowIcon(Graphics2D g2, int x, int y, int width, int height, Color color, boolean right) {
-        BufferedImage src = getIcon(right ? "arrow_right" : "arrow_left");
-        if (src != null) {
-            int cx = x + width / 2;
-            int cy = y + height / 2;
-            int size = Math.max(Math.min(width, height) * 2 / 3, 16);
-            drawTintedIcon(g2, src, cx, cy, size, color);
+        int cx = x + width / 2;
+        int cy = y + height / 2;
+        int size = Math.max(Math.min(width, height) * 2 / 3, 16);
+
+        
+        BufferedImage base = getIcon("arrow_right");
+        if (base != null) {
+            drawTintedRotatedIcon(g2, base, cx, cy, size, color, right ? 0 : Math.PI);
+            return;
+        }
+
+        
+        BufferedImage fallback = getIcon(right ? "arrow_right" : "arrow_left");
+        if (fallback != null) {
+            drawTintedIcon(g2, fallback, cx, cy, size, color);
         }
     }
 
@@ -255,7 +264,7 @@ public class UIUtils {
             return;
         }
 
-        // Fallback if icon is missing.
+        
         Graphics2D iconG = (Graphics2D) g2.create();
         iconG.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         iconG.setColor(color);

@@ -23,14 +23,14 @@ public class AuthService {
         user.setPasswordHash(hash);
 
         if (userDAO.register(user)) {
-            // Create matching profile in playtrack.db
+         
             Profile profile = new Profile();
             profile.setUserId(user.getId());
             profile.setUsername(username);
             profile.setBio("Welcome to my PlayTrack profile!");
             profileDAO.createProfile(profile);
 
-            // Log the signup
+          
             com.playtrack.util.DatabaseLogger.logActivity(username, "Sign Up", "User registered a new account");
 
             return true;

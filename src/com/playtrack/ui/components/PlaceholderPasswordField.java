@@ -96,13 +96,13 @@ public class PlaceholderPasswordField extends JPasswordField {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Background
+        
         g2.setPaint(new GradientPaint(
                 0, 0, focused ? StyleConfig.INPUT_BG_FOCUS : StyleConfig.INPUT_BG,
                 0, getHeight(), StyleConfig.BACKGROUND_LIGHT));
         g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
 
-        // Border
+        
         if (focused) {
             g2.setColor(StyleConfig.INPUT_FOCUS);
             g2.setStroke(new BasicStroke(2f));
@@ -112,7 +112,7 @@ public class PlaceholderPasswordField extends JPasswordField {
         }
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 13, 13));
 
-        // Left Icon
+        
         if (iconText != null) {
             g2.setColor(focused ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_LIGHT);
             g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
@@ -123,7 +123,7 @@ public class PlaceholderPasswordField extends JPasswordField {
         g2.dispose();
         super.paintComponent(g);
 
-        // Draw eye icon
+        
         Graphics2D g3 = (Graphics2D) g.create();
         g3.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 

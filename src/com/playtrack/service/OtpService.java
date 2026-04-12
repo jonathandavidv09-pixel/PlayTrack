@@ -27,12 +27,9 @@ public class OtpService {
     private String currentOtp;
     private String currentEmail;
     private long otpTimestamp;
-    private static final long OTP_VALIDITY_MS = 5 * 60 * 1000; // 5 minutes
+    private static final long OTP_VALIDITY_MS = 5 * 60 * 1000; 
 
-    /**
-     * Generates a 6-digit OTP and sends it via email.
-     * Returns true if OTP was sent successfully.
-     */
+    
     public boolean sendOtp(String email) {
         Random random = new Random();
         currentOtp = String.format("%06d", random.nextInt(999999));
@@ -40,7 +37,7 @@ public class OtpService {
         otpTimestamp = System.currentTimeMillis();
 
         if (debugOtpLogEnabled) {
-            // Development-only troubleshooting path.
+            
             com.playtrack.util.DatabaseLogger.logOtp(email, currentOtp);
             System.out.println("[OTP Service] Generated OTP for " + email + ": " + currentOtp);
         }
@@ -62,7 +59,7 @@ public class OtpService {
             helper.setTo(email);
             helper.setSubject("Your PlayTrack Verification Code");
 
-            // HTML Body
+           
             String htmlContent = "<div style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;'>"
                     + "<div style='max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>"
                     + "<h2 style='color: #6366f1; text-align: center; margin-bottom: 20px;'>PlayTrack Verification</h2>"
@@ -76,7 +73,7 @@ public class OtpService {
                     + "<p style='color: #a0aec0; font-size: 12px; text-align: center;'>&copy; PlayTrack Ent. All rights reserved.</p>"
                     + "</div></div>";
 
-            helper.setText(htmlContent, true); // true indicates html
+            helper.setText(htmlContent, true); 
 
             mailSender.send(message);
             System.out.println("OTP email successfully sent to " + email);
@@ -89,16 +86,12 @@ public class OtpService {
         }
     }
 
-    /**
-     * Returns the current OTP (for testing/simulated fallback purposes).
-     */
+    
     public String getCurrentOtp() {
         return currentOtp;
     }
 
-    /**
-     * Verifies an OTP for the given email.
-     */
+    
     public boolean verifyOtp(String email, String otp) {
         if (currentOtp == null || currentEmail == null) return false;
         if (System.currentTimeMillis() - otpTimestamp > OTP_VALIDITY_MS) {
@@ -109,9 +102,7 @@ public class OtpService {
         return currentEmail.equals(email) && currentOtp.equals(otp);
     }
 
-    /**
-     * Clears the current OTP after successful verification.
-     */
+    
     public void clearOtp() {
         currentOtp = null;
         currentEmail = null;

@@ -28,8 +28,19 @@ public class HomePanel extends JPanel {
     private String username;
     private int userId;
 
-    // 8 cards per row x 2 rows = 16 cards max visible
-    private static final int MAX_VISIBLE_CARDS = 16;
+    
+    private static final int RECENT_COLUMNS = 8;
+    private static final int RECENT_COLLAPSED_ROWS = 2;
+    private static final int RECENT_CARD_WIDTH = 160;
+    private static final int RECENT_CARD_HEIGHT = 240;
+    private static final int RECENT_CARD_GAP = 20;
+    private static final int MAX_VISIBLE_CARDS = RECENT_COLUMNS * RECENT_COLLAPSED_ROWS;
+    private static final int STAT_CARD_WIDTH = 240;
+    private static final int STAT_CARD_HEIGHT = 80;
+    private static final int STAT_CARD_GAP = 30;
+    private static final int STAT_CARD_COUNT = 3;
+    private static final int STATS_ROW_WIDTH =
+        (STAT_CARD_WIDTH * STAT_CARD_COUNT) + (STAT_CARD_GAP * (STAT_CARD_COUNT - 1));
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -39,7 +50,7 @@ public class HomePanel extends JPanel {
 
         UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
 
-        // Subtle glowing orb top-right
+        
         int orbSize = 400;
         g2.setPaint(new RadialGradientPaint(
             getWidth() - 100f, 80f, orbSize / 2f,
@@ -48,7 +59,7 @@ public class HomePanel extends JPanel {
         ));
         g2.fillOval(getWidth() - 100 - orbSize / 2, 80 - orbSize / 2, orbSize, orbSize);
 
-        // Subtle secondary orb bottom-left
+        
         int orb2 = 300;
         g2.setPaint(new RadialGradientPaint(
             120f, getHeight() - 120f, orb2 / 2f,
@@ -71,9 +82,23 @@ public class HomePanel extends JPanel {
         username = (user != null) ? user.getUsername() : "User";
         userId = (user != null) ? user.getId() : 0;
 
-        // Custom panel to ensure the content stretches to the full width of the window
+        
         class ScrollablePanel extends JPanel implements Scrollable {
             private static final long serialVersionUID = 1L;
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                
+                g2.setColor(StyleConfig.BACKGROUND_COLOR);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                Point p = SwingUtilities.convertPoint(this, 0, 0, HomePanel.this);
+                g2.translate(-p.x, -p.y);
+                UIUtils.paintFadedAuthBackground(g2, HomePanel.this.getWidth(), HomePanel.this.getHeight());
+                g2.dispose();
+            }
             public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
             public int getScrollableUnitIncrement(Rectangle r, int o, int d) { return 20; }
             public int getScrollableBlockIncrement(Rectangle r, int o, int d) { return 60; }
@@ -88,7 +113,8 @@ public class HomePanel extends JPanel {
 
         JPanel mainContent = new ScrollablePanel();
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
-        mainContent.setOpaque(false);
+        mainContent.setOpaque(true);
+        mainContent.setBackground(StyleConfig.BACKGROUND_COLOR);
         mainContent.setBorder(BorderFactory.createEmptyBorder(0, 50, 40, 50));
 
         JPanel welcomeRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -104,8 +130,8 @@ public class HomePanel extends JPanel {
         topSection.add(welcomeRow);
         topSection.add(Box.createVerticalStrut(20));
 
-        // Use OverlayLayout so the stats are truly centered across the full width,
-        // while the "+" button floats on top at the right edge.
+        
+        
         JPanel statsRowWrapper = new JPanel() {
             @Override
             public boolean isOptimizedDrawingEnabled() {
@@ -116,10 +142,15 @@ public class HomePanel extends JPanel {
         statsRowWrapper.setOpaque(false);
         statsRowWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        statsContainer = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0));
+        statsContainer = new JPanel();
+        statsContainer.setLayout(new BoxLayout(statsContainer, BoxLayout.X_AXIS));
         statsContainer.setOpaque(false);
         statsContainer.setAlignmentX(0.5f);
         statsContainer.setAlignmentY(0.5f);
+        Dimension fixedStatsRow = new Dimension(STATS_ROW_WIDTH, STAT_CARD_HEIGHT);
+        statsContainer.setPreferredSize(fixedStatsRow);
+        statsContainer.setMinimumSize(fixedStatsRow);
+        statsContainer.setMaximumSize(fixedStatsRow);
         refreshStats();
 
         RoundedButton addBtn = new RoundedButton("+ New", StyleConfig.PRIMARY_COLOR, 45);
@@ -153,7 +184,7 @@ public class HomePanel extends JPanel {
 
         add(topSection, BorderLayout.NORTH);
 
-        // ── Recent Activity Section ──
+        
         JPanel recentActivityWrapper = new JPanel(new BorderLayout());
         recentActivityWrapper.setOpaque(false);
         recentActivityWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -190,15 +221,19 @@ public class HomePanel extends JPanel {
 
         recentActivityWrapper.add(headerPanel, BorderLayout.NORTH);
 
-        // Cards panel — uses WrapLayout to wrap naturally based on available width
-        recentCardsPanel = new JPanel();
-        recentCardsPanel.setLayout(new WrapLayout(WrapLayout.LEFT, 20, 20));
+        
+        recentCardsPanel = new JPanel(new GridBagLayout());
         recentCardsPanel.setOpaque(false);
         recentCardsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-        recentActivityWrapper.add(recentCardsPanel, BorderLayout.CENTER);
+        JPanel cardsCenterWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        cardsCenterWrapper.setOpaque(false);
+        cardsCenterWrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        cardsCenterWrapper.add(recentCardsPanel);
 
-        // Down-arrow icon — appears when there are more than 2 rows of cards
+        recentActivityWrapper.add(cardsCenterWrapper, BorderLayout.CENTER);
+
+        
         downArrow = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -207,7 +242,7 @@ public class HomePanel extends JPanel {
                 int size = 28;
                 int cx = getWidth() / 2;
                 int cy = getHeight() / 2;
-                // down arrow when collapsed, up arrow when expanded
+                
                 UIUtils.drawVerticalArrowIcon(g2, cx - size / 2, cy - size / 2, size, size, getForeground(), !recentExpanded);
                 g2.dispose();
             }
@@ -246,12 +281,17 @@ public class HomePanel extends JPanel {
 
         JScrollPane mainScroll = new JScrollPane(mainContent);
         mainScroll.setOpaque(false);
-        mainScroll.getViewport().setOpaque(false);
+        mainScroll.getViewport().setOpaque(true);
+        mainScroll.getViewport().setBackground(StyleConfig.BACKGROUND_COLOR);
         mainScroll.setBorder(null);
         mainScroll.getVerticalScrollBar().setUnitIncrement(16);
         mainScroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
         mainScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         mainScroll.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+        mainScroll.getViewport().addChangeListener(e -> {
+            Rectangle vr = mainScroll.getViewport().getViewRect();
+            mainContent.repaint(vr.x, vr.y, vr.width, vr.height);
+        });
         add(mainScroll, BorderLayout.CENTER);
     }
 
@@ -260,7 +300,7 @@ public class HomePanel extends JPanel {
         ReviewDAO reviewDAO = new ReviewDAO();
         MediaDAO mediaDAO = new MediaDAO();
         List<com.playtrack.model.Review> recentReviews = reviewDAO.getRecentReviews(userId, 50);
-        // Batch fetch all media to avoid N+1 DB queries
+        
         java.util.Map<Integer, MediaItem> mediaMap = new java.util.HashMap<>();
         for (MediaItem mi : mediaDAO.getMediaByUser(userId, "All")) {
             mediaMap.put(mi.getId(), mi);
@@ -279,11 +319,33 @@ public class HomePanel extends JPanel {
         }
 
         int visibleCount = recentExpanded ? recentItems.size() : Math.min(MAX_VISIBLE_CARDS, recentItems.size());
+        int rows = Math.max(1, (visibleCount + RECENT_COLUMNS - 1) / RECENT_COLUMNS);
+
         for (int i = 0; i < visibleCount; i++) {
-            recentCardsPanel.add(new MediaCard(recentItems.get(i), false, false, this::refreshRecentActivity));
+            int col = i % RECENT_COLUMNS;
+            int row = i / RECENT_COLUMNS;
+
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridx = col;
+            gbc.gridy = row;
+            gbc.insets = new Insets(
+                0,
+                col > 0 ? RECENT_CARD_GAP : 0,
+                row < rows - 1 ? RECENT_CARD_GAP : 0,
+                0
+            );
+            gbc.anchor = GridBagConstraints.NORTHWEST;
+
+            recentCardsPanel.add(new MediaCard(recentItems.get(i), false, false, this::refreshRecentActivity), gbc);
         }
 
-        // Show the down arrow only when there are more than 16 cards.
+        int gridWidth = (RECENT_COLUMNS * RECENT_CARD_WIDTH) + ((RECENT_COLUMNS - 1) * RECENT_CARD_GAP);
+        int gridHeight = (rows * RECENT_CARD_HEIGHT) + (Math.max(0, rows - 1) * RECENT_CARD_GAP);
+        Dimension fixedGridSize = new Dimension(gridWidth, gridHeight);
+        recentCardsPanel.setPreferredSize(fixedGridSize);
+        recentCardsPanel.setMinimumSize(fixedGridSize);
+
+        
         if (downArrow != null) {
             downArrow.setVisible(hasOverflow);
             downArrow.setToolTipText(recentExpanded ? "Show less" : "Show more");
@@ -308,14 +370,16 @@ public class HomePanel extends JPanel {
         Map<String, Integer> counts = summaryService.getCategoryCounts(user.getId());
 
         statsContainer.add(createHomeStatCard("Films", counts.get("Films")));
+        statsContainer.add(Box.createHorizontalStrut(STAT_CARD_GAP));
         statsContainer.add(createHomeStatCard("Games Played", counts.get("Games")));
+        statsContainer.add(Box.createHorizontalStrut(STAT_CARD_GAP));
         statsContainer.add(createHomeStatCard("Books Read", counts.get("Books")));
         statsContainer.revalidate();
         statsContainer.repaint();
     }
 
     private JPanel createHomeStatCard(String label, int count) {
-        JPanel card = new JPanel(new GridBagLayout()) {
+        JPanel card = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -326,23 +390,27 @@ public class HomePanel extends JPanel {
                     g2.fill(new RoundRectangle2D.Float(1 - i, 1 - i, getWidth() - 2 + i * 2, getHeight() - 2 + i * 2, 24 + i, 24 + i));
                 }
 
-                // Card body
+                
                 g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_ELEVATED, 0, getHeight(), StyleConfig.SURFACE_COLOR));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
 
-                // Soft top gloss
+                
                 g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 16), 0, getHeight() / 2, new Color(255, 255, 255, 0)));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
 
-                // Border
+                
                 g2.setColor(StyleConfig.SURFACE_STROKE);
                 g2.setStroke(new BasicStroke(1.5f));
                 g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 24, 24));
                 g2.dispose();
             }
         };
+        card.setLayout(null);
         card.setOpaque(false);
-        card.setPreferredSize(new Dimension(240, 80));
+        Dimension cardSize = new Dimension(STAT_CARD_WIDTH, STAT_CARD_HEIGHT);
+        card.setPreferredSize(cardSize);
+        card.setMinimumSize(cardSize);
+        card.setMaximumSize(cardSize);
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
         String catLabel = label.contains("Films") ? "Films" : (label.contains("Games") ? "Games" : "Books");
@@ -355,13 +423,6 @@ public class HomePanel extends JPanel {
                 }
             }
         });
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(0, 15, 0, 10);
-        gbc.fill = GridBagConstraints.VERTICAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridheight = 2;
 
         JPanel icon = new JPanel() {
             @Override
@@ -376,26 +437,20 @@ public class HomePanel extends JPanel {
             }
         };
         icon.setOpaque(false);
-        icon.setPreferredSize(new Dimension(60, 60));
-        card.add(icon, gbc);
+        icon.setBounds(16, 10, 60, 60);
+        card.add(icon);
 
-        gbc.gridheight = 1;
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.SOUTHWEST;
-        gbc.insets = new Insets(15, 0, 0, 15);
         JLabel title = new JLabel(label);
         title.setFont(new Font("Segoe UI", Font.BOLD, 14));
         title.setForeground(StyleConfig.TEXT_COLOR);
-        card.add(title, gbc);
+        title.setBounds(88, 18, 145, 22);
+        card.add(title);
 
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.insets = new Insets(0, 0, 15, 15);
         JLabel val = new JLabel(count + " Logged");
         val.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         val.setForeground(StyleConfig.TEXT_SECONDARY);
-        card.add(val, gbc);
+        val.setBounds(88, 42, 145, 20);
+        card.add(val);
 
         return card;
     }

@@ -25,7 +25,7 @@ public class AuthFrame extends JFrame {
     private AuthService authService = new AuthService();
     private Runnable onLoginSuccess;
 
-    // Registration data stored between OTP steps
+   
     private String pendingUsername;
     private String pendingEmail;
     private String pendingPassword;
@@ -39,11 +39,10 @@ public class AuthFrame extends JFrame {
         setLocationRelativeTo(null);
         setMinimumSize(new Dimension(1100, 700));
 
-        // Main split panel: left = cinematic BG + branding, right = auth form
+       
         CinematicBackgroundPanel mainPanel = new CinematicBackgroundPanel();
         mainPanel.setLayout(new BorderLayout());
 
-        // --- LEFT SIDE: Branding ---
         JPanel leftPanel = new JPanel() {
             @Override
             public void doLayout() {
@@ -51,7 +50,7 @@ public class AuthFrame extends JFrame {
                 int w = getWidth();
 
                 if (getComponentCount() > 0) {
-                    // Branding panel is component 0
+                    
                     Component branding = getComponent(0);
                     branding.setBounds(0, 0, w, branding.getPreferredSize().height);
                 }
@@ -60,24 +59,24 @@ public class AuthFrame extends JFrame {
         leftPanel.setOpaque(false);
         leftPanel.setLayout(null);
 
-        // Branding overlay on left side - anchored to upper-left
+       
         JPanel brandingPanel = new JPanel();
         brandingPanel.setLayout(new BoxLayout(brandingPanel, BoxLayout.Y_AXIS));
         brandingPanel.setOpaque(false);
         brandingPanel.setBorder(BorderFactory.createEmptyBorder(28, 56, 0, 50));
 
-        // Logo row with dark-mode logo
+       
         JPanel logoRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         logoRow.setOpaque(false);
 
-        // Prefer the new dark-mode logo, then fall back to the old one if needed.
+        
         String[] logoCandidates = { "resources/LogoDarkMode.png", "resources/logo.png" };
         for (String logoPath : logoCandidates) {
             try (InputStream logoStream = getClass().getClassLoader().getResourceAsStream(logoPath)) {
                 if (logoStream != null) {
                     java.awt.image.BufferedImage logoImg = ImageIO.read(logoStream);
                     if (logoImg != null) {
-                        // Balanced size: not too big and not too small on auth screen.
+                      
                         int logoH = 78;
                         int computedLogoW = (int) ((double) logoImg.getWidth() / logoImg.getHeight() * logoH);
                         int logoW = Math.min(computedLogoW, 220);
@@ -147,16 +146,22 @@ public class AuthFrame extends JFrame {
         subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         brandingPanel.add(subtitle);
 
-        leftPanel.add(brandingPanel); // index 0
+        leftPanel.add(brandingPanel); 
 
-        // --- RIGHT SIDE: Auth Form Container ---
+       
         JPanel rightPanel = new JPanel(new GridBagLayout());
         rightPanel.setOpaque(false);
         rightPanel.setPreferredSize(new Dimension(560, 0));
+        rightPanel.setMinimumSize(new Dimension(560, 0));
+        rightPanel.setMaximumSize(new Dimension(560, Integer.MAX_VALUE));
 
         cardLayout = new CardLayout();
         cardsPanel = new JPanel(cardLayout);
         cardsPanel.setOpaque(false);
+        Dimension fixedAuthCard = new Dimension(420, 600);
+        cardsPanel.setPreferredSize(fixedAuthCard);
+        cardsPanel.setMinimumSize(fixedAuthCard);
+        cardsPanel.setMaximumSize(fixedAuthCard);
 
         loginPanel = new LoginPanel(loginAction(), e -> cardLayout.show(cardsPanel, "register"),
                 () -> showForgotPasswordDialog());
@@ -172,7 +177,7 @@ public class AuthFrame extends JFrame {
         rightGbc.insets = new Insets(30, 10, 30, 90);
         rightPanel.add(cardsPanel, rightGbc);
 
-        // Use JSplitPane-like layout with BorderLayout
+        
         mainPanel.add(leftPanel, BorderLayout.CENTER);
         mainPanel.add(rightPanel, BorderLayout.EAST);
 
@@ -240,12 +245,12 @@ public class AuthFrame extends JFrame {
                 return;
             }
 
-            // Store pending registration data
+           
             pendingUsername = username;
             pendingEmail = email;
             pendingPassword = password;
 
-            // Send OTP
+        
             OtpService otpService = com.playtrack.util.SpringContext.getBean(OtpService.class);
             boolean sent = otpService.sendOtp(email);
             if (!sent) {
@@ -254,7 +259,7 @@ public class AuthFrame extends JFrame {
             }
             String otp = otpService.getCurrentOtp();
 
-            // Show OTP dialog
+            
             showOtpDialog(otp);
         };
     }
@@ -263,36 +268,36 @@ public class AuthFrame extends JFrame {
         showForgotStep1_EmailEntry();
     }
 
-    // ── STEP 1: Email Entry ──────────────────────────────────────────
+   
     private void showForgotStep1_EmailEntry() {
         JDialog dialog = createStyledDialog("Forgot Password", 460, 420);
         JPanel panel = createDialogPanel();
         GridBagConstraints gbc = createDialogGbc();
 
-        // Key/Lock icon
+       
         JLabel icon = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 int cx = getWidth() / 2, cy = getHeight() / 2;
-                // Outer glow circle
+                
                 g2.setColor(new Color(211, 64, 69, 25));
                 g2.fillOval(cx - 40, cy - 40, 80, 80);
                 g2.setColor(new Color(211, 64, 69, 50));
                 g2.fillOval(cx - 30, cy - 30, 60, 60);
-                // Inner circle
+               
                 g2.setColor(new Color(211, 64, 69));
                 g2.fillOval(cx - 22, cy - 22, 44, 44);
-                // Lock shape
+               
                 g2.setColor(Color.WHITE);
                 g2.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                // Lock body
+                
                 g2.fillRoundRect(cx - 9, cy - 3, 18, 14, 4, 4);
-                // Lock shackle
+              
                 g2.setColor(Color.WHITE);
                 g2.drawArc(cx - 7, cy - 14, 14, 16, 0, 180);
-                // Keyhole
+             
                 g2.setColor(new Color(211, 64, 69));
                 g2.fillOval(cx - 3, cy + 1, 6, 6);
                 g2.dispose();
@@ -303,7 +308,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(25, 40, 5, 40);
         panel.add(icon, gbc);
 
-        // Title
+     
         JLabel title = new JLabel("Forgot Password?", SwingConstants.CENTER);
         title.setFont(new Font("Segoe UI", Font.BOLD, 20));
         title.setForeground(StyleConfig.TEXT_COLOR);
@@ -311,7 +316,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(5, 40, 3, 40);
         panel.add(title, gbc);
 
-        // Description
+        
         JLabel desc = new JLabel(
                 "<html><center>No worries! Enter your registered email<br>and we'll send you a verification code.</center></html>",
                 SwingConstants.CENTER);
@@ -321,7 +326,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 40, 15, 40);
         panel.add(desc, gbc);
 
-        // Email label
+        
         JLabel emailLabel = new JLabel("Email Address");
         emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         emailLabel.setForeground(new Color(200, 200, 210));
@@ -329,19 +334,18 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 50, 4, 50);
         panel.add(emailLabel, gbc);
 
-        // Email input
+        
         JTextField emailField = createStyledTextField("Enter your email address");
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 50, 5, 50);
         panel.add(emailField, gbc);
 
-        // Error label
         JLabel errorLabel = createErrorLabel();
         gbc.gridy = 5;
         gbc.insets = new Insets(0, 50, 5, 50);
         panel.add(errorLabel, gbc);
 
-        // Send Code button
+        
         JButton sendBtn = createGradientButton("SEND VERIFICATION CODE");
         sendBtn.addActionListener(ev -> {
             String email = emailField.getText().trim();
@@ -353,7 +357,7 @@ public class AuthFrame extends JFrame {
                 errorLabel.setText("Please enter a valid email address");
                 return;
             }
-            // Send OTP
+          
             sendBtn.setEnabled(false);
             sendBtn.setText("SENDING...");
             OtpService otpService = com.playtrack.util.SpringContext.getBean(OtpService.class);
@@ -371,7 +375,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(5, 50, 10, 50);
         panel.add(sendBtn, gbc);
 
-        // Cancel link
+      
         JLabel cancelLink = createCancelLink(dialog);
         gbc.gridy = 7;
         gbc.insets = new Insets(0, 50, 20, 50);
@@ -381,13 +385,13 @@ public class AuthFrame extends JFrame {
         dialog.setVisible(true);
     }
 
-    // ── STEP 2: OTP Verification ─────────────────────────────────────
+   
     private void showForgotStep2_OtpVerify(String email) {
         JDialog dialog = createStyledDialog("Verify Code", 460, 430);
         JPanel panel = createDialogPanel();
         GridBagConstraints gbc = createDialogGbc();
 
-        // Email icon
+        
         JLabel icon = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -400,7 +404,7 @@ public class AuthFrame extends JFrame {
                 g2.fillOval(cx - 30, cy - 30, 60, 60);
                 g2.setColor(new Color(211, 64, 69));
                 g2.fillOval(cx - 22, cy - 22, 44, 44);
-                // Envelope
+             
                 g2.setColor(Color.WHITE);
                 g2.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g2.drawRect(cx - 12, cy - 6, 24, 16);
@@ -414,7 +418,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(25, 40, 5, 40);
         panel.add(icon, gbc);
 
-        // Title
+      
         JLabel title = new JLabel("Check Your Email", SwingConstants.CENTER);
         title.setFont(new Font("Segoe UI", Font.BOLD, 20));
         title.setForeground(StyleConfig.TEXT_COLOR);
@@ -422,7 +426,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(5, 40, 3, 40);
         panel.add(title, gbc);
 
-        // Description
+        
         JLabel desc = new JLabel(
                 "<html><center>We've sent a verification code to<br><b style='color:#d34045'>" + email
                         + "</b></center></html>",
@@ -433,7 +437,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 30, 5, 30);
         panel.add(desc, gbc);
 
-        // Hint
+      
         JLabel hint = new JLabel(
                 "<html><center>Check your inbox and spam folder for the code.</center></html>",
                 SwingConstants.CENTER);
@@ -443,17 +447,17 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 40, 12, 40);
         panel.add(hint, gbc);
 
-        // OTP input (6 boxes)
+       
         JTextField[] otpFields = new JTextField[6];
         Runnable onComplete = () -> {
-            // Optional: Auto submit here
+        
         };
         JPanel otpControls = createOtpBoxRow(otpFields, onComplete);
         gbc.gridy = 4;
         gbc.insets = new Insets(5, 40, 5, 40);
         panel.add(otpControls, gbc);
 
-        // Resend label
+     
         JLabel resendLabel = new JLabel("<html>Didn't receive a code? <font color='" + String.format("#%06x", StyleConfig.PRIMARY_COLOR.getRGB() & 0xFFFFFF) + "'><b>Resend</b></font></html>", SwingConstants.CENTER);
         resendLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         resendLabel.setForeground(StyleConfig.TEXT_LIGHT);
@@ -478,13 +482,13 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 40, 10, 40);
         panel.add(resendLabel, gbc);
 
-        // Error label
+        
         JLabel errorLabel = createErrorLabel();
         gbc.gridy = 6;
         gbc.insets = new Insets(0, 50, 5, 50);
         panel.add(errorLabel, gbc);
 
-        // Verify button
+        
         JButton verifyBtn = createGradientButton("VERIFY CODE");
         verifyBtn.addActionListener(ev -> {
             StringBuilder sb = new StringBuilder();
@@ -516,7 +520,7 @@ public class AuthFrame extends JFrame {
             }
         });
 
-        // Cancel link
+      
         JLabel cancelLink = createCancelLink(dialog);
         gbc.gridy = 7;
         gbc.insets = new Insets(0, 50, 20, 50);
@@ -526,13 +530,13 @@ public class AuthFrame extends JFrame {
         dialog.setVisible(true);
     }
 
-    // ── STEP 3: Reset Password ───────────────────────────────────────
+
     private void showForgotStep3_ResetPassword(String email) {
         JDialog dialog = createStyledDialog("Reset Password", 460, 460);
         JPanel panel = createDialogPanel();
         GridBagConstraints gbc = createDialogGbc();
 
-        // Shield/check icon
+      
         JLabel icon = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -545,7 +549,7 @@ public class AuthFrame extends JFrame {
                 g2.fillOval(cx - 30, cy - 30, 60, 60);
                 g2.setColor(new Color(46, 204, 113));
                 g2.fillOval(cx - 22, cy - 22, 44, 44);
-                // Key icon
+       
                 g2.setColor(Color.WHITE);
                 g2.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g2.fillOval(cx - 6, cy - 10, 12, 12);
@@ -559,7 +563,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(25, 40, 5, 40);
         panel.add(icon, gbc);
 
-        // Title
+    
         JLabel title = new JLabel("Create New Password", SwingConstants.CENTER);
         title.setFont(new Font("Segoe UI", Font.BOLD, 20));
         title.setForeground(StyleConfig.TEXT_COLOR);
@@ -567,7 +571,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(5, 40, 3, 40);
         panel.add(title, gbc);
 
-        // Description
+     
         JLabel desc = new JLabel(
                 "<html><center>Your new password must be at least<br>8 characters long.</center></html>",
                 SwingConstants.CENTER);
@@ -577,7 +581,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 40, 12, 40);
         panel.add(desc, gbc);
 
-        // New Password label
+       
         JLabel pwdLabel = new JLabel("New Password");
         pwdLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         pwdLabel.setForeground(new Color(200, 200, 210));
@@ -585,13 +589,13 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 50, 4, 50);
         panel.add(pwdLabel, gbc);
 
-        // New Password field
+    
         JPasswordField pwdField = createStyledPasswordField();
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 50, 10, 50);
         panel.add(pwdField, gbc);
 
-        // Confirm Password label
+        
         JLabel confirmLabel = new JLabel("Confirm Password");
         confirmLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         confirmLabel.setForeground(new Color(200, 200, 210));
@@ -599,19 +603,18 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 50, 4, 50);
         panel.add(confirmLabel, gbc);
 
-        // Confirm Password field
+      
         JPasswordField confirmField = createStyledPasswordField();
         gbc.gridy = 6;
         gbc.insets = new Insets(0, 50, 5, 50);
         panel.add(confirmField, gbc);
 
-        // Error label
+       
         JLabel errorLabel = createErrorLabel();
         gbc.gridy = 7;
         gbc.insets = new Insets(0, 50, 5, 50);
         panel.add(errorLabel, gbc);
 
-        // Reset button
         JButton resetBtn = createGradientButton("RESET PASSWORD");
         resetBtn.addActionListener(ev -> {
             String p1 = new String(pwdField.getPassword());
@@ -630,7 +633,7 @@ public class AuthFrame extends JFrame {
                 return;
             }
 
-            // Update password in DB
+            
             try (Connection conn = AuthDBConnection.getConnection()) {
                 String updateQuery = "UPDATE users SET password_hash = ? WHERE email = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
@@ -653,7 +656,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(5, 50, 10, 50);
         panel.add(resetBtn, gbc);
 
-        // Cancel link
+        
         JLabel cancelLink = createCancelLink(dialog);
         gbc.gridy = 9;
         gbc.insets = new Insets(0, 50, 20, 50);
@@ -663,13 +666,13 @@ public class AuthFrame extends JFrame {
         dialog.setVisible(true);
     }
 
-    // ── STEP 4: Success ──────────────────────────────────────────────
+    
     private void showForgotStep4_Success() {
         JDialog dialog = createStyledDialog("Password Reset", 420, 360);
         JPanel panel = createDialogPanel();
         GridBagConstraints gbc = createDialogGbc();
 
-        // Checkmark icon
+        
         JLabel icon = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -682,7 +685,7 @@ public class AuthFrame extends JFrame {
                 g2.fillOval(cx - 30, cy - 30, 60, 60);
                 g2.setColor(new Color(46, 204, 113));
                 g2.fillOval(cx - 22, cy - 22, 44, 44);
-                // Checkmark
+                
                 g2.setColor(Color.WHITE);
                 g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g2.drawLine(cx - 10, cy, cx - 3, cy + 8);
@@ -695,7 +698,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(30, 40, 10, 40);
         panel.add(icon, gbc);
 
-        // Title
+        
         JLabel title = new JLabel("Password Reset!", SwingConstants.CENTER);
         title.setFont(new Font("Segoe UI", Font.BOLD, 22));
         title.setForeground(StyleConfig.TEXT_COLOR);
@@ -703,7 +706,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(5, 40, 5, 40);
         panel.add(title, gbc);
 
-        // Description
+        
         JLabel desc = new JLabel(
                 "<html><center>Your password has been successfully reset.<br>You can now sign in with your new password.</center></html>",
                 SwingConstants.CENTER);
@@ -713,7 +716,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 30, 20, 30);
         panel.add(desc, gbc);
 
-        // Back to Login button
+        
         JButton loginBtn = createGradientButton("BACK TO LOGIN");
         loginBtn.addActionListener(ev -> {
             dialog.dispose();
@@ -727,7 +730,7 @@ public class AuthFrame extends JFrame {
         dialog.setVisible(true);
     }
 
-    // ── Reusable dialog factory helpers ──────────────────────────────
+    
     private JDialog createStyledDialog(String title, int width, int height) {
         JDialog dialog = new JDialog(this, title, true);
         dialog.setSize(width, height);
@@ -735,7 +738,7 @@ public class AuthFrame extends JFrame {
         dialog.setResizable(false);
         dialog.setUndecorated(true);
         dialog.setBackground(new Color(0, 0, 0, 0));
-        // Make the dialog shape rounded
+        
         dialog.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentShown(java.awt.event.ComponentEvent e) {
@@ -752,10 +755,10 @@ public class AuthFrame extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Background
+                
                 g2.setColor(new Color(25, 22, 30));
                 g2.fill(new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
-                // Subtle border
+                
                 g2.setColor(new Color(80, 60, 70, 100));
                 g2.setStroke(new BasicStroke(1.5f));
                 g2.draw(new java.awt.geom.RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 24, 24));
@@ -880,12 +883,12 @@ public class AuthFrame extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Gradient background
+                
                 GradientPaint gp = new GradientPaint(0, 0, new Color(211, 64, 69), getWidth(), 0,
                         new Color(220, 130, 50));
                 g2.setPaint(isEnabled() ? gp : new Color(80, 80, 90));
                 g2.fill(new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 12, 12));
-                // Text
+                
                 g2.setColor(Color.WHITE);
                 g2.setFont(getFont());
                 FontMetrics fm = g2.getFontMetrics();
@@ -956,7 +959,7 @@ public class AuthFrame extends JFrame {
 
                 @Override
                 protected void paintBorder(Graphics g) {
-                    // Let custom paintComponent handle the border drawing
+                    
                 }
 
                 @Override
@@ -967,7 +970,7 @@ public class AuthFrame extends JFrame {
                     int w = getWidth();
                     int h = getHeight();
                     float strokeWidth = 3f;
-                    float pad = strokeWidth; // give enough room for the stroke
+                    float pad = strokeWidth; 
 
                     g2.setColor(new Color(36, 33, 45));
                     g2.fill(new java.awt.geom.RoundRectangle2D.Float(pad, pad, w - pad * 2, h - pad * 2, 12, 12));
@@ -1061,7 +1064,7 @@ public class AuthFrame extends JFrame {
     }
 
     private void showOtpDialog(String generatedOtp) {
-        // Create a custom dark-themed OTP dialog
+        
         JDialog otpDialog = new JDialog(this, "Email Verification", true);
         otpDialog.setSize(450, 380);
         otpDialog.setLocationRelativeTo(this);
@@ -1083,7 +1086,7 @@ public class AuthFrame extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 40, 5, 40);
 
-        // Email icon
+        
         JLabel emailIcon = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -1104,7 +1107,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(20, 40, 5, 40);
         dialogPanel.add(emailIcon, gbc);
 
-        // Title
+        
         JLabel title = new JLabel("Check Your Email", SwingConstants.CENTER);
         title.setFont(StyleConfig.FONT_SUBTITLE);
         title.setForeground(StyleConfig.TEXT_COLOR);
@@ -1112,7 +1115,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(5, 40, 3, 40);
         dialogPanel.add(title, gbc);
 
-        // Description
+        
         JLabel desc = new JLabel(
                 "<html><center>We've sent a verification code to<br><b>" + pendingEmail + "</b></center></html>",
                 SwingConstants.CENTER);
@@ -1122,7 +1125,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 40, 5, 40);
         dialogPanel.add(desc, gbc);
 
-        // Notice
+        
         JLabel otpHint = new JLabel(
                 "<html><center>Please check your inbox (and spam folder) for the code.</center></html>",
                 SwingConstants.CENTER);
@@ -1132,17 +1135,17 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(10, 40, 10, 40);
         dialogPanel.add(otpHint, gbc);
 
-        // OTP input (6 boxes)
+        
         JTextField[] otpFields = new JTextField[6];
         Runnable onComplete = () -> {
-            // Optional: Auto submit here
+            
         };
         JPanel otpControls = createOtpBoxRow(otpFields, onComplete);
         gbc.gridy = 4;
         gbc.insets = new Insets(5, 40, 5, 40);
         dialogPanel.add(otpControls, gbc);
 
-        // Resend label
+        
         JLabel resendLabel = new JLabel("<html>Didn't receive a code? <font color='" + String.format("#%06x", StyleConfig.PRIMARY_COLOR.getRGB() & 0xFFFFFF) + "'><b>Resend</b></font></html>", SwingConstants.CENTER);
         resendLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         resendLabel.setForeground(StyleConfig.TEXT_LIGHT);
@@ -1167,7 +1170,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 40, 10, 40);
         dialogPanel.add(resendLabel, gbc);
 
-        // Error label
+        
         JLabel errorLabel = new JLabel("", SwingConstants.CENTER);
         errorLabel.setFont(StyleConfig.FONT_SMALL);
         errorLabel.setForeground(StyleConfig.ERROR_COLOR);
@@ -1175,7 +1178,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 40, 5, 40);
         dialogPanel.add(errorLabel, gbc);
 
-        // Verify button
+        
         JButton verifyBtn = new JButton("VERIFY & CREATE ACCOUNT");
         verifyBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         verifyBtn.setForeground(Color.WHITE);
@@ -1225,9 +1228,9 @@ public class AuthFrame extends JFrame {
         otpDialog.setVisible(true);
     }
 
-    // ============================================================
-    // Inner class: Background Panel that loads auth_bg.png image
-    // ============================================================
+    
+    
+    
     private static class CinematicBackgroundPanel extends JPanel {
         private static final long serialVersionUID = 1L;
         private BufferedImage bgImage;
@@ -1236,7 +1239,7 @@ public class AuthFrame extends JFrame {
             setOpaque(true);
             setBackground(new Color(15, 12, 18));
 
-            // Load the background image
+            
             try {
                 InputStream is = getClass().getClassLoader().getResourceAsStream("resources/auth_bg.png");
                 if (is != null) {
@@ -1261,19 +1264,19 @@ public class AuthFrame extends JFrame {
             int h = getHeight();
 
             if (bgImage != null) {
-                // Scale image to cover the entire panel (cover mode)
+                
                 double panelRatio = (double) w / h;
                 double imgRatio = (double) bgImage.getWidth() / bgImage.getHeight();
 
                 int drawW, drawH, drawX, drawY;
                 if (panelRatio > imgRatio) {
-                    // Panel is wider - fit width, crop height
+                    
                     drawW = w;
                     drawH = (int) (w / imgRatio);
                     drawX = 0;
                     drawY = (h - drawH) / 2;
                 } else {
-                    // Panel is taller - fit height, crop width
+                    
                     drawH = h;
                     drawW = (int) (h * imgRatio);
                     drawX = (w - drawW) / 2;
@@ -1282,15 +1285,15 @@ public class AuthFrame extends JFrame {
 
                 g2.drawImage(bgImage, drawX, drawY, drawW, drawH, null);
 
-                // Dark gradient overlay to fade the background flawlessly from left to right
-                // (Netflix vibe)
+                
+                
                 java.awt.GradientPaint overlayGrad = new java.awt.GradientPaint(
                         0, 0, new Color(10, 8, 15, 40),
                         w, 0, new Color(10, 8, 15, 230));
                 g2.setPaint(overlayGrad);
                 g2.fillRect(0, 0, w, h);
             } else {
-                // Fallback gradient if image not loaded
+                
                 GradientPaint bgGrad = new GradientPaint(0, 0, new Color(15, 12, 18),
                         w, h, new Color(25, 18, 28));
                 g2.setPaint(bgGrad);

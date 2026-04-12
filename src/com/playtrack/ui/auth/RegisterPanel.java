@@ -27,21 +27,30 @@ public class RegisterPanel extends JPanel {
     public RegisterPanel(ActionListener registerAction, ActionListener switchToLoginAction) {
         setLayout(new GridBagLayout());
         setOpaque(false);
-        setPreferredSize(new Dimension(420, 600));
+        Dimension fixedPanel = new Dimension(420, 600);
+        setPreferredSize(fixedPanel);
+        setMinimumSize(fixedPanel);
+        setMaximumSize(fixedPanel);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
 
-        // ========== TAB HEADER: LOGIN | REGISTER ==========
+        
         JPanel tabHeader = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         tabHeader.setOpaque(false);
+        Dimension tabHeaderSize = new Dimension(330, 36);
+        tabHeader.setPreferredSize(tabHeaderSize);
+        tabHeader.setMinimumSize(tabHeaderSize);
+        tabHeader.setMaximumSize(tabHeaderSize);
 
         JLabel loginTab = new JLabel("LOGIN");
         loginTab.setFont(new Font("Segoe UI", Font.BOLD, 22));
         loginTab.setForeground(new Color(160, 160, 175));
         loginTab.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        loginTab.setPreferredSize(new Dimension(118, 32));
+        loginTab.setHorizontalAlignment(SwingConstants.RIGHT);
         loginTab.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 switchToLoginAction.actionPerformed(null);
@@ -51,10 +60,14 @@ public class RegisterPanel extends JPanel {
         JLabel divider = new JLabel("  |  ");
         divider.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         divider.setForeground(new Color(100, 100, 120));
+        divider.setPreferredSize(new Dimension(34, 32));
+        divider.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel registerTab = new JLabel("REGISTER");
         registerTab.setFont(new Font("Segoe UI", Font.BOLD, 22));
         registerTab.setForeground(StyleConfig.PRIMARY_COLOR);
+        registerTab.setPreferredSize(new Dimension(168, 32));
+        registerTab.setHorizontalAlignment(SwingConstants.LEFT);
 
         tabHeader.add(loginTab);
         tabHeader.add(divider);
@@ -64,7 +77,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(25, 30, 15, 30);
         add(tabHeader, gbc);
 
-        // ========== Email Address ==========
+        
         JLabel emailLabel = new JLabel("Email Address");
         emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         emailLabel.setForeground(new Color(200, 200, 210));
@@ -78,7 +91,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 10, 35);
         add(emailField, gbc);
 
-        // ========== Username ==========
+        
         JLabel userLabel = new JLabel("Username");
         userLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         userLabel.setForeground(new Color(200, 200, 210));
@@ -92,7 +105,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 10, 35);
         add(usernameField, gbc);
 
-        // ========== Password ==========
+        
         JLabel passLabel = new JLabel("Password");
         passLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         passLabel.setForeground(new Color(200, 200, 210));
@@ -106,7 +119,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 4, 35);
         add(passwordField, gbc);
 
-        // ========== Password Checklist ==========
+        
         JPanel checklistPanel = new JPanel();
         checklistPanel.setLayout(new BoxLayout(checklistPanel, BoxLayout.Y_AXIS));
         checklistPanel.setOpaque(false);
@@ -129,7 +142,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 10, 35);
         add(checklistPanel, gbc);
 
-        // ========== Confirm Password ==========
+        
         JLabel confirmLabel = new JLabel("Confirm Password");
         confirmLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         confirmLabel.setForeground(new Color(200, 200, 210));
@@ -143,7 +156,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 12, 35);
         add(confirmPasswordField, gbc);
 
-        // ========== Error label ==========
+        
         errorLabel = new JLabel("", SwingConstants.CENTER);
         errorLabel.setForeground(StyleConfig.ERROR_COLOR);
         errorLabel.setFont(StyleConfig.FONT_SMALL);
@@ -151,7 +164,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 5, 35);
         add(errorLabel, gbc);
 
-        // ========== Buttons: Back + Create Account ==========
+        
         JPanel buttonsPanel = new JPanel(new GridLayout(1, 2, 12, 0));
         buttonsPanel.setOpaque(false);
 
@@ -172,7 +185,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(5, 35, 15, 35);
         add(buttonsPanel, gbc);
 
-        // ========== Already have account? Sign in. ==========
+        
         JPanel signInRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
         signInRow.setOpaque(false);
 
@@ -207,7 +220,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 20, 35);
         add(signInRow, gbc);
 
-        // Password strength listener
+        
         passwordField.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { updateChecklist(); }
             public void removeUpdate(DocumentEvent e) { updateChecklist(); }
@@ -314,11 +327,11 @@ public class RegisterPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // --- TRANSLUCENT dark background card ---
+        
         g2.setColor(new Color(28, 25, 35, 180));
         g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 18, 18));
 
-        // Subtle border with slight red tint
+        
         g2.setColor(new Color(80, 50, 55, 120));
         g2.setStroke(new BasicStroke(1.5f));
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 18, 18));

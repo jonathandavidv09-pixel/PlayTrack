@@ -16,7 +16,7 @@ public class MediaCard extends JPanel {
     private final MediaItem item;
     private static final MediaService mediaService = new MediaService();
 
-    // LRU image cache to avoid re-loading and re-scaling the same poster images
+    
     private static final java.util.Map<String, java.awt.Image> posterCache =
         java.util.Collections.synchronizedMap(new java.util.LinkedHashMap<String, java.awt.Image>(100, 0.75f, true) {
             @Override
@@ -44,7 +44,7 @@ public class MediaCard extends JPanel {
         this.onRefresh = onRefresh;
 
         setLayout(null);
-        // Clean poster aspect ratio (2:3)
+        
         setPreferredSize(new Dimension(160, 240));
         setMinimumSize(new Dimension(160, 240));
         setMaximumSize(new Dimension(160, 240));
@@ -87,7 +87,7 @@ public class MediaCard extends JPanel {
         boolean isFav = review != null && review.isFavorite();
         boolean isWatch = review != null && review.isWatchlist();
 
-        // Footer Y near the bottom of the card
+        
         int footerY = 205;
 
         if (item.getId() >= 0 && !isWatch) {
@@ -231,16 +231,16 @@ public class MediaCard extends JPanel {
 
             @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
-                // Use screen coordinates to reliably detect if mouse moved to a child
+                
                 try {
                     Point screenPt = e.getLocationOnScreen();
                     Point cardLoc = getLocationOnScreen();
                     if (screenPt.x >= cardLoc.x && screenPt.x < cardLoc.x + getWidth()
                         && screenPt.y >= cardLoc.y && screenPt.y < cardLoc.y + getHeight()) {
-                        return; // Still within card bounds (moved to a child component)
+                        return; 
                     }
                 } catch (Exception ex) {
-                    // Component not showing, fall through to hide
+                    
                 }
                 hovered = false;
                 setControlsVisible(false);
@@ -297,17 +297,17 @@ public class MediaCard extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
-                // Subtle shadow
+                
                 for (int i = 6; i > 0; i--) {
                     g2.setColor(new Color(0, 0, 0, 10 * i));
                     g2.fill(new RoundRectangle2D.Float(6 - i, 6 - i, getWidth() - 12 + i * 2, getHeight() - 12 + i * 2, 28 + i, 28 + i));
                 }
                 
-                // Dark sleek background
+                
                 g2.setColor(new Color(30, 36, 50));
                 g2.fill(new RoundRectangle2D.Float(6, 6, getWidth() - 12, getHeight() - 12, 28, 28));
                 
-                // Inner border
+                
                 g2.setColor(new Color(255, 255, 255, 18));
                 g2.setStroke(new BasicStroke(1.2f));
                 g2.draw(new RoundRectangle2D.Float(6.5f, 6.5f, getWidth() - 13, getHeight() - 13, 27, 27));
@@ -430,8 +430,8 @@ public class MediaCard extends JPanel {
         Window window = SwingUtilities.getWindowAncestor(this);
         refreshComponentState();
 
-        // Use refreshAll() when in MainFrame (refreshes everything once),
-        // otherwise fall back to the local callback to avoid double-refresh
+        
+        
         if (window instanceof com.playtrack.ui.main.MainFrame) {
             ((com.playtrack.ui.main.MainFrame) window).refreshAll();
         } else if (onRefresh != null) {
@@ -442,7 +442,7 @@ public class MediaCard extends JPanel {
     private void refreshComponentState() {
         refreshReviewState();
 
-        // Recreate stars just in case rating changed
+        
         if (starRating != null) {
             remove(starRating);
             starRating = new StarRating(review != null ? review.getRating() : 0, false, 14);
@@ -471,12 +471,14 @@ public class MediaCard extends JPanel {
         int w = getWidth();
         int h = getHeight();
         int arc = 14;
+        Shape originalClip = g2.getClip();
+        g2.clipRect(0, 0, w, h);
 
-        // Category glow on hover
+        
         if (hovered) {
             Color glowColor = getCategoryColor(item.getCategory());
             g2.setColor(new Color(glowColor.getRed(), glowColor.getGreen(), glowColor.getBlue(), 52));
-            g2.fill(new RoundRectangle2D.Float(-2, -2, w + 4, h + 4, arc + 4, arc + 4));
+            g2.fill(new RoundRectangle2D.Float(0, 0, w, h, arc + 2, arc + 2));
         }
 
         Shape clipShape = new RoundRectangle2D.Float(0, 0, w, h, arc, arc);
@@ -485,7 +487,7 @@ public class MediaCard extends JPanel {
         if (posterImage != null) {
             g2.drawImage(posterImage, 0, 0, w, h, null);
         } else {
-            // Placeholder
+            
             Color catColor = getCategoryColor(item.getCategory());
             g2.setPaint(new GradientPaint(0, 0,
                     new Color(Math.max(catColor.getRed() - 45, 0), Math.max(catColor.getGreen() - 45, 0),
@@ -499,15 +501,15 @@ public class MediaCard extends JPanel {
             drawCategoryIcon(g2, item.getCategory(), w / 2, h / 2 - 20, false);
         }
 
-        // Subtle top gloss
+        
         g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 18), 0, 40, new Color(255, 255, 255, 0)));
         g2.fillRect(0, 0, w, 40);
 
-        // Bottom readability gradient
+        
         g2.setPaint(new GradientPaint(0, h - 92, new Color(0, 0, 0, 0), 0, h, new Color(0, 0, 0, 145)));
         g2.fillRect(0, h - 92, w, 92);
 
-        // Overlay on hover
+        
         if (hovered) {
             Color catColor = getCategoryColor(item.getCategory());
             g2.setPaint(new GradientPaint(0, 0,
@@ -520,9 +522,9 @@ public class MediaCard extends JPanel {
             drawCardTitle(g2, w, 44, w - 24, item.getTitle());
         }
 
-        g2.setClip(null);
+        g2.setClip(originalClip);
 
-        // Thin border
+        
         g2.setColor(new Color(255, 255, 255, hovered ? 118 : 36));
         g2.setStroke(new BasicStroke(hovered ? 1.8f : 1f));
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, arc, arc));

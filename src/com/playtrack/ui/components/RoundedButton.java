@@ -88,7 +88,7 @@ public class RoundedButton extends JButton {
 
         Shape buttonShape = new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), radius, radius);
 
-        // Subtle floating shadow for better depth on modern surfaces.
+        
         if (isEnabled() && (isHovered || isPressed)) {
             g2.setColor(new Color(0, 0, 0, isPressed ? 22 : 30));
             g2.fill(new RoundRectangle2D.Float(0, 1.5f, getWidth(), getHeight() - 1.5f, radius, radius));
@@ -106,7 +106,7 @@ public class RoundedButton extends JButton {
 
         g2.fill(buttonShape);
 
-        // Subtle top highlight
+        
         if (isEnabled() && !isPressed) {
             g2.setColor(new Color(255, 255, 255, isHovered ? 28 : 18));
             Shape oldClip = g2.getClip();
@@ -115,7 +115,7 @@ public class RoundedButton extends JButton {
             g2.setClip(oldClip);
         }
 
-        // Crisp edge for premium look.
+        
         g2.setColor(new Color(255, 255, 255, isHovered ? 88 : 58));
         g2.setStroke(new BasicStroke(1f));
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, radius - 1, radius - 1));
@@ -139,12 +139,12 @@ public class RoundedButton extends JButton {
             int startX = (getWidth() - totalWidth) / 2;
             int cy = getHeight() / 2;
             
-            // Draw bold plus icon
+            
             g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             g2.drawLine(startX, cy, startX + iconSize, cy);
             g2.drawLine(startX + iconSize/2, cy - iconSize/2, startX + iconSize/2, cy + iconSize/2);
             
-            // Draw text
+            
             int textY = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
             g2.drawString("New", startX + iconSize + gap, textY);
         } else if (getText() != null && !getText().isEmpty()) {

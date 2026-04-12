@@ -52,7 +52,7 @@ public class SummaryPanel extends JPanel {
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
         mainContent.setOpaque(false);
 
-        // Header
+        
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         headerPanel.setOpaque(false);
@@ -87,7 +87,7 @@ public class SummaryPanel extends JPanel {
         headerPanel.add(divider);
         mainContent.add(headerPanel);
 
-        // Row 1: Total Counts
+        
         JPanel row1 = new JPanel(new GridLayout(1, 3, 30, 0));
         row1.setOpaque(false);
         row1.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -98,7 +98,7 @@ public class SummaryPanel extends JPanel {
         mainContent.add(row1);
         mainContent.add(Box.createVerticalStrut(30));
 
-        // Row 2: Genres
+        
         JPanel row2 = new JPanel(new GridLayout(1, 3, 30, 0));
         row2.setOpaque(false);
         row2.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -109,7 +109,7 @@ public class SummaryPanel extends JPanel {
         mainContent.add(row2);
         mainContent.add(Box.createVerticalStrut(30));
 
-        // Row 3: Bottom Area
+        
         JPanel row3 = new JPanel(new GridLayout(1, 2, 30, 0));
         row3.setOpaque(false);
         row3.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -150,16 +150,16 @@ public class SummaryPanel extends JPanel {
                     g2.fill(new RoundRectangle2D.Float(1 - i, 1 - i, getWidth() - 2 + i * 2, getHeight() - 2 + i * 2, 24 + i, 24 + i));
                 }
 
-                // Card body
+                
                 g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_ELEVATED, 0, getHeight(), StyleConfig.SURFACE_COLOR));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
 
-                // Soft top gloss
+                
                 g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 14), 0, getHeight() / 2,
                         new Color(255, 255, 255, 0)));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
 
-                // Border
+                
                 g2.setColor(StyleConfig.SURFACE_STROKE);
                 g2.setStroke(new BasicStroke(1.5f));
                 g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 24, 24));
@@ -255,7 +255,7 @@ public class SummaryPanel extends JPanel {
                         name = name.substring(0, 8) + "..";
                     g2.drawString(name, 0, y + 14);
 
-                    g2.setColor(new Color(255, 255, 255, 12)); // Track background
+                    g2.setColor(new Color(255, 255, 255, 12)); 
                     g2.fillRoundRect(85, y + 3, barMaxWidth, 12, 12, 12);
 
                     g2.setPaint(new GradientPaint(85, y + 3, StyleConfig.PRIMARY_COLOR, 85 + barMaxWidth, y + 3, StyleConfig.SECONDARY_COLOR));
@@ -408,7 +408,7 @@ public class SummaryPanel extends JPanel {
         JPanel headerLine = new JPanel() {
             protected void paintComponent(Graphics g) {
                 g.setColor(StyleConfig.PRIMARY_COLOR);
-                g.fillRect(0, 0, 60, 3); // Cool accent line
+                g.fillRect(0, 0, 60, 3); 
             }
         };
         headerLine.setOpaque(false);

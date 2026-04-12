@@ -107,7 +107,7 @@ public class ProfilePanel extends JPanel {
                     g2.drawImage(finalCachedAvatar, 4 + (112 - dw) / 2, 4 + (112 - dh) / 2, dw, dh, null);
                     g2.setClip(null);
 
-                    // Draw anti-aliased mask border to cover jagged clipping pixels
+                    
                     g2.setColor(StyleConfig.BACKGROUND_COLOR);
                     g2.setStroke(new BasicStroke(1.5f));
                     g2.draw(new Ellipse2D.Float(4, 4, 112, 112));
@@ -202,7 +202,7 @@ public class ProfilePanel extends JPanel {
         MediaDAO mediaDAO = new MediaDAO();
         WatchlistDAO watchlistDAO = new WatchlistDAO();
 
-        // Batch fetch all media items once to avoid N+1 DB queries
+        
         java.util.Map<Integer, MediaItem> mediaMap = new java.util.HashMap<>();
         for (MediaItem mi : mediaDAO.getMediaByUser(userId, "All")) {
             mediaMap.put(mi.getId(), mi);
@@ -245,8 +245,8 @@ public class ProfilePanel extends JPanel {
         JPanel content = new ScrollablePanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
-        // Remove the 50px right margin from the parent container so we can use it for
-        // the arrow
+        
+        
         content.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 0));
 
         content.add(header);
@@ -261,7 +261,7 @@ public class ProfilePanel extends JPanel {
         scrollPane.getViewport().setOpaque(false);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        // Make the vertical scrollbar completely invisible natively like LibraryPanel!
+        
         scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         add(scrollPane, BorderLayout.CENTER);
@@ -305,8 +305,8 @@ public class ProfilePanel extends JPanel {
         JPanel topRow = new JPanel();
         topRow.setLayout(new BoxLayout(topRow, BoxLayout.Y_AXIS));
         topRow.setOpaque(false);
-        // Apply the 50px right margin locally to topRow so the divider aligns with the
-        // 8th card
+        
+        
         topRow.setBorder(BorderFactory.createEmptyBorder(0, 5, 15, 55));
         topRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -408,7 +408,7 @@ public class ProfilePanel extends JPanel {
             }
         }
 
-        // Wrap titleRow in a BorderLayout to make it expand to full width
+        
         JPanel titleRowWrapper = new JPanel(new BorderLayout());
         titleRowWrapper.setOpaque(false);
         titleRowWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -418,7 +418,7 @@ public class ProfilePanel extends JPanel {
 
         topRow.add(Box.createVerticalStrut(8));
 
-        // Gradient divider line
+        
         JPanel divider = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -471,8 +471,8 @@ public class ProfilePanel extends JPanel {
             };
             arrowIcon.setForeground(StyleConfig.TEXT_SECONDARY);
             arrowIcon.setPreferredSize(new Dimension(80, 40));
-            arrowIcon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 30)); // Move arrow left within icon without
-                                                                               // squishing it
+            arrowIcon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 30)); 
+                                                                               
             arrowIcon.setHorizontalAlignment(SwingConstants.CENTER);
             arrowIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));
             arrowIcon.setToolTipText("Show more");
@@ -514,8 +514,8 @@ public class ProfilePanel extends JPanel {
                     scrollPane.setOpaque(false);
                     scrollPane.getViewport().setOpaque(false);
 
-                    // Add the margin back strictly to match the divider's 55px right margin,
-                    // preventing the carousel from expanding past the layout bounds!
+                    
+                    
                     scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 55));
                     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
                     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -523,7 +523,7 @@ public class ProfilePanel extends JPanel {
                     scrollPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 10));
                     scrollPane.getHorizontalScrollBar().setUnitIncrement(24);
 
-                    // Disable mouse wheel integration so vertical scrolling passes through
+                    
                     scrollPane.setWheelScrollingEnabled(false);
                     scrollPane.addMouseWheelListener(evt -> {
                         JScrollPane parentScroll = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class,
@@ -539,7 +539,7 @@ public class ProfilePanel extends JPanel {
                         }
                     });
 
-                    // Implementing smooth hold-and-drag panning
+                    
                     java.awt.event.MouseAdapter dragScroll = new java.awt.event.MouseAdapter() {
                         private Point origin;
 
@@ -572,14 +572,66 @@ public class ProfilePanel extends JPanel {
                     expandedRowPanel.addMouseListener(dragScroll);
                     expandedRowPanel.addMouseMotionListener(dragScroll);
 
-                    // Apply drag panning locally to all cards so grabbhing a card works
+                    
                     for (Component c : expandedRowPanel.getComponents()) {
                         c.addMouseListener(dragScroll);
                         c.addMouseMotionListener(dragScroll);
                     }
 
+                    
+                    final boolean[] showLessHovered = { false };
+                    JLabel showLessControl = new JLabel() {
+                        @Override
+                        protected void paintComponent(Graphics g) {
+                            Graphics2D g2 = (Graphics2D) g.create();
+                            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                            int size = 28;
+                            int cx = getWidth() / 2;
+                            int cy = getHeight() / 2;
+                            UIUtils.drawArrowIcon(g2, cx - size / 2, cy - size / 2, size,
+                                    showLessHovered[0] ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_SECONDARY, false);
+                            g2.dispose();
+                        }
+                    };
+                    showLessControl.setOpaque(false);
+                    showLessControl.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                    showLessControl.setPreferredSize(new Dimension(80, 40));
+                    showLessControl.setMaximumSize(new Dimension(80, 40));
+                    showLessControl.setHorizontalAlignment(SwingConstants.CENTER);
+                    showLessControl.setToolTipText("Show less");
+
+                    JPanel navArrows = new JPanel();
+                    navArrows.setOpaque(false);
+                    navArrows.setLayout(new BoxLayout(navArrows, BoxLayout.Y_AXIS));
+                    navArrows.setPreferredSize(new Dimension(80, TWO_ROW_HEIGHT));
+                    navArrows.add(Box.createVerticalGlue());
+                    navArrows.add(showLessControl);
+                    navArrows.add(Box.createVerticalGlue());
+
+                    java.awt.event.MouseAdapter showLessMouse = new java.awt.event.MouseAdapter() {
+                        public void mouseEntered(java.awt.event.MouseEvent e) {
+                            showLessHovered[0] = true;
+                            showLessControl.repaint();
+                        }
+                        public void mouseExited(java.awt.event.MouseEvent e) {
+                            showLessHovered[0] = false;
+                            showLessControl.repaint();
+                        }
+                        public void mouseClicked(java.awt.event.MouseEvent e) {
+                            wrapper.remove(scrollPane);
+                            wrapper.remove(navArrows);
+                            wrapper.add(rowPanel, BorderLayout.CENTER);
+                            wrapper.add(arrowWrapper, BorderLayout.EAST);
+                            arrowIcon.setForeground(StyleConfig.TEXT_SECONDARY);
+                            wrapper.revalidate();
+                            wrapper.repaint();
+                        }
+                    };
+                    showLessControl.addMouseListener(showLessMouse);
+
                     wrapper.remove(rowPanel);
                     wrapper.add(scrollPane, BorderLayout.CENTER);
+                    wrapper.add(navArrows, BorderLayout.EAST);
 
                     wrapper.revalidate();
                     wrapper.repaint();
@@ -732,8 +784,8 @@ public class ProfilePanel extends JPanel {
         popup.add(categoryMenu);
     }
 
-    // Removed redundant showAddWatchlistDialog as it now uses the unified
-    // ReviewFormDialog
+    
+    
 
     private void showEditDialog() {
         JDialog editDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Edit Profile", true);
@@ -742,25 +794,25 @@ public class ProfilePanel extends JPanel {
         editDialog.setUndecorated(true);
         editDialog.setBackground(new Color(0, 0, 0, 0));
 
-        // ── Glassmorphism container with rounded corners & soft glow ──
+        
         JPanel container = new JPanel(new BorderLayout(0, 0)) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Outer soft glow
+                
                 for (int i = 4; i > 0; i--) {
                     g2.setColor(new Color(255, 92, 109, 8 * i));
                     g2.fill(new RoundRectangle2D.Float(4 - i, 4 - i,
                             getWidth() - 8 + 2 * i, getHeight() - 8 + 2 * i, 28 + i * 2, 28 + i * 2));
                 }
 
-                // Main body
+                
                 g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_ELEVATED, 0, getHeight(), StyleConfig.SURFACE_COLOR));
                 g2.fill(new RoundRectangle2D.Float(4, 4, getWidth() - 8, getHeight() - 8, 28, 28));
 
-                // Subtle inner border
+                
                 g2.setColor(StyleConfig.SURFACE_STROKE);
                 g2.setStroke(new BasicStroke(1.2f));
                 g2.draw(new RoundRectangle2D.Float(4.5f, 4.5f, getWidth() - 9, getHeight() - 9, 27, 27));
@@ -770,7 +822,7 @@ public class ProfilePanel extends JPanel {
         container.setOpaque(false);
         container.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
-        // ── Gradient accent bar at top ──
+        
         JPanel accentBar = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -778,7 +830,7 @@ public class ProfilePanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setPaint(new GradientPaint(0, 0, StyleConfig.PRIMARY_COLOR,
                         getWidth(), 0, new Color(94, 194, 255, 120)));
-                // Top rounded rect clipped to only show top 4px stripe
+                
                 g2.setClip(new RoundRectangle2D.Float(0, 0, getWidth(), 28, 24, 24));
                 g2.fillRect(0, 0, getWidth(), 4);
                 g2.dispose();
@@ -787,13 +839,13 @@ public class ProfilePanel extends JPanel {
         accentBar.setOpaque(false);
         accentBar.setPreferredSize(new Dimension(0, 4));
 
-        // ── Content wrapper with padding ──
+        
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
         content.setBorder(BorderFactory.createEmptyBorder(32, 42, 32, 42));
 
-        // ── Dialog title ──
+        
         JLabel dialogTitle = new JLabel("Edit Profile");
         dialogTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         dialogTitle.setForeground(StyleConfig.TEXT_COLOR);
@@ -807,7 +859,7 @@ public class ProfilePanel extends JPanel {
         content.add(dialogSubtitle);
         content.add(Box.createVerticalStrut(24));
 
-        // ── Avatar section (centered) ──
+        
         final String[] tempAvatarPath = { profile.getAvatarPath() };
         final java.awt.Image[] tempAvatarImg = { null };
         if (tempAvatarPath[0] != null && !tempAvatarPath[0].isEmpty()) {
@@ -830,7 +882,7 @@ public class ProfilePanel extends JPanel {
                 int sz = 110;
                 int pad = (getWidth() - sz) / 2;
 
-                // Outer ring glow on hover
+                
                 if (avatarHovered[0]) {
                     for (int i = 3; i > 0; i--) {
                         g2.setColor(new Color(255, 92, 109, 20 * i));
@@ -839,11 +891,11 @@ public class ProfilePanel extends JPanel {
                     }
                 }
 
-                // Background circle
+                
                 g2.setColor(StyleConfig.INPUT_BG);
                 g2.fill(new Ellipse2D.Float(pad, 0, sz, sz));
 
-                // Image or initial
+                
                 if (tempAvatarImg[0] != null) {
                     g2.setClip(new Ellipse2D.Float(pad + 3, 3, sz - 6, sz - 6));
                     int imgW = tempAvatarImg[0].getWidth(null);
@@ -855,7 +907,7 @@ public class ProfilePanel extends JPanel {
                             3 + (sz - 6 - dh) / 2, dw, dh, null);
                     g2.setClip(null);
 
-                    // Mask jagged clip edges
+                    
                     g2.setColor(StyleConfig.INPUT_BG);
                     g2.setStroke(new BasicStroke(1.5f));
                     g2.draw(new Ellipse2D.Float(pad + 3, 3, sz - 6, sz - 6));
@@ -870,18 +922,18 @@ public class ProfilePanel extends JPanel {
                             (sz + fm.getAscent() - fm.getDescent()) / 2);
                 }
 
-                // Subtle ring
+                
                 g2.setColor(new Color(255, 255, 255, avatarHovered[0] ? 52 : 20));
                 g2.setStroke(new BasicStroke(2f));
                 g2.draw(new Ellipse2D.Float(pad + 1, 1, sz - 2, sz - 2));
 
-                // Camera badge (bottom-right)
+                
                 int bx = pad + sz - 30, by = sz - 30, bsz = 28;
                 g2.setColor(avatarHovered[0] ? StyleConfig.PRIMARY_COLOR : StyleConfig.SURFACE_SOFT);
                 g2.fill(new Ellipse2D.Float(bx, by, bsz, bsz));
                 g2.setColor(new Color(255, 255, 255, avatarHovered[0] ? 220 : 160));
                 g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                // Camera icon
+                
                 int cx = bx + bsz / 2, cy = by + bsz / 2;
                 g2.drawRoundRect(cx - 6, cy - 4, 12, 9, 3, 3);
                 g2.draw(new Ellipse2D.Float(cx - 3, cy - 2, 6, 6));
@@ -926,7 +978,7 @@ public class ProfilePanel extends JPanel {
             }
         });
 
-        // Avatar hint label
+        
         JLabel avatarHint = new JLabel("Click to change avatar");
         avatarHint.setFont(new Font("Segoe UI", Font.ITALIC, 11));
         avatarHint.setForeground(StyleConfig.TEXT_LIGHT);
@@ -943,13 +995,13 @@ public class ProfilePanel extends JPanel {
         content.add(avatarSection);
         content.add(Box.createVerticalStrut(22));
 
-        // ── Form fields ──
+        
         JPanel form = new JPanel();
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
         form.setOpaque(false);
         form.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Username label
+        
         JLabel userFieldLabel = new JLabel("<html><span style='letter-spacing: 1.5px;'>USERNAME</span></html>");
         userFieldLabel.setFont(new Font("Segoe UI Semibold", Font.BOLD, 10));
         userFieldLabel.setForeground(StyleConfig.TEXT_LIGHT);
@@ -957,7 +1009,7 @@ public class ProfilePanel extends JPanel {
         form.add(userFieldLabel);
         form.add(Box.createVerticalStrut(6));
 
-        // Username field with focus glow
+        
         JTextField userField = new JTextField(profile.getUsername()) {
             private boolean focused = false;
 
@@ -980,11 +1032,11 @@ public class ProfilePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Background
+                
                 g2.setColor(focused ? StyleConfig.INPUT_BG_FOCUS : StyleConfig.INPUT_BG);
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
 
-                // Focus glow border
+                
                 if (focused) {
                     g2.setColor(StyleConfig.INPUT_FOCUS);
                     g2.setStroke(new BasicStroke(2f));
@@ -1009,7 +1061,7 @@ public class ProfilePanel extends JPanel {
         form.add(userField);
         form.add(Box.createVerticalStrut(18));
 
-        // Bio label with character counter
+        
         JLabel bioCountLabel = new JLabel("0/150");
         bioCountLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         bioCountLabel.setForeground(StyleConfig.TEXT_LIGHT);
@@ -1027,12 +1079,12 @@ public class ProfilePanel extends JPanel {
         form.add(bioLabelRow);
         form.add(Box.createVerticalStrut(6));
 
-        // Bio field with focus glow
+        
         JTextArea bioField = new JTextArea(profile.getBio()) {
             {
                 addFocusListener(new java.awt.event.FocusAdapter() {
                     public void focusGained(java.awt.event.FocusEvent e) {
-                        getParent().getParent().repaint(); // repaint scroll pane wrapper
+                        getParent().getParent().repaint(); 
                     }
 
                     public void focusLost(java.awt.event.FocusEvent e) {
@@ -1051,7 +1103,7 @@ public class ProfilePanel extends JPanel {
         bioField.setLineWrap(true);
         bioField.setWrapStyleWord(true);
 
-        // Update character count
+        
         String bioText = profile.getBio() != null ? profile.getBio() : "";
         bioCountLabel.setText(bioText.length() + "/150");
         bioField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
@@ -1108,7 +1160,7 @@ public class ProfilePanel extends JPanel {
         content.add(form);
         content.add(Box.createVerticalGlue());
 
-        // ── Divider before buttons ──
+        
         JPanel btnDivider = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -1125,7 +1177,7 @@ public class ProfilePanel extends JPanel {
         content.add(btnDivider);
         content.add(Box.createVerticalStrut(18));
 
-        // ── Buttons (right-aligned) ──
+        
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         buttons.setOpaque(false);
         buttons.setAlignmentX(Component.LEFT_ALIGNMENT);

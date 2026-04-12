@@ -32,7 +32,7 @@ public class Navbar extends JPanel {
         setPreferredSize(new Dimension(1400, 65));
         setBorder(BorderFactory.createEmptyBorder(0, 0, 1, 0));
 
-        // Logo
+        
         JPanel logoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         logoPanel.setOpaque(false);
 
@@ -53,7 +53,7 @@ public class Navbar extends JPanel {
         logoPanel.add(logo);
         add(logoPanel, BorderLayout.WEST);
 
-        // Navigation links
+        
         JPanel navLinks = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         navLinks.setOpaque(false);
 
@@ -72,14 +72,14 @@ public class Navbar extends JPanel {
 
         add(navLinks, BorderLayout.CENTER);
 
-        // Profile area
+        
         JPanel profilePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 0));
         profilePanel.setOpaque(false);
 
         usernameLabel = new JLabel(username);
         usernameLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         usernameLabel.setForeground(StyleConfig.TEXT_SECONDARY);
-        // Removed profilePanel.add(usernameLabel) to hide the username as requested
+        
 
         profileIcon = new JLabel() {
             @Override
@@ -100,7 +100,7 @@ public class Navbar extends JPanel {
                 }
 
                 if (avatarImage != null) {
-                    // Clip the image drawing
+                    
                     g2.setClip(new java.awt.geom.Ellipse2D.Float(xPadding, yPadding, size, size));
                     int imgW = avatarImage.getWidth(null);
                     int imgH = avatarImage.getHeight(null);
@@ -112,7 +112,7 @@ public class Navbar extends JPanel {
                     g2.drawImage(avatarImage, xPadding + (size - dw) / 2, yPadding + (size - dh) / 2, dw, dh, null);
                     g2.setClip(null);
 
-                    // Draw anti-aliased rings over the edge to perfectly hide jagged clipping pixels!
+                    
                     g2.setColor(new Color(255, 255, 255, profileHovered ? 80 : 50));
                     g2.setStroke(new BasicStroke(1.5f));
                     g2.draw(new java.awt.geom.Ellipse2D.Float(xPadding + 0.5f, yPadding + 0.5f, size - 1, size - 1));

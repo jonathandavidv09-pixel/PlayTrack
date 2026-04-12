@@ -5,9 +5,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
-/**
- * FlowLayout subclass that fully supports wrapping of components.
- */
+
+
+
 public class WrapLayout extends FlowLayout {
     private static final long serialVersionUID = 1L;
 
@@ -39,8 +39,8 @@ public class WrapLayout extends FlowLayout {
         synchronized (target.getTreeLock()) {
             int targetWidth = resolveTargetWidth(target);
 
-            // Conservative fallback before first layout pass:
-            // prefer taller wrapping over clipped content.
+            
+            
             if (targetWidth <= 0) {
                 targetWidth = 320;
             }

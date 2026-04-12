@@ -21,14 +21,15 @@ public class AddMediaDropdown extends JPopupMenu {
     private static final int CONTENT_PAD = 12;
 
     public AddMediaDropdown(Consumer<String> onAddMedia) {
-        // Heavyweight popup avoids layered-pane transparency artifacts on some systems.
-        setLightWeightPopupEnabled(false);
+        
+        setLightWeightPopupEnabled(true);
         setDoubleBuffered(true);
-        setOpaque(true);
-        setBackground(DROPDOWN_BG);
+        setOpaque(false);
+        setBackground(new Color(0, 0, 0, 0));
         setBorder(BorderFactory.createEmptyBorder());
+        setLayout(new BorderLayout());
 
-        // Main container panel
+        
         JPanel container = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -36,29 +37,29 @@ public class AddMediaDropdown extends JPopupMenu {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Always fill whole bounds to prevent black artifacts.
+                
                 g2.setColor(DROPDOWN_BG);
                 g2.fillRect(0, 0, getWidth(), getHeight());
 
-                // Surface body
+                
                 g2.setColor(DROPDOWN_BG);
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), ARC, ARC));
 
-                // Accent strip
+                
                 g2.setClip(new RoundRectangle2D.Float(0, 0, getWidth(), 16, ARC, ARC));
                 g2.setPaint(new GradientPaint(0, 0, StyleConfig.PRIMARY_COLOR, getWidth(), 0, StyleConfig.SECONDARY_COLOR));
                 g2.fillRect(0, 0, getWidth(), 3);
                 g2.setClip(null);
 
-                // Border
+                
                 g2.setColor(new Color(255, 255, 255, 30));
                 g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, ARC - 1, ARC - 1));
                 g2.dispose();
             }
         };
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        container.setOpaque(true);
-        container.setBackground(DROPDOWN_BG);
+        container.setOpaque(false);
+        container.setBackground(new Color(0, 0, 0, 0));
         container.setBorder(BorderFactory.createEmptyBorder(CONTENT_PAD, CONTENT_PAD, CONTENT_PAD, CONTENT_PAD));
 
         container.add(createItem("Film", 1, () -> { setVisible(false); onAddMedia.accept("Films"); }));
@@ -69,28 +70,17 @@ public class AddMediaDropdown extends JPopupMenu {
         container.add(Box.createVerticalStrut(ITEM_GAP));
         container.add(createItem("Watchlist", 4, () -> { setVisible(false); onAddMedia.accept("Watchlist"); }));
 
-        int popupWidth = (CONTENT_PAD * 2) + ITEM_WIDTH;
-        int popupHeight = (CONTENT_PAD * 2) + (ITEM_HEIGHT * 4) + (ITEM_GAP * 3);
-        Dimension pref = new Dimension(popupWidth, popupHeight);
-        container.setPreferredSize(pref);
+        Dimension pref = container.getPreferredSize();
         setPreferredSize(pref);
         setPopupSize(pref);
-
-        add(container);
+        add(container, BorderLayout.CENTER);
     }
 
     @Override
     public void show(Component invoker, int x, int y) {
-        setPopupSize(getPreferredSize());
+        Dimension pref = getPreferredSize();
+        setPopupSize(pref);
         super.show(invoker, x, y);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setColor(DROPDOWN_BG);
-        g2.fillRect(0, 0, getWidth(), getHeight());
-        g2.dispose();
     }
 
     private JPanel createItem(String text, int iconType, Runnable action) {
@@ -122,7 +112,7 @@ public class AddMediaDropdown extends JPopupMenu {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Fill parent background first to avoid transparent artifacts
+                
                 g2.setColor(DROPDOWN_BG);
                 g2.fillRect(0, 0, getWidth(), getHeight());
 
@@ -164,7 +154,7 @@ public class AddMediaDropdown extends JPopupMenu {
         lbl.setForeground(StyleConfig.TEXT_COLOR);
         lbl.setIconTextGap(12);
         lbl.setBorder(BorderFactory.createEmptyBorder(0, 14, 0, 14));
-        // Label must also be non-opaque to let parent paint through
+        
         lbl.setOpaque(false);
         item.add(lbl, BorderLayout.CENTER);
 
@@ -178,7 +168,7 @@ public class AddMediaDropdown extends JPopupMenu {
             @Override
             public void mouseExited(MouseEvent e) {
                 item.setPressed(false);
-                // Defer check to avoid flicker when moving between label and parent row.
+                
                 SwingUtilities.invokeLater(() -> {
                     if (!item.isShowing()) {
                         item.setHovered(false);

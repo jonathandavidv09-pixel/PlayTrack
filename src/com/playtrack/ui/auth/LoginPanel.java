@@ -20,30 +20,43 @@ public class LoginPanel extends JPanel {
     public LoginPanel(ActionListener loginAction, ActionListener switchToRegisterAction, Runnable forgotPasswordAction) {
         setLayout(new GridBagLayout());
         setOpaque(false);
-        setPreferredSize(new Dimension(420, 530));
+        Dimension fixedPanel = new Dimension(420, 530);
+        setPreferredSize(fixedPanel);
+        setMinimumSize(fixedPanel);
+        setMaximumSize(fixedPanel);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
 
-        // ========== TAB HEADER: LOGIN | REGISTER ==========
+        
         JPanel tabHeader = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         tabHeader.setOpaque(false);
+        Dimension tabHeaderSize = new Dimension(330, 36);
+        tabHeader.setPreferredSize(tabHeaderSize);
+        tabHeader.setMinimumSize(tabHeaderSize);
+        tabHeader.setMaximumSize(tabHeaderSize);
 
         JLabel loginTab = new JLabel("LOGIN");
         loginTab.setFont(new Font("Segoe UI", Font.BOLD, 22));
         loginTab.setForeground(StyleConfig.PRIMARY_COLOR);
         loginTab.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        loginTab.setPreferredSize(new Dimension(118, 32));
+        loginTab.setHorizontalAlignment(SwingConstants.RIGHT);
 
         JLabel divider = new JLabel("  |  ");
         divider.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         divider.setForeground(new Color(100, 100, 120));
+        divider.setPreferredSize(new Dimension(34, 32));
+        divider.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel registerTab = new JLabel("REGISTER");
         registerTab.setFont(new Font("Segoe UI", Font.BOLD, 22));
         registerTab.setForeground(new Color(160, 160, 175));
         registerTab.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        registerTab.setPreferredSize(new Dimension(168, 32));
+        registerTab.setHorizontalAlignment(SwingConstants.LEFT);
         registerTab.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 switchToRegisterAction.actionPerformed(null);
@@ -58,7 +71,7 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(30, 30, 20, 30);
         add(tabHeader, gbc);
 
-        // ========== Email or Username ==========
+        
         JLabel emailLabel = new JLabel("Email or Username");
         emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         emailLabel.setForeground(new Color(200, 200, 210));
@@ -72,7 +85,7 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 12, 35);
         add(usernameField, gbc);
 
-        // ========== Password ==========
+        
         JLabel passLabel = new JLabel("Password");
         passLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         passLabel.setForeground(new Color(200, 200, 210));
@@ -86,7 +99,7 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 8, 35);
         add(passwordField, gbc);
 
-        // ========== Remember Me + Forgot Password row ==========
+        
         JPanel rememberForgotRow = new JPanel(new BorderLayout());
         rememberForgotRow.setOpaque(false);
 
@@ -114,7 +127,7 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 15, 35);
         add(rememberForgotRow, gbc);
 
-        // ========== Error label ==========
+        
         errorLabel = new JLabel("", SwingConstants.CENTER);
         errorLabel.setForeground(StyleConfig.ERROR_COLOR);
         errorLabel.setFont(StyleConfig.FONT_SMALL);
@@ -122,7 +135,7 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 5, 35);
         add(errorLabel, gbc);
 
-        // ========== SIGN IN button (gradient red) ==========
+        
         loginButton = new RoundedButton("SIGN IN", StyleConfig.PRIMARY_COLOR, 22);
         loginButton.setGradient(new Color(220, 130, 50));
         loginButton.setPreferredSize(new Dimension(330, 44));
@@ -175,20 +188,20 @@ public class LoginPanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Background
+                
                 g2.setColor(new Color(35, 32, 45));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 12, 12));
 
-                // Border
+                
                 g2.setColor(new Color(70, 65, 85));
                 g2.setStroke(new BasicStroke(1f));
                 g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 12, 12));
 
-                // Icon circle
+                
                 g2.setColor(iconColor);
                 g2.fillOval(16, getHeight() / 2 - 8, 16, 16);
 
-                // Icon letter
+                
                 g2.setColor(Color.WHITE);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 11));
                 FontMetrics fm = g2.getFontMetrics();
@@ -196,14 +209,14 @@ public class LoginPanel extends JPanel {
                     g2.drawString(iconLetter, 16 + (16 - fm.stringWidth(iconLetter)) / 2,
                             getHeight() / 2 + fm.getAscent() / 2 - 1);
                 } else {
-                    // Apple logo approximation
+                    
                     g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
                     fm = g2.getFontMetrics();
                     g2.drawString("⌘", 16 + (16 - fm.stringWidth("⌘")) / 2,
                             getHeight() / 2 + fm.getAscent() / 2 - 1);
                 }
 
-                // Text
+                
                 g2.setColor(new Color(200, 200, 215));
                 g2.setFont(new Font("Segoe UI", Font.PLAIN, 13));
                 fm = g2.getFontMetrics();
@@ -226,11 +239,11 @@ public class LoginPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // --- TRANSLUCENT dark background card ---
+        
         g2.setColor(new Color(28, 25, 35, 180));
         g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 18, 18));
 
-        // Subtle border with slight red tint
+        
         g2.setColor(new Color(80, 50, 55, 120));
         g2.setStroke(new BasicStroke(1.5f));
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 18, 18));

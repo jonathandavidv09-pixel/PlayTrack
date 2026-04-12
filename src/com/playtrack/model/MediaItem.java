@@ -6,7 +6,7 @@ public class MediaItem {
     private int id;
     private int userId;
     private String title;
-    private String category; // Film, Game, Book
+    private String category; 
     private String genre;
     private String author;
     private String imagePath;
@@ -25,7 +25,7 @@ public class MediaItem {
         this.createdAt = createdAt;
     }
 
-    // Getters and Setters
+    
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public int getUserId() { return userId; }

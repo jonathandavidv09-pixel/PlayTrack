@@ -16,6 +16,7 @@ public class LibraryPanel extends JPanel {
     private static final int CARD_WIDTH = 160;
     private static final int CARD_HEIGHT = 240;
     private static final int CARD_GAP = 20;
+    private static final int MAX_CATEGORY_ROWS = 2;
     private MediaService mediaService = new MediaService();
     private JPanel cardGrid;
     private JScrollPane libraryScroll;
@@ -32,7 +33,7 @@ public class LibraryPanel extends JPanel {
 
         UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
 
-        // Subtle glowing orb top-left
+        
         int orbSize = 350;
         g2.setPaint(new RadialGradientPaint(
             80f, 60f, orbSize / 2f,
@@ -49,29 +50,29 @@ public class LibraryPanel extends JPanel {
         setBackground(StyleConfig.BACKGROUND_COLOR);
         setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
-        // Top section
+        
         JPanel topSection = new JPanel(new BorderLayout());
         topSection.setOpaque(false);
         topSection.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 50));
 
-        // Title
+        
         JLabel pageTitle = new JLabel("Your Library");
         pageTitle.setFont(StyleConfig.FONT_TITLE);
         pageTitle.setForeground(StyleConfig.TEXT_COLOR);
         topSection.add(pageTitle, BorderLayout.NORTH);
 
-        // Filters row
+        
         JPanel filtersRow = new JPanel(new BorderLayout());
         filtersRow.setOpaque(false);
         filtersRow.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
 
-        // Category tabs
+        
         tabsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
         tabsPanel.setOpaque(false);
         refreshTabs();
         filtersRow.add(tabsPanel, BorderLayout.CENTER);
 
-        // Search
+        
         searchField = new PlaceholderTextField("Search your library...", "SEARCH");
         searchField.setPreferredSize(new Dimension(280, 42));
         searchField.addActionListener(e -> {
@@ -80,7 +81,7 @@ public class LibraryPanel extends JPanel {
         });
         filtersRow.add(searchField, BorderLayout.EAST);
 
-        // Left spacer to perfectly balance BorderLayout.CENTER
+        
         JPanel leftSpacer = new JPanel();
         leftSpacer.setOpaque(false);
         leftSpacer.setPreferredSize(new Dimension(280, 42));
@@ -89,7 +90,7 @@ public class LibraryPanel extends JPanel {
         topSection.add(filtersRow, BorderLayout.SOUTH);
         add(topSection, BorderLayout.NORTH);
 
-        // Card grid
+        
         class ScrollableCardGrid extends JPanel implements Scrollable {
             private static final long serialVersionUID = 1L;
 
@@ -99,7 +100,7 @@ public class LibraryPanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Repaint a stable full background every frame to prevent scroll ghosting/clipped duplicates.
+                
                 g2.setColor(StyleConfig.BACKGROUND_COLOR);
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 Point p = SwingUtilities.convertPoint(this, 0, 0, LibraryPanel.this);
@@ -150,6 +151,10 @@ public class LibraryPanel extends JPanel {
         scroll.getViewport().setOpaque(true);
         scroll.getViewport().setBackground(StyleConfig.BACKGROUND_COLOR);
         scroll.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+        scroll.getViewport().addChangeListener(e -> {
+            Rectangle vr = scroll.getViewport().getViewRect();
+            cardGrid.repaint(vr.x, vr.y, vr.width, vr.height);
+        });
 
         add(scroll, BorderLayout.CENTER);
 
@@ -208,7 +213,7 @@ public class LibraryPanel extends JPanel {
         tab.setOpaque(false);
         tab.setPreferredSize(new Dimension(100, 36));
         tab.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        tab.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10)); // Provide some spacing between tabs
+        tab.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10)); 
 
         JLabel label = new JLabel(name, SwingConstants.CENTER);
         label.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -408,7 +413,7 @@ public class LibraryPanel extends JPanel {
         headerPanel.add(divider);
         section.add(headerPanel, BorderLayout.NORTH);
 
-        // Build cards with deterministic rows (same look, no wrap clipping artifacts).
+        
         int columns = calculateCardColumns(showSectionArrow);
         JPanel cardsHost = new JPanel();
         cardsHost.setOpaque(false);
@@ -416,19 +421,34 @@ public class LibraryPanel extends JPanel {
         cardsHost.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         cardsHost.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        for (int start = 0; start < itemCount; start += columns) {
+        int visibleCount = itemCount;
+        if (isCategorySection) {
+            visibleCount = Math.min(itemCount, columns * MAX_CATEGORY_ROWS);
+        }
+
+        for (int start = 0; start < visibleCount; start += columns) {
             JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, CARD_GAP, 0));
             row.setOpaque(false);
             row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-            int end = Math.min(itemCount, start + columns);
+            int end = Math.min(visibleCount, start + columns);
             for (int i = start; i < end; i++) {
                 row.add(new MediaCard(items.get(i), false, true, this::refreshLibrary));
             }
 
             cardsHost.add(row);
-            if (end < itemCount) {
+            if (end < visibleCount) {
                 cardsHost.add(Box.createVerticalStrut(CARD_GAP));
+            }
+        }
+
+        
+        if (isCategorySection) {
+            int shownRows = Math.max(1, (visibleCount + columns - 1) / columns);
+            int missingRows = Math.max(0, MAX_CATEGORY_ROWS - shownRows);
+            if (missingRows > 0) {
+                int reservedHeight = missingRows * (CARD_HEIGHT + CARD_GAP);
+                cardsHost.add(Box.createVerticalStrut(reservedHeight));
             }
         }
 
@@ -482,7 +502,7 @@ public class LibraryPanel extends JPanel {
             viewportWidth = 1200;
         }
 
-        int reserved = showSectionArrow ? 44 : 0; // section arrow host + gap
+        int reserved = showSectionArrow ? 44 : 0; 
         int available = Math.max(CARD_WIDTH, viewportWidth - reserved - CARD_GAP);
         return Math.max(1, (available + CARD_GAP) / (CARD_WIDTH + CARD_GAP));
     }

@@ -8,9 +8,20 @@ import com.playtrack.ui.components.UIUtils;
 import com.playtrack.util.SessionManager;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
+import javax.swing.text.JTextComponent;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
 public class SettingsDialog extends JDialog {
     private static final long serialVersionUID = 1L;
@@ -20,6 +31,20 @@ public class SettingsDialog extends JDialog {
     private JPasswordField currentPasswordField;
     private JPasswordField newPasswordField;
     private JPasswordField confirmPasswordField;
+    private ChecklistRow lenRow;
+    private ChecklistRow complexityRow;
+    private ChecklistRow commonRow;
+    private ChecklistRow matchRow;
+
+    private static final Color DIALOG_BG_TOP = new Color(30, 35, 64);
+    private static final Color DIALOG_BG_BOTTOM = new Color(20, 24, 46);
+    private static final Color FIELD_BG = new Color(42, 52, 84);
+    private static final Color FIELD_BORDER = new Color(255, 255, 255, 48);
+    private static final Color FIELD_BORDER_FOCUS = new Color(253, 164, 129, 185);
+    private static final Set<String> COMMON_PASSWORDS = new HashSet<>(Arrays.asList(
+        "password", "password123", "123456", "12345678", "123456789", "qwerty",
+        "abc123", "111111", "letmein", "admin", "welcome", "iloveyou"
+    ));
 
     public SettingsDialog(Frame parent) {
         super(parent, "SETTINGS", true);
@@ -28,118 +53,181 @@ public class SettingsDialog extends JDialog {
         setUndecorated(true);
         setBackground(new Color(0, 0, 0, 0));
 
-        JPanel container = new JPanel(new BorderLayout());
-        container.setBackground(StyleConfig.BACKGROUND_COLOR);
-        container.setBorder(BorderFactory.createLineBorder(StyleConfig.BORDER_COLOR, 1));
+        JPanel container = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int w = getWidth();
+                int h = getHeight();
+
+                Shape card = new RoundRectangle2D.Float(0, 0, w, h, 20, 20);
+                g2.setPaint(new GradientPaint(0, 0, DIALOG_BG_TOP, 0, h, DIALOG_BG_BOTTOM));
+                g2.fill(card);
+
+                g2.setColor(new Color(255, 255, 255, 60));
+                g2.setStroke(new BasicStroke(1f));
+                g2.draw(card);
+                g2.dispose();
+            }
+        };
+        container.setOpaque(false);
+        container.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         
-        // Header
+        
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
-        header.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        header.setBorder(BorderFactory.createEmptyBorder(22, 24, 16, 24));
         
         JLabel title = new JLabel("SETTINGS", SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        title.setFont(new Font("Segoe UI", Font.BOLD, 28));
         title.setForeground(StyleConfig.TEXT_COLOR);
         header.add(title, BorderLayout.CENTER);
         
+        final boolean[] closeHovered = { false };
         JLabel closeBtn = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                UIUtils.drawCloseIcon(g2, 0, 0, getWidth(), getForeground(), 2.0f);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int boxSize = Math.min(getWidth(), getHeight()) - 2;
+                int bx = (getWidth() - boxSize) / 2;
+                int by = (getHeight() - boxSize) / 2;
+
+                if (closeHovered[0]) {
+                    g2.setColor(new Color(255, 255, 255, 24));
+                    g2.fillRoundRect(bx, by, boxSize, boxSize, 10, 10);
+                }
+                UIUtils.drawCloseIcon(g2, bx + 2, by + 2, boxSize - 4, getForeground(), 2.2f);
                 g2.dispose();
             }
         };
-        closeBtn.setPreferredSize(new Dimension(20, 20));
+        closeBtn.setPreferredSize(new Dimension(30, 30));
+        closeBtn.setMinimumSize(new Dimension(30, 30));
+        closeBtn.setMaximumSize(new Dimension(30, 30));
         closeBtn.setForeground(StyleConfig.TEXT_SECONDARY);
         closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         closeBtn.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) { dispose(); }
-            public void mouseEntered(MouseEvent e) { closeBtn.setForeground(StyleConfig.PRIMARY_COLOR); }
-            public void mouseExited(MouseEvent e) { closeBtn.setForeground(StyleConfig.TEXT_SECONDARY); }
+            public void mouseEntered(MouseEvent e) { closeHovered[0] = true; closeBtn.setForeground(Color.WHITE); closeBtn.repaint(); }
+            public void mouseExited(MouseEvent e) { closeHovered[0] = false; closeBtn.setForeground(StyleConfig.TEXT_SECONDARY); closeBtn.repaint(); }
         });
         header.add(closeBtn, BorderLayout.EAST);
         container.add(header, BorderLayout.NORTH);
 
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(StyleConfig.BACKGROUND_COLOR);
-        content.setBorder(BorderFactory.createEmptyBorder(10, 30, 30, 30));
+        content.setOpaque(false);
+        content.setBorder(BorderFactory.createEmptyBorder(6, 30, 30, 30));
 
         User user = SessionManager.getCurrentUser();
 
-        // Account Information
+        
         JLabel accInfoTitle = new JLabel("Account Information");
-        accInfoTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        accInfoTitle.setFont(new Font("Segoe UI", Font.BOLD, 23));
         accInfoTitle.setForeground(StyleConfig.TEXT_COLOR);
         content.add(accInfoTitle);
-        content.add(Box.createVerticalStrut(15));
+        content.add(Box.createVerticalStrut(12));
 
         emailField = createField("Email", user.getEmail(), content);
         usernameField = createField("Username", user.getUsername(), content);
         
-        content.add(Box.createVerticalStrut(15));
+        content.add(Box.createVerticalStrut(8));
         
-        // Change Password
+        
         JLabel passTitle = new JLabel("Change Password");
-        passTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        passTitle.setFont(new Font("Segoe UI", Font.BOLD, 23));
         passTitle.setForeground(StyleConfig.TEXT_COLOR);
         content.add(passTitle);
-        content.add(Box.createVerticalStrut(15));
+        content.add(Box.createVerticalStrut(12));
 
         currentPasswordField = createPasswordField("Current Password", content);
         newPasswordField = createPasswordField("New Password", content);
         confirmPasswordField = createPasswordField("Confirm Password", content);
+        content.add(createPasswordChecklistPanel());
+        bindPasswordChecklistListeners();
+        updatePasswordChecklist();
+        content.add(Box.createVerticalStrut(10));
 
-        content.add(Box.createVerticalGlue());
+        JScrollPane contentScroll = new JScrollPane(content);
+        contentScroll.setBorder(null);
+        contentScroll.setOpaque(false);
+        contentScroll.getViewport().setOpaque(false);
+        contentScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        contentScroll.getVerticalScrollBar().setUnitIncrement(16);
+        contentScroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
 
-        // Save Button Row
+        
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.setOpaque(false);
+        footer.setBorder(BorderFactory.createEmptyBorder(10, 30, 16, 30));
+
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         btnRow.setOpaque(false);
         RoundedButton saveBtn = new RoundedButton("Save changes", StyleConfig.PRIMARY_COLOR, 12);
-        saveBtn.setPreferredSize(new Dimension(140, 36));
+        saveBtn.setGradient(StyleConfig.PRIMARY_DARK);
+        saveBtn.setPreferredSize(new Dimension(150, 38));
+        saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 15));
         saveBtn.addActionListener(e -> saveSettings());
         btnRow.add(saveBtn);
-        
-        content.add(btnRow);
 
-        container.add(content, BorderLayout.CENTER);
+        footer.add(btnRow, BorderLayout.CENTER);
+
+        container.add(contentScroll, BorderLayout.CENTER);
+        container.add(footer, BorderLayout.SOUTH);
         add(container);
     }
 
     private JTextField createField(String label, String value, JPanel parent) {
         JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lbl.setForeground(StyleConfig.TEXT_SECONDARY);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lbl.setForeground(new Color(220, 229, 248));
         parent.add(lbl);
+        parent.add(Box.createVerticalStrut(6));
 
         JTextField field = new JTextField(value);
-        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        field.setBackground(StyleConfig.BACKGROUND_LIGHT);
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        field.setBackground(FIELD_BG);
         field.setForeground(StyleConfig.TEXT_COLOR);
         field.setCaretColor(StyleConfig.TEXT_COLOR);
-        field.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        parent.add(field);
-        parent.add(Box.createVerticalStrut(15));
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
+        parent.add(createInputShell(field));
+        parent.add(Box.createVerticalStrut(16));
         return field;
     }
 
     private JPasswordField createPasswordField(String label, JPanel parent) {
         JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lbl.setForeground(StyleConfig.TEXT_SECONDARY);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lbl.setForeground(new Color(220, 229, 248));
         parent.add(lbl);
+        parent.add(Box.createVerticalStrut(6));
 
         JPanel fieldWrapper = new JPanel(new BorderLayout());
-        fieldWrapper.setBackground(StyleConfig.BACKGROUND_LIGHT);
-        fieldWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        fieldWrapper.setBackground(FIELD_BG);
+        fieldWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        fieldWrapper.setBorder(createInputBorder(false));
 
         JPasswordField field = new JPasswordField();
-        field.setBackground(StyleConfig.BACKGROUND_LIGHT);
+        field.setBackground(FIELD_BG);
         field.setForeground(StyleConfig.TEXT_COLOR);
         field.setCaretColor(StyleConfig.TEXT_COLOR);
-        field.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
         fieldWrapper.add(field, BorderLayout.CENTER);
+        field.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                fieldWrapper.setBorder(createInputBorder(true));
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                fieldWrapper.setBorder(createInputBorder(false));
+            }
+        });
 
         JLabel eye = new JLabel() {
             boolean isHovered = false;
@@ -164,15 +252,175 @@ public class SettingsDialog extends JDialog {
         eye.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 boolean visible = field.getEchoChar() == (char)0;
-                field.setEchoChar(!visible ? (char)0 : '•');
+                field.setEchoChar(!visible ? (char)0 : '\u2022');
                 eye.repaint();
             }
         });
         fieldWrapper.add(eye, BorderLayout.EAST);
 
         parent.add(fieldWrapper);
-        parent.add(Box.createVerticalStrut(15));
+        parent.add(Box.createVerticalStrut(16));
         return field;
+    }
+
+    private JPanel createInputShell(JTextComponent field) {
+        JPanel shell = new JPanel(new BorderLayout());
+        shell.setBackground(FIELD_BG);
+        shell.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        shell.setBorder(createInputBorder(false));
+        shell.add(field, BorderLayout.CENTER);
+
+        field.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                shell.setBorder(createInputBorder(true));
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                shell.setBorder(createInputBorder(false));
+            }
+        });
+
+        return shell;
+    }
+
+    private Border createInputBorder(boolean focused) {
+        Color stroke = focused ? FIELD_BORDER_FOCUS : FIELD_BORDER;
+        return BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(stroke, 1, true),
+            BorderFactory.createEmptyBorder(0, 0, 0, 0)
+        );
+    }
+
+    private JPanel createPasswordChecklistPanel() {
+        JPanel checklist = new JPanel();
+        checklist.setLayout(new BoxLayout(checklist, BoxLayout.Y_AXIS));
+        checklist.setOpaque(false);
+        checklist.setAlignmentX(Component.LEFT_ALIGNMENT);
+        checklist.setBorder(BorderFactory.createEmptyBorder(2, 0, 10, 0));
+
+        lenRow = new ChecklistRow("At least 8 characters");
+        complexityRow = new ChecklistRow("Uppercase, lowercase, numbers & symbols");
+        commonRow = new ChecklistRow("Not a common password");
+        matchRow = new ChecklistRow("Passwords match");
+
+        checklist.add(lenRow);
+        checklist.add(Box.createVerticalStrut(4));
+        checklist.add(complexityRow);
+        checklist.add(Box.createVerticalStrut(4));
+        checklist.add(commonRow);
+        checklist.add(Box.createVerticalStrut(4));
+        checklist.add(matchRow);
+        return checklist;
+    }
+
+    private void bindPasswordChecklistListeners() {
+        DocumentListener listener = new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { updatePasswordChecklist(); }
+            public void removeUpdate(DocumentEvent e) { updatePasswordChecklist(); }
+            public void changedUpdate(DocumentEvent e) { updatePasswordChecklist(); }
+        };
+        newPasswordField.getDocument().addDocumentListener(listener);
+        confirmPasswordField.getDocument().addDocumentListener(listener);
+    }
+
+    private void updatePasswordChecklist() {
+        String newPass = new String(newPasswordField.getPassword());
+        String confirmPass = new String(confirmPasswordField.getPassword());
+
+        boolean hasLen = newPass.length() >= 8;
+        boolean hasComplexity = isComplexPassword(newPass);
+        boolean isNotCommon = !newPass.isEmpty() && !isCommonPassword(newPass);
+        boolean matches = !newPass.isEmpty() && newPass.equals(confirmPass);
+
+        lenRow.setMet(hasLen);
+        complexityRow.setMet(hasComplexity);
+        commonRow.setMet(isNotCommon);
+        matchRow.setMet(matches);
+    }
+
+    private boolean isComplexPassword(String pass) {
+        if (pass == null || pass.isEmpty()) {
+            return false;
+        }
+        boolean hasUpper = false;
+        boolean hasLower = false;
+        boolean hasDigit = false;
+        boolean hasSymbol = false;
+
+        for (char ch : pass.toCharArray()) {
+            if (Character.isUpperCase(ch)) {
+                hasUpper = true;
+            } else if (Character.isLowerCase(ch)) {
+                hasLower = true;
+            } else if (Character.isDigit(ch)) {
+                hasDigit = true;
+            } else {
+                hasSymbol = true;
+            }
+        }
+        return hasUpper && hasLower && hasDigit && hasSymbol;
+    }
+
+    private boolean isCommonPassword(String pass) {
+        if (pass == null || pass.isEmpty()) {
+            return false;
+        }
+        return COMMON_PASSWORDS.contains(pass.toLowerCase(Locale.ROOT));
+    }
+
+    private boolean passesPasswordRules(String newPass, String confirmPass) {
+        return newPass.length() >= 8
+            && isComplexPassword(newPass)
+            && !isCommonPassword(newPass)
+            && newPass.equals(confirmPass);
+    }
+
+    private static class ChecklistRow extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private final JLabel textLabel;
+        private boolean met;
+
+        ChecklistRow(String text) {
+            super(new BorderLayout(8, 0));
+            setOpaque(false);
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+            setPreferredSize(new Dimension(0, 20));
+
+            JComponent statusIcon = new JComponent() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                    Color stroke = met ? new Color(97, 224, 154) : new Color(189, 200, 226);
+                    g2.setColor(stroke);
+                    g2.setStroke(new BasicStroke(1.8f));
+                    g2.drawOval(2, 2, 10, 10);
+                    if (met) {
+                        g2.setStroke(new BasicStroke(1.9f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                        g2.drawLine(5, 8, 7, 10);
+                        g2.drawLine(7, 10, 11, 5);
+                    }
+                    g2.dispose();
+                }
+            };
+            statusIcon.setPreferredSize(new Dimension(14, 14));
+
+            textLabel = new JLabel(text);
+            textLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            textLabel.setForeground(new Color(205, 214, 236));
+
+            add(statusIcon, BorderLayout.WEST);
+            add(textLabel, BorderLayout.CENTER);
+        }
+
+        void setMet(boolean met) {
+            this.met = met;
+            textLabel.setForeground(met ? new Color(180, 240, 204) : new Color(205, 214, 236));
+            repaint();
+        }
     }
 
     private void saveSettings() {
@@ -200,8 +448,13 @@ public class SettingsDialog extends JDialog {
                 JOptionPane.showMessageDialog(this, "Please enter your current password to set a new one.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            if (!newPass.equals(confPass)) {
-                JOptionPane.showMessageDialog(this, "New passwords do not match.", "Error", JOptionPane.ERROR_MESSAGE);
+            if (!passesPasswordRules(newPass, confPass)) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Password must be 8+ chars, include uppercase/lowercase/number/symbol,\nnot be a common password, and match confirmation.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
                 return;
             }
         }

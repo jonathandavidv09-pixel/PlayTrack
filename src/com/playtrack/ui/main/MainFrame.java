@@ -93,7 +93,7 @@ public class MainFrame extends JFrame {
         
         cardLayout.show(contentPanel, name);
 
-        // Always reset scroll position to the very top when navigating to a new page
+       
         SwingUtilities.invokeLater(() -> {
             JScrollPane targetScroll = findScrollPane(getPanelByName(name));
             if (targetScroll != null) {

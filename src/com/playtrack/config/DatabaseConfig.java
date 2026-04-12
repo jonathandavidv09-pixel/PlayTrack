@@ -62,7 +62,7 @@ public class DatabaseConfig {
             "id INTEGER PRIMARY KEY AUTOINCREMENT," +
             "user_id INTEGER NOT NULL," +
             "title TEXT NOT NULL," +
-            "category TEXT NOT NULL," + // Film, Game, Book
+            "category TEXT NOT NULL," + 
             "genre TEXT," +
             "image_path TEXT," +
             "created_at DATETIME DEFAULT CURRENT_TIMESTAMP" +

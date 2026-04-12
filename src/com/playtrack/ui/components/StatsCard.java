@@ -25,14 +25,14 @@ public class StatsCard extends ShadowPanel {
         gbc.gridx = 0;
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Icon
+        
         JLabel iconLabel = new JLabel(getIcon(title));
         iconLabel.setFont(new Font("Segoe UI", Font.PLAIN, 28));
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 8, 0);
         content.add(iconLabel, gbc);
 
-        // Title
+        
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(StyleConfig.FONT_SMALL);
         titleLabel.setForeground(StyleConfig.TEXT_SECONDARY);
@@ -40,7 +40,7 @@ public class StatsCard extends ShadowPanel {
         gbc.insets = new Insets(0, 0, 4, 0);
         content.add(titleLabel, gbc);
 
-        // Count
+        
         JLabel countLabel = new JLabel(String.valueOf(count));
         countLabel.setFont(StyleConfig.FONT_LARGE_NUMBER);
         countLabel.setForeground(accentColor);
@@ -57,7 +57,7 @@ public class StatsCard extends ShadowPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Draw accent bar at top
+        
         g2.setColor(accentColor);
         g2.fill(new RoundRectangle2D.Float(6, 6, getWidth() - 12, 4, 4, 4));
         g2.dispose();

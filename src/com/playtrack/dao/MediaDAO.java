@@ -135,7 +135,7 @@ public class MediaDAO {
     }
 
     public boolean deleteMedia(int id) {
-        // Delete associated reviews first to prevent orphaned records
+       
         String deleteReviews = "DELETE FROM reviews WHERE media_id = ?";
         String deleteMedia = "DELETE FROM media_items WHERE id = ?";
         try (Connection conn = SystemDBConnection.getConnection()) {

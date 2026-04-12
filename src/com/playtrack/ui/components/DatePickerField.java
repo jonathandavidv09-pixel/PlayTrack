@@ -72,7 +72,7 @@ public class DatePickerField extends JTextField {
             g2.drawString(placeholder, getInsets().left, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
         }
 
-        // Draw Calendar Icon on the right side
+        
         int iconSize = 16;
         int cx = getWidth() - iconSize / 2 - 12;
         int cy = getHeight() / 2;
@@ -103,7 +103,7 @@ public class DatePickerField extends JTextField {
         panel.setPreferredSize(new Dimension(240, 220));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Header
+        
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
         
@@ -121,7 +121,7 @@ public class DatePickerField extends JTextField {
 
         panel.add(header, BorderLayout.NORTH);
 
-        // Days Grid
+        
         JPanel grid = new JPanel(new GridLayout(0, 7, 4, 4));
         grid.setOpaque(false);
         String[] days = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
@@ -138,7 +138,7 @@ public class DatePickerField extends JTextField {
         int maxDays = calc.getActualMaximum(Calendar.DAY_OF_MONTH);
 
         for (int i = 1; i < startDay; i++) {
-            grid.add(new JLabel("")); // empty
+            grid.add(new JLabel("")); 
         }
         for (int d = 1; d <= maxDays; d++) {
             final int day = d;

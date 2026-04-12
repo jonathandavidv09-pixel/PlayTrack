@@ -15,11 +15,13 @@ public class ProfileDropdown extends JPopupMenu {
     private JLabel emailLabel;
 
     public ProfileDropdown(Runnable onProfile, Runnable onLogout) {
-        setBackground(StyleConfig.BACKGROUND_COLOR);
+        setLightWeightPopupEnabled(true);
+        setBackground(new Color(0, 0, 0, 0));
         setBorder(BorderFactory.createEmptyBorder());
         setOpaque(false);
+        setLayout(new BorderLayout());
 
-        // Main container
+        
         JPanel container = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -32,13 +34,7 @@ public class ProfileDropdown extends JPopupMenu {
                 g2.setColor(StyleConfig.BACKGROUND_COLOR);
                 g2.fillRoundRect(0, 0, w, h, 18, 18);
 
-                // Top sheen
-                g2.setClip(new java.awt.geom.RoundRectangle2D.Float(0, 0, w, 24, 18, 18));
-                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 26), 0, 24, new Color(255, 255, 255, 0)));
-                g2.fillRect(0, 0, w, 24);
-                g2.setClip(null);
-
-                // Border
+                
                 g2.setColor(new Color(255, 255, 255, 42));
                 g2.drawRoundRect(0, 0, w - 1, h - 1, 18, 18);
                 g2.dispose();
@@ -48,7 +44,7 @@ public class ProfileDropdown extends JPopupMenu {
         container.setOpaque(false);
         container.setBorder(BorderFactory.createEmptyBorder(15, 18, 15, 18));
 
-        // User Info Section
+        
         JPanel userInfoPanel = new JPanel();
         userInfoPanel.setLayout(new BoxLayout(userInfoPanel, BoxLayout.Y_AXIS));
         userInfoPanel.setOpaque(false);
@@ -56,7 +52,7 @@ public class ProfileDropdown extends JPopupMenu {
 
         usernameLabel = new JLabel("username");
         usernameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        usernameLabel.setForeground(new Color(245, 218, 140)); // gold-ish color
+        usernameLabel.setForeground(new Color(245, 218, 140)); 
 
         emailLabel = new JLabel("email");
         emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -85,7 +81,7 @@ public class ProfileDropdown extends JPopupMenu {
         container.add(divider);
         container.add(Box.createVerticalStrut(12));
 
-        // Menu Items
+        
         PillButton profileBtn = new PillButton("Profile", 1, StyleConfig.TEXT_COLOR, StyleConfig.PRIMARY_COLOR, () -> {
                     setVisible(false);
                     onProfile.run();
@@ -95,17 +91,26 @@ public class ProfileDropdown extends JPopupMenu {
         container.add(Box.createVerticalStrut(10));
 
         PillButton settingsBtn = new PillButton("Settings", 2, StyleConfig.TEXT_COLOR, StyleConfig.SECONDARY_COLOR, () -> {
+                    Component invoker = getInvoker();
+                    Window window = invoker != null ? SwingUtilities.getWindowAncestor(invoker) : null;
+                    if (!(window instanceof Frame)) {
+                        Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+                        if (active instanceof Frame) {
+                            window = active;
+                        }
+                    }
+
                     setVisible(false);
-                    Window window = SwingUtilities.getWindowAncestor(this.getInvoker());
                     if (window instanceof Frame) {
-                        new com.playtrack.ui.settings.SettingsDialog((Frame) window).setVisible(true);
+                        Frame owner = (Frame) window;
+                        SwingUtilities.invokeLater(() -> new com.playtrack.ui.settings.SettingsDialog(owner).setVisible(true));
                     }
                 });
         settingsBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         container.add(settingsBtn);
-        container.add(Box.createVerticalStrut(10)); // Space before logout
+        container.add(Box.createVerticalStrut(10)); 
 
-        // Logout
+        
         PillButton logoutBtn = new PillButton("Logout", 3, StyleConfig.ERROR_COLOR, StyleConfig.ERROR_COLOR, () -> {
                     setVisible(false);
                     onLogout.run();
@@ -113,22 +118,26 @@ public class ProfileDropdown extends JPopupMenu {
         logoutBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         container.add(logoutBtn);
 
-        add(container);
+        Dimension pref = container.getPreferredSize();
+        setPreferredSize(pref);
+        setPopupSize(pref);
+        add(container, BorderLayout.CENTER);
     }
 
     @Override
     public void show(Component invoker, int x, int y) {
-        // Refresh user details before showing
+        
         User user = SessionManager.getCurrentUser();
         if (user != null) {
             usernameLabel.setText(user.getUsername());
             emailLabel.setText(
                     user.getEmail() != null && !user.getEmail().isEmpty() ? user.getEmail() : "no email provided");
         }
+        setPopupSize(getPreferredSize());
         super.show(invoker, x, y);
     }
 
-    // Custom Pill Button
+    
     private class PillButton extends JPanel {
         private static final long serialVersionUID = 1L;
         private final String text;

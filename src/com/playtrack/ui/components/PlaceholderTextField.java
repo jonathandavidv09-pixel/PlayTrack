@@ -59,13 +59,13 @@ public class PlaceholderTextField extends JTextField {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Background
+        
         g2.setPaint(new GradientPaint(
                 0, 0, focused ? StyleConfig.INPUT_BG_FOCUS : StyleConfig.INPUT_BG,
                 0, getHeight(), StyleConfig.BACKGROUND_LIGHT));
         g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
 
-        // Border
+        
         if (focused) {
             g2.setColor(StyleConfig.INPUT_FOCUS);
             g2.setStroke(new BasicStroke(2f));
@@ -75,7 +75,7 @@ public class PlaceholderTextField extends JTextField {
         }
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 13, 13));
 
-        // Icon
+        
         if (iconText != null) {
             if ("SEARCH".equals(iconText)) {
                 Color iconColor = focused ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_LIGHT;
@@ -95,5 +95,26 @@ public class PlaceholderTextField extends JTextField {
     @Override
     public String getText() {
         return showingPlaceholder ? "" : super.getText();
+    }
+
+    @Override
+    public void setText(String text) {
+        String safe = text == null ? "" : text;
+
+        if (safe.isEmpty()) {
+            if (focused) {
+                super.setText("");
+                setForeground(StyleConfig.TEXT_COLOR);
+                showingPlaceholder = false;
+            } else {
+                super.setText(placeholder);
+                setForeground(StyleConfig.TEXT_LIGHT);
+                showingPlaceholder = true;
+            }
+        } else {
+            super.setText(safe);
+            setForeground(StyleConfig.TEXT_COLOR);
+            showingPlaceholder = false;
+        }
     }
 }

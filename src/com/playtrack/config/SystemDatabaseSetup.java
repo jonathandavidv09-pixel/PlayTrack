@@ -19,7 +19,7 @@ public class SystemDatabaseSetup {
             "id INTEGER PRIMARY KEY AUTOINCREMENT," +
             "user_id INTEGER NOT NULL," +
             "title TEXT NOT NULL," +
-            "category TEXT NOT NULL," + // Film, Game, Book
+            "category TEXT NOT NULL," +
             "genre TEXT," +
             "author TEXT," +
             "image_path TEXT," +
@@ -68,7 +68,7 @@ public class SystemDatabaseSetup {
                 stmt.execute(sql);
             }
             
-            // Safe automated migration
+            
             try {
                 stmt.execute("ALTER TABLE reviews ADD COLUMN is_watchlist BOOLEAN DEFAULT 0");
             } catch (SQLException ignore) {}
