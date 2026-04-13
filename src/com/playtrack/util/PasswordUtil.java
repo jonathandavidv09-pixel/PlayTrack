@@ -4,7 +4,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
+// Utility component: shared helpers for the system layer.
 public class PasswordUtil {
+    // hashPassword.
     public static String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -15,6 +17,7 @@ public class PasswordUtil {
         }
     }
 
+    // verifyPassword.
     public static boolean verifyPassword(String password, String hash) {
         return hashPassword(password).equals(hash);
     }

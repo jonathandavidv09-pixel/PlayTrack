@@ -9,6 +9,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.util.List;
 import java.util.Map;
 
+// Summary dashboard for user activity and ratings.
 public class SummaryPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private SummaryService summaryService = new SummaryService();

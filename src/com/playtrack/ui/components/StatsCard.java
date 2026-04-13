@@ -3,13 +3,13 @@ package com.playtrack.ui.components;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
-
+// Custom stats card component.
 public class StatsCard extends ShadowPanel {
     private static final long serialVersionUID = 1L;
     private Color accentColor;
     private String title;
     private int count;
-
+    // Constructor.
     public StatsCard(String title, int count, Color accentColor) {
         super(20, 6);
         this.title = title;
@@ -17,7 +17,7 @@ public class StatsCard extends ShadowPanel {
         this.accentColor = accentColor;
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(300, 160));
-
+        // Content panel with a grid bag layout to arrange the icon.
         JPanel content = new JPanel(new GridBagLayout());
         content.setOpaque(false);
         content.setBorder(BorderFactory.createEmptyBorder(15, 25, 15, 25));
@@ -25,14 +25,14 @@ public class StatsCard extends ShadowPanel {
         gbc.gridx = 0;
         gbc.anchor = GridBagConstraints.WEST;
 
-        
+        // Icon label at the top of the card.
         JLabel iconLabel = new JLabel(getIcon(title));
         iconLabel.setFont(new Font("Segoe UI", Font.PLAIN, 28));
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 8, 0);
         content.add(iconLabel, gbc);
 
-        
+        // Title label below the icon.
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(StyleConfig.FONT_SMALL);
         titleLabel.setForeground(StyleConfig.TEXT_SECONDARY);
@@ -40,7 +40,7 @@ public class StatsCard extends ShadowPanel {
         gbc.insets = new Insets(0, 0, 4, 0);
         content.add(titleLabel, gbc);
 
-        
+        // Count label at the bottom of the card.
         JLabel countLabel = new JLabel(String.valueOf(count));
         countLabel.setFont(StyleConfig.FONT_LARGE_NUMBER);
         countLabel.setForeground(accentColor);
@@ -64,9 +64,9 @@ public class StatsCard extends ShadowPanel {
     }
 
     private String getIcon(String title) {
-        if (title.contains("Film")) return "🎬";
-        if (title.contains("Game")) return "🎮";
-        if (title.contains("Book")) return "📚";
-        return "📊";
+        if (title.contains("Film")) return "";
+        if (title.contains("Game")) return "";
+        if (title.contains("Book")) return "";
+        return "ðŸ“Š";
     }
 }

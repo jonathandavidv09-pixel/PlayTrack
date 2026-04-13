@@ -5,8 +5,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+// Utility component: shared helpers for the system layer.
 public class DatabaseLogger {
 
+    // logActivity.
     public static void logActivity(String username, String action, String details) {
         String sql = "INSERT INTO global_logs (username, action, details) VALUES (?, ?, ?)";
         try (Connection conn = AuthDBConnection.getConnection();
@@ -20,6 +22,7 @@ public class DatabaseLogger {
         }
     }
 
+    // logOtp.
     public static void logOtp(String email, String otpCode) {
         String sql = "INSERT INTO otp_logs (email, otp_code) VALUES (?, ?)";
         try (Connection conn = AuthDBConnection.getConnection();

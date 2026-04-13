@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+// Settings modal for account info and password updates.
 public class SettingsDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     private AuthService authService = new AuthService();
@@ -46,6 +47,7 @@ public class SettingsDialog extends JDialog {
         "abc123", "111111", "letmein", "admin", "welcome", "iloveyou"
     ));
 
+    // Builds the settings dialog UI.
     public SettingsDialog(Frame parent) {
         super(parent, "SETTINGS", true);
         setSize(450, 600);
@@ -165,7 +167,7 @@ public class SettingsDialog extends JDialog {
 
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         btnRow.setOpaque(false);
-        // Primary action button for persisting account/settings updates.
+        // Save button for account changes.
         RoundedButton saveBtn = new RoundedButton("Save changes", StyleConfig.PRIMARY_COLOR, 12);
         saveBtn.setGradient(StyleConfig.PRIMARY_DARK);
         saveBtn.setPreferredSize(new Dimension(150, 38));
@@ -180,6 +182,7 @@ public class SettingsDialog extends JDialog {
         add(container);
     }
 
+    // Creates a styled text input row.
     private JTextField createField(String label, String value, JPanel parent) {
         JLabel lbl = new JLabel(label);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -199,6 +202,7 @@ public class SettingsDialog extends JDialog {
         return field;
     }
 
+    // Creates a styled password input row.
     private JPasswordField createPasswordField(String label, JPanel parent) {
         JLabel lbl = new JLabel(label);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -264,6 +268,7 @@ public class SettingsDialog extends JDialog {
         return field;
     }
 
+    // Wraps an input in a focus-aware shell.
     private JPanel createInputShell(JTextComponent field) {
         JPanel shell = new JPanel(new BorderLayout());
         shell.setBackground(FIELD_BG);
@@ -286,6 +291,7 @@ public class SettingsDialog extends JDialog {
         return shell;
     }
 
+    // Returns the border style for input focus state.
     private Border createInputBorder(boolean focused) {
         Color stroke = focused ? FIELD_BORDER_FOCUS : FIELD_BORDER;
         return BorderFactory.createCompoundBorder(
@@ -294,6 +300,7 @@ public class SettingsDialog extends JDialog {
         );
     }
 
+    // Creates the password rules checklist panel.
     private JPanel createPasswordChecklistPanel() {
         JPanel checklist = new JPanel();
         checklist.setLayout(new BoxLayout(checklist, BoxLayout.Y_AXIS));
@@ -316,6 +323,7 @@ public class SettingsDialog extends JDialog {
         return checklist;
     }
 
+    // Binds listeners that refresh checklist state.
     private void bindPasswordChecklistListeners() {
         DocumentListener listener = new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { updatePasswordChecklist(); }
@@ -326,6 +334,7 @@ public class SettingsDialog extends JDialog {
         confirmPasswordField.getDocument().addDocumentListener(listener);
     }
 
+    // Updates checklist status from current inputs.
     private void updatePasswordChecklist() {
         String newPass = new String(newPasswordField.getPassword());
         String confirmPass = new String(confirmPasswordField.getPassword());
@@ -341,6 +350,7 @@ public class SettingsDialog extends JDialog {
         matchRow.setMet(matches);
     }
 
+    // Checks password complexity requirements.
     private boolean isComplexPassword(String pass) {
         if (pass == null || pass.isEmpty()) {
             return false;
@@ -364,6 +374,7 @@ public class SettingsDialog extends JDialog {
         return hasUpper && hasLower && hasDigit && hasSymbol;
     }
 
+    // Checks if a password is in a common list.
     private boolean isCommonPassword(String pass) {
         if (pass == null || pass.isEmpty()) {
             return false;
@@ -371,6 +382,7 @@ public class SettingsDialog extends JDialog {
         return COMMON_PASSWORDS.contains(pass.toLowerCase(Locale.ROOT));
     }
 
+    // Validates full password rule set.
     private boolean passesPasswordRules(String newPass, String confirmPass) {
         return newPass.length() >= 8
             && isComplexPassword(newPass)
@@ -378,11 +390,13 @@ public class SettingsDialog extends JDialog {
             && newPass.equals(confirmPass);
     }
 
+    // Row widget for one password rule.
     private static class ChecklistRow extends JPanel {
         private static final long serialVersionUID = 1L;
         private final JLabel textLabel;
         private boolean met;
 
+        // Builds one checklist row.
         ChecklistRow(String text) {
             super(new BorderLayout(8, 0));
             setOpaque(false);
@@ -417,6 +431,7 @@ public class SettingsDialog extends JDialog {
             add(textLabel, BorderLayout.CENTER);
         }
 
+        // Marks this rule as met/unmet.
         void setMet(boolean met) {
             this.met = met;
             textLabel.setForeground(met ? new Color(180, 240, 204) : new Color(205, 214, 236));
@@ -424,6 +439,7 @@ public class SettingsDialog extends JDialog {
         }
     }
 
+    // Saves settings after validation.
     private void saveSettings() {
         User user = SessionManager.getCurrentUser();
         String mail = emailField.getText().trim();

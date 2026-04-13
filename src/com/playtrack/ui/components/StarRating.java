@@ -4,14 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+// Custom star rating component.
 public class StarRating extends JPanel {
     private static final long serialVersionUID = 1L;
     private int rating = 0;
     private boolean editable;
     private int starSize;
     private StarIcon[] stars = new StarIcon[5];
-
+    // Constructor.
     public StarRating(int initialRating, boolean editable) {
         this(initialRating, editable, 24);
     }
@@ -22,7 +22,7 @@ public class StarRating extends JPanel {
         this.starSize = starSize;
         setLayout(new FlowLayout(FlowLayout.LEFT, starSize / 6, 0));
         setOpaque(false);
-
+        // Create and add the star icons to the panel.
         for (int i = 0; i < 5; i++) {
             final int index = i + 1;
             stars[i] = new StarIcon(starSize);
@@ -55,7 +55,7 @@ public class StarRating extends JPanel {
             stars[i].setFilled(i < r);
         }
     }
-
+    // Inner class for the star icon.
     private class StarIcon extends JPanel {
         private static final long serialVersionUID = 1L;
         private boolean filled = false;

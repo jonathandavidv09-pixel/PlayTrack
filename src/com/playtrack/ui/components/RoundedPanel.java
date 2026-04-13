@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
+// Simple panel with rounded corners.
 public class RoundedPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private int radius;

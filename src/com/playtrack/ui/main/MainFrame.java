@@ -10,7 +10,7 @@ import com.playtrack.util.RememberMeManager;
 import com.playtrack.util.SessionManager;
 import javax.swing.*;
 import java.awt.*;
-
+// Main application window.
 public class MainFrame extends JFrame {
     private static final long serialVersionUID = 1L;
     private JPanel contentPanel;
@@ -21,7 +21,7 @@ public class MainFrame extends JFrame {
     private SummaryPanel summaryPanel;
     private ProfilePanel profilePanel;
     private Runnable onLogout;
-
+    // Constructor.
     public MainFrame(Runnable onLogout) {
         this.onLogout = onLogout;
         setTitle("PlayTrack");
@@ -30,7 +30,7 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
-
+        // Navigation bar with callbacks for page switching and logout.
         navbar = new Navbar(
             () -> showPage("home"),
             () -> showPage("library"),
@@ -50,7 +50,7 @@ public class MainFrame extends JFrame {
         libraryPanel = new LibraryPanel();
         summaryPanel = new SummaryPanel();
         profilePanel = new ProfilePanel();
-
+        // Add panels to the content panel with corresponding names for the CardLayout.
         contentPanel.add(homePanel, "home");
         contentPanel.add(libraryPanel, "library");
         contentPanel.add(summaryPanel, "summary");
@@ -58,7 +58,7 @@ public class MainFrame extends JFrame {
 
         add(contentPanel, BorderLayout.CENTER);
     }
-
+    // Method to refresh all panels.
     public void refreshAll() {
         if (navbar != null) navbar.refreshUser();
         if (homePanel != null) { homePanel.refreshStats(); homePanel.refreshRecentActivity(); }
@@ -67,10 +67,10 @@ public class MainFrame extends JFrame {
         if (profilePanel != null) profilePanel.refreshProfile();
         if (contentPanel != null) { contentPanel.revalidate(); contentPanel.repaint(); }
     }
-
+    // Method to show a specific page based on its name.
     private void showPage(String name) {
         if (navbar != null) navbar.refreshUser();
-
+        // Refresh the target panel's content before showing it.
         switch (name) {
             case "home":
                 if (homePanel != null) { homePanel.refreshStats(); homePanel.refreshRecentActivity(); }
@@ -101,7 +101,7 @@ public class MainFrame extends JFrame {
             }
         });
     }
-
+    // Helper method to get a panel by its name.
     private JPanel getPanelByName(String name) {
         if (name == null) return null;
         switch (name) {
@@ -129,7 +129,7 @@ public class MainFrame extends JFrame {
         ReviewFormDialog dialog = new ReviewFormDialog(this, category, () -> refreshAll());
         dialog.setVisible(true);
     }
-
+    // Method to navigate to the library page with a specific category filter.
     private void navigateToLibrary(String category) {
         if (navbar != null) navbar.setActiveNav("Library");
         showPage("library");

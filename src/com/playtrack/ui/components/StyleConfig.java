@@ -2,7 +2,7 @@ package com.playtrack.ui.components;
 
 import java.awt.Color;
 import java.awt.Font;
-
+// Style configuration class.
 public class StyleConfig {
     
     public static final Color PALETTE_NAVY = new Color(0x18, 0x1A, 0x2F);   

@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+// System configuration component: manages database and app setup.
 public class SystemDatabaseSetup {
+    // setup.
     public static void setup() {
         String[] tables = {
             "CREATE TABLE IF NOT EXISTS profiles (" +

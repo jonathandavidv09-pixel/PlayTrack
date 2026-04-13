@@ -1,1 +1,17 @@
-package com.playtrack.test; import com.playtrack.ui.components.PlaceholderTextField; import com.playtrack.ui.components.PlaceholderPasswordField; public class UiLoginTest { public static void main(String[] args) { PlaceholderTextField uField = new PlaceholderTextField(\" "Enter\, null); uField.setText(\testuser\); System.out.println(\Username:" "\ + uField.getText()); PlaceholderPasswordField pField = new PlaceholderPasswordField(\Pass\, null); pField.setText(\password123\); System.out.println(\Password:" "\ + new String(pField.getPassword())); } } 
+package com.playtrack.test;
+
+import com.playtrack.ui.components.PlaceholderPasswordField;
+import com.playtrack.ui.components.PlaceholderTextField;
+
+// Simple UI input field smoke test.
+public class UiLoginTest {
+    public static void main(String[] args) {
+        PlaceholderTextField userField = new PlaceholderTextField("Enter username", "USER");
+        userField.setText("testuser");
+        System.out.println("Username: " + userField.getText());
+
+        PlaceholderPasswordField passField = new PlaceholderPasswordField("Enter password", "LOCK");
+        passField.setText("password123");
+        System.out.println("Password: " + new String(passField.getPassword()));
+    }
+}

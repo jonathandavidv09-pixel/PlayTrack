@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.io.File;
 
+// System configuration component: manages database and app setup.
 public class DatabaseConfig {
     private static final String AUTH_DB_URL = "jdbc:sqlite:db/auth.db";
     private static final String SYSTEM_DB_URL = "jdbc:sqlite:db/playtrack.db";
@@ -19,19 +20,23 @@ public class DatabaseConfig {
         }
     }
 
+    // getAuthConnection.
     public static Connection getAuthConnection() throws SQLException {
         return DriverManager.getConnection(AUTH_DB_URL);
     }
 
+    // getSystemConnection.
     public static Connection getSystemConnection() throws SQLException {
         return DriverManager.getConnection(SYSTEM_DB_URL);
     }
 
+    // setupDatabases.
     public static void setupDatabases() {
         setupAuthDatabase();
         setupSystemDatabase();
     }
 
+    // setupAuthDatabase.
     private static void setupAuthDatabase() {
         String sql = "CREATE TABLE IF NOT EXISTS users (" +
                      "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -48,6 +53,7 @@ public class DatabaseConfig {
         }
     }
 
+    // setupSystemDatabase.
     private static void setupSystemDatabase() {
         String[] tables = {
             "CREATE TABLE IF NOT EXISTS profiles (" +

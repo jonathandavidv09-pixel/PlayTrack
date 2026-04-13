@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
-
+// Navbar component.
 public class Navbar extends JPanel {
     private static final long serialVersionUID = 1L;
     private Runnable onHome, onLibrary, onSummary, onProfile, onLogout;
@@ -32,7 +32,7 @@ public class Navbar extends JPanel {
         setPreferredSize(new Dimension(1400, 65));
         setBorder(BorderFactory.createEmptyBorder(0, 0, 1, 0));
 
-        
+        // Logo section on the left side of the navbar.
         JPanel logoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         logoPanel.setOpaque(false);
 
@@ -53,10 +53,10 @@ public class Navbar extends JPanel {
         logoPanel.add(logo);
         add(logoPanel, BorderLayout.WEST);
 
-        
+        // Navigation links in the center of the navbar.
         JPanel navLinks = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         navLinks.setOpaque(false);
-
+        // Create navigation link panels for Home.
         navLinks.add(createNavLink("Home", () -> {
             setActiveNav("Home");
             onHome.run();
@@ -72,15 +72,15 @@ public class Navbar extends JPanel {
 
         add(navLinks, BorderLayout.CENTER);
 
-        
+        // User profile section on the right side of the navbar.
         JPanel profilePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 0));
         profilePanel.setOpaque(false);
-
+        // Username label next to the avatar icon.
         usernameLabel = new JLabel(username);
         usernameLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         usernameLabel.setForeground(StyleConfig.TEXT_SECONDARY);
         
-
+        // Profile icon label that displays the user's avatar or a default placeholder.
         profileIcon = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -140,7 +140,7 @@ public class Navbar extends JPanel {
         refreshUser();
 
         add(profilePanel, BorderLayout.EAST);
-
+        // Wrap the onProfile action to also set the active navigation state to "Profile" when the profile dropdown option is selected.
         Runnable wrappedOnProfile = () -> {
             setActiveNav("Profile");
             onProfile.run();
@@ -230,7 +230,7 @@ public class Navbar extends JPanel {
         });
         return linkPanel;
     }
-
+    
     public void setActiveNav(String nav) {
         this.activeNav = nav;
         Component center = ((BorderLayout) getLayout()).getLayoutComponent(BorderLayout.CENTER);

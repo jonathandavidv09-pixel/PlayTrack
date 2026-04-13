@@ -10,7 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.io.File;
-
+// Media card component.
 public class MediaCard extends JPanel {
     private static final long serialVersionUID = 1L;
     private final MediaItem item;
@@ -257,7 +257,7 @@ public class MediaCard extends JPanel {
             }
         });
     }
-
+    // Opens the review dialog for this media item.
     private void openReviewDialog() {
         Window window = SwingUtilities.getWindowAncestor(this);
         if (window instanceof Frame) {
@@ -266,7 +266,7 @@ public class MediaCard extends JPanel {
             dialog.setVisible(true);
         }
     }
-
+    // Ensures that a Review object exists for this media item and the current user.
     private Review ensureReview() {
         Review currentReview = mediaService.getReviewByMedia(item.getId());
         if (currentReview == null) {
@@ -280,7 +280,7 @@ public class MediaCard extends JPanel {
         }
         return currentReview;
     }
-
+    // Handles the deletion of the current media item.
     private void deleteCurrentItem() {
         String msg = (item.getId() < 0) ? "Remove this from your watchlist?" : "Delete this item from your library?";
         
@@ -464,7 +464,7 @@ public class MediaCard extends JPanel {
         revalidate();
         repaint();
     }
-
+    // Custom icon painting based on the check state (neutral.
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -595,7 +595,7 @@ public class MediaCard extends JPanel {
             y += lineHeight;
         }
     }
-
+    // Utility method to trim a string.
     private String trimToWidth(String value, FontMetrics fm, int maxWidth) {
         if (value == null || value.isEmpty()) {
             return "";

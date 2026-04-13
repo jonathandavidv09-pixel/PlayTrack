@@ -6,7 +6,9 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// Data access component: handles persistence operations.
 public class ReviewDAO {
+    // addOrUpdateReview.
     public boolean addOrUpdateReview(Review review) {
         String checkSql = "SELECT id FROM reviews WHERE media_id = ? AND user_id = ?";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -45,6 +47,7 @@ public class ReviewDAO {
         return false;
     }
 
+    // getReviewByMedia.
     public Review getReviewByMedia(int mediaId, int userId) {
         String sql = "SELECT * FROM reviews WHERE media_id = ? AND user_id = ?";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -72,6 +75,7 @@ public class ReviewDAO {
         return null;
     }
     
+    // hasColumn.
     private boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
         ResultSetMetaData rsmd = rs.getMetaData();
         int columns = rsmd.getColumnCount();
@@ -83,6 +87,7 @@ public class ReviewDAO {
         return false;
     }
 
+    // getRecentReviews.
     public List<Review> getRecentReviews(int userId, int limit) {
         List<Review> reviews = new ArrayList<>();
         String sql = "SELECT * FROM reviews WHERE user_id = ? ORDER BY review_date DESC LIMIT ?";
@@ -111,6 +116,7 @@ public class ReviewDAO {
         return reviews;
     }
 
+    // getFavorites.
     public List<Review> getFavorites(int userId, int limit) {
         List<Review> reviews = new ArrayList<>();
         String sql = "SELECT * FROM reviews WHERE user_id = ? AND is_favorite = 1 ORDER BY review_date DESC LIMIT ?";
@@ -139,6 +145,7 @@ public class ReviewDAO {
         return reviews;
     }
 
+    // getWatchlists.
     public List<Review> getWatchlists(int userId, int limit) {
         List<Review> reviews = new ArrayList<>();
         String sql = "SELECT * FROM reviews WHERE user_id = ? AND is_watchlist = 1 ORDER BY review_date DESC LIMIT ?";

@@ -7,7 +7,7 @@ import javax.swing.SwingUtilities;
 
 
 
-
+// Custom layout manager.
 public class WrapLayout extends FlowLayout {
     private static final long serialVersionUID = 1L;
 
@@ -94,7 +94,7 @@ public class WrapLayout extends FlowLayout {
             return dim;
         }
     }
-
+    // Helper method to add a row of components to the overall dimension calculation.
     private void addRow(Dimension dim, int rowWidth, int rowHeight) {
         dim.width = Math.max(dim.width, rowWidth);
         if (dim.height > 0) {
@@ -102,7 +102,7 @@ public class WrapLayout extends FlowLayout {
         }
         dim.height += rowHeight;
     }
-
+    // Helper method to resolve the target width for layout calculations.
     private int resolveTargetWidth(Container target) {
         int bestWidth = Integer.MAX_VALUE;
 

@@ -4,7 +4,9 @@ import com.playtrack.config.SystemDBConnection;
 import com.playtrack.model.Profile;
 import java.sql.*;
 
+// Data access component: handles persistence operations.
 public class ProfileDAO {
+    // createProfile.
     public boolean createProfile(Profile profile) {
         String sql = "INSERT INTO profiles (user_id, username, bio, avatar_path) VALUES (?, ?, ?, ?)";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -20,6 +22,7 @@ public class ProfileDAO {
         return false;
     }
 
+    // getProfile.
     public Profile getProfile(int userId) {
         String sql = "SELECT * FROM profiles WHERE user_id = ?";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -42,6 +45,7 @@ public class ProfileDAO {
         return null;
     }
 
+    // updateProfile.
     public boolean updateProfile(Profile profile) {
         String sql = "UPDATE profiles SET username = ?, bio = ?, avatar_path = ? WHERE user_id = ?";
         try (Connection conn = SystemDBConnection.getConnection();

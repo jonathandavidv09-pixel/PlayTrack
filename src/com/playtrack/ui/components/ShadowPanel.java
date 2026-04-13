@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
+// Panel with a soft shadow background.
 public class ShadowPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private int shadowSize = 5;

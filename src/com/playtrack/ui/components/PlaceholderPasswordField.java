@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
-
+// Custom password field component.
 public class PlaceholderPasswordField extends JPasswordField {
     private static final long serialVersionUID = 1L;
     private String placeholder;
@@ -15,11 +15,11 @@ public class PlaceholderPasswordField extends JPasswordField {
     private JLabel eyeLabel;
     private Rectangle eyeBounds = new Rectangle();
     private String iconText = null;
-
+    // Constructor.
     public PlaceholderPasswordField(String placeholder) {
         this(placeholder, null);
     }
-
+    // Constructor.
     public PlaceholderPasswordField(String placeholder, String iconText) {
         this.placeholder = placeholder;
         this.showingPlaceholder = true;
@@ -32,7 +32,7 @@ public class PlaceholderPasswordField extends JPasswordField {
         setCaretColor(StyleConfig.TEXT_COLOR);
         setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(12, iconText != null ? 40 : 16, 12, 44));
-
+        // Focus listener to handle placeholder visibility and styling when the field gains or loses focus.
         addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -59,7 +59,7 @@ public class PlaceholderPasswordField extends JPasswordField {
                 repaint();
             }
         });
-
+        // Mouse listeners for the eye icon to toggle password visibility when clicked.
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -68,7 +68,7 @@ public class PlaceholderPasswordField extends JPasswordField {
                 }
             }
         });
-
+        // Mouse motion listener to change the cursor to a hand when hovering over the eye icon.
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
@@ -80,7 +80,7 @@ public class PlaceholderPasswordField extends JPasswordField {
             }
         });
     }
-
+    // Toggles the visibility of the password by changing the echo character.
     private void togglePasswordVisibility() {
         passwordVisible = !passwordVisible;
         if (passwordVisible) {

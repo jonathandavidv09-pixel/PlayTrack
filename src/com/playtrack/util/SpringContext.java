@@ -2,9 +2,11 @@ package com.playtrack.util;
 
 import org.springframework.context.ApplicationContext;
 
+// Utility component: shared helpers for the system layer.
 public class SpringContext {
     private static ApplicationContext context;
 
+    // setContext.
     public static void setContext(ApplicationContext applicationContext) {
         context = applicationContext;
     }

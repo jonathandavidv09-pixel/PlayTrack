@@ -4,7 +4,9 @@ import com.playtrack.config.AuthDBConnection;
 import com.playtrack.model.User;
 import java.sql.*;
 
+// Data access component: handles persistence operations.
 public class UserDAO {
+    // register.
     public boolean register(User user) {
         String sql = "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)";
         try (Connection conn = AuthDBConnection.getConnection();
@@ -27,6 +29,7 @@ public class UserDAO {
         return false;
     }
 
+    // login.
     public User login(String identifier, String passwordHash) {
         String sql = "SELECT * FROM users WHERE (username = ? OR email = ?) AND password_hash = ?";
         try (Connection conn = AuthDBConnection.getConnection();
@@ -51,6 +54,7 @@ public class UserDAO {
         return null;
     }
 
+    // isUsernameTaken.
     public boolean isUsernameTaken(String username) {
         String sql = "SELECT COUNT(*) FROM users WHERE username = ?";
         try (Connection conn = AuthDBConnection.getConnection();
@@ -67,6 +71,7 @@ public class UserDAO {
         return false;
     }
 
+    // getUserById.
     public User getUserById(int userId) {
         String sql = "SELECT * FROM users WHERE id = ?";
         try (Connection conn = AuthDBConnection.getConnection();
@@ -89,6 +94,7 @@ public class UserDAO {
         return null;
     }
 
+    // updateUserAndAuth.
     public boolean updateUserAndAuth(int userId, String newUsername, String newEmail, String newPasswordHash) {
         String baseSql = "UPDATE users SET username = ?, email = ? ";
         boolean updatePassword = (newPasswordHash != null && !newPasswordHash.isEmpty());

@@ -7,13 +7,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+// Custom profile dropdown component.
 public class ProfileDropdown extends JPopupMenu {
     private static final long serialVersionUID = 1L;
 
     private JLabel usernameLabel;
     private JLabel emailLabel;
-
+    // Constructor.
     public ProfileDropdown(Runnable onProfile, Runnable onLogout) {
         setLightWeightPopupEnabled(true);
         setBackground(new Color(0, 0, 0, 0));
@@ -21,7 +21,7 @@ public class ProfileDropdown extends JPopupMenu {
         setOpaque(false);
         setLayout(new BorderLayout());
 
-        
+        // Container panel with custom painting for the dropdown background and border.
         JPanel container = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -49,11 +49,11 @@ public class ProfileDropdown extends JPopupMenu {
         userInfoPanel.setLayout(new BoxLayout(userInfoPanel, BoxLayout.Y_AXIS));
         userInfoPanel.setOpaque(false);
         userInfoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+        // Labels for displaying the current user's username and email at the top of the dropdown.
         usernameLabel = new JLabel("username");
         usernameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         usernameLabel.setForeground(new Color(245, 218, 140)); 
-
+        // Email label with default text "email" that will.
         emailLabel = new JLabel("email");
         emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         emailLabel.setForeground(StyleConfig.TEXT_COLOR);
@@ -138,7 +138,7 @@ public class ProfileDropdown extends JPopupMenu {
         super.show(invoker, x, y);
     }
 
-    
+    // Custom button component for the dropdown options.
     private class PillButton extends JPanel {
         private static final long serialVersionUID = 1L;
         private final String text;

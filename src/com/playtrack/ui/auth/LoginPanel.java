@@ -109,7 +109,7 @@ public class LoginPanel extends JPanel {
         rememberMeCheck.setOpaque(false);
         rememberMeCheck.setFocusPainted(false);
         rememberForgotRow.add(rememberMeCheck, BorderLayout.WEST);
-
+        // Forgot Password? link.
         forgotPassword = new JLabel("Forgot Password?");
         forgotPassword.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         forgotPassword.setForeground(new Color(211, 64, 69));
@@ -127,7 +127,7 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 15, 35);
         add(rememberForgotRow, gbc);
 
-        
+        // Error message label (initially empty).
         errorLabel = new JLabel("", SwingConstants.CENTER);
         errorLabel.setForeground(StyleConfig.ERROR_COLOR);
         errorLabel.setFont(StyleConfig.FONT_SMALL);
@@ -150,12 +150,12 @@ public class LoginPanel extends JPanel {
 
         JPanel createAccRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
         createAccRow.setOpaque(false);
-
+        // "New to Playtrack?" label.
         JLabel newTo = new JLabel("New to Playtrack?");
         newTo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         newTo.setForeground(new Color(160, 160, 175));
         createAccRow.add(newTo);
-        
+        // Create an account button.
         final String createAccountText = "Create an account.";
         JLabel createAccLink = new JLabel(createAccountText);
         createAccLink.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
@@ -235,7 +235,7 @@ public class LoginPanel extends JPanel {
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
-
+    // Custom panel background with rounded corners and semi-transparent fill.
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);

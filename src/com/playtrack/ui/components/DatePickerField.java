@@ -5,7 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-
+// Custom date picker component.
 public class DatePickerField extends JTextField {
     private static final long serialVersionUID = 1L;
     private String placeholder;

@@ -14,6 +14,7 @@ import java.util.Properties;
 import java.util.Random;
 
 @Service
+// Service layer component: coordinates business logic.
 public class OtpService {
 
     @Value("${spring.mail.username}")
@@ -41,6 +42,7 @@ public class OtpService {
     private String lastDeliveryMessage = "";
     private static final long OTP_VALIDITY_MS = 5 * 60 * 1000;
 
+    // sendOtp.
     public boolean sendOtp(String email) {
         Random random = new Random();
         currentOtp = String.format("%06d", random.nextInt(999999));
@@ -110,6 +112,7 @@ public class OtpService {
         }
     }
 
+    // buildMailSender.
     private JavaMailSender buildMailSender(String host, int port, String username, String password) {
         JavaMailSenderImpl sender = new JavaMailSenderImpl();
         sender.setHost(host);
@@ -130,14 +133,16 @@ public class OtpService {
         return sender;
     }
 
+    // normalizeSmtpPassword.
     private String normalizeSmtpPassword(String rawPassword) {
         if (rawPassword == null) {
             return "";
         }
-        // Gmail app passwords are often shown with spaces; SMTP requires the raw token.
+        // Gmail app passwords are often shown with spaces.
         return rawPassword.replaceAll("\\s+", "").trim();
     }
 
+    // classifyMailError.
     private String classifyMailError(Exception e) {
         String details = collectExceptionDetails(e).toLowerCase();
         if (details.contains("authentication")
@@ -161,6 +166,7 @@ public class OtpService {
         return "Unable to send verification code.";
     }
 
+    // buildConfigErrorMessage.
     private String buildConfigErrorMessage(String host, String username, String password) {
         boolean missingHost = isBlank(host);
         boolean missingUser = isBlank(username);
@@ -192,6 +198,7 @@ public class OtpService {
         return "SMTP config invalid. Check email settings.";
     }
 
+    // collectExceptionDetails.
     private String collectExceptionDetails(Throwable throwable) {
         StringBuilder sb = new StringBuilder();
         Throwable current = throwable;
@@ -207,6 +214,7 @@ public class OtpService {
         return sb.toString();
     }
 
+    // isSmtpConfigured.
     private boolean isSmtpConfigured(String host, String username, String password) {
         return !isBlank(host)
                 && !isBlank(username)
@@ -214,6 +222,7 @@ public class OtpService {
                 && !"your.email@gmail.com".equalsIgnoreCase(username.trim());
     }
 
+    // resolvePort.
     private int resolvePort() {
         if (smtpPort > 0) {
             return smtpPort;
@@ -226,6 +235,7 @@ public class OtpService {
         }
     }
 
+    // resolveConfigValue.
     private String resolveConfigValue(String injectedValue, String envKey) {
         if (!isBlank(injectedValue)) {
             return injectedValue.trim();
@@ -245,6 +255,7 @@ public class OtpService {
         return "";
     }
 
+    // readWindowsUserEnv.
     private String readWindowsUserEnv(String envKey) {
         String os = System.getProperty("os.name", "").toLowerCase();
         if (!os.contains("win")) {
@@ -273,6 +284,7 @@ public class OtpService {
         return "";
     }
 
+    // useSimulatedDelivery.
     private boolean useSimulatedDelivery(String email, String reason) {
         lastDeliverySimulated = true;
         lastDeliveryMessage = reason;
@@ -281,22 +293,27 @@ public class OtpService {
         return true;
     }
 
+    // isBlank.
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
 
+    // getCurrentOtp.
     public String getCurrentOtp() {
         return currentOtp;
     }
 
+    // wasLastDeliverySimulated.
     public boolean wasLastDeliverySimulated() {
         return lastDeliverySimulated;
     }
 
+    // getLastDeliveryMessage.
     public String getLastDeliveryMessage() {
         return lastDeliveryMessage;
     }
 
+    // verifyOtp.
     public boolean verifyOtp(String email, String otp) {
         if (currentOtp == null || currentEmail == null) return false;
         if (System.currentTimeMillis() - otpTimestamp > OTP_VALIDITY_MS) {
@@ -307,6 +324,7 @@ public class OtpService {
         return currentEmail.equals(email) && currentOtp.equals(otp);
     }
 
+    // clearOtp.
     public void clearOtp() {
         currentOtp = null;
         currentEmail = null;

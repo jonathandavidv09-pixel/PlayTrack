@@ -19,7 +19,9 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @ComponentScan(basePackages = "com.playtrack")
+// Application bootstrap component: starts the PlayTrack app.
 public class Main {
+    // main.
     public static void main(String[] args) {
        
         ApplicationContext context = new SpringApplicationBuilder(Main.class)
@@ -67,11 +69,13 @@ public class Main {
         });
     }
 
+    // showAuth.
     private static void showAuth() {
         AuthFrame authFrame = new AuthFrame(() -> showMain());
         authFrame.setVisible(true);
     }
 
+    // showMain.
     private static void showMain() {
         MainFrame mainFrame = new MainFrame(() -> showAuth());
         mainFrame.setVisible(true);

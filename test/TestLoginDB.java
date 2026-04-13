@@ -4,6 +4,7 @@ import com.playtrack.dao.UserDAO;
 import com.playtrack.model.User;
 import com.playtrack.util.PasswordUtil;
 
+// Simple database login smoke test.
 public class TestLoginDB {
     public static void main(String[] args) {
         UserDAO dao = new UserDAO();

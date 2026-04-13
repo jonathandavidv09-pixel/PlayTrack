@@ -6,7 +6,9 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// Data access component: handles persistence operations.
 public class MediaDAO {
+    // addMedia.
     public int addMedia(MediaItem item) {
         String sql = "INSERT INTO media_items (user_id, title, category, genre, author, image_path) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -31,6 +33,7 @@ public class MediaDAO {
         return -1;
     }
 
+    // getMediaByUser.
     public List<MediaItem> getMediaByUser(int userId, String category) {
         List<MediaItem> items = new ArrayList<>();
         String sql = "SELECT * FROM media_items WHERE user_id = ?";
@@ -65,6 +68,7 @@ public class MediaDAO {
         return items;
     }
 
+    // getMediaById.
     public MediaItem getMediaById(int id) {
         String sql = "SELECT * FROM media_items WHERE id = ?";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -90,6 +94,7 @@ public class MediaDAO {
         return null;
     }
 
+    // searchMedia.
     public List<MediaItem> searchMedia(int userId, String query) {
         List<MediaItem> items = new ArrayList<>();
         String sql = "SELECT * FROM media_items WHERE user_id = ? AND title LIKE ? ORDER BY created_at DESC";
@@ -117,6 +122,7 @@ public class MediaDAO {
         return items;
     }
 
+    // updateMedia.
     public boolean updateMedia(MediaItem item) {
         String sql = "UPDATE media_items SET title=?, category=?, genre=?, author=?, image_path=? WHERE id=?";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -134,6 +140,7 @@ public class MediaDAO {
         return false;
     }
 
+    // deleteMedia.
     public boolean deleteMedia(int id) {
        
         String deleteReviews = "DELETE FROM reviews WHERE media_id = ?";

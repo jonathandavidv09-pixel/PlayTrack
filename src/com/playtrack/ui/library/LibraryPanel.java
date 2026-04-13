@@ -13,7 +13,7 @@ import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.util.List;
 import javax.imageio.ImageIO;
-
+// Main panel for the library section.
 public class LibraryPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private static final int CARD_WIDTH = 160;
@@ -27,7 +27,7 @@ public class LibraryPanel extends JPanel {
     private String currentCategory = "All";
     private PlaceholderTextField searchField;
     private JPanel tabsPanel;
-
+    // Constructor.
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -36,7 +36,7 @@ public class LibraryPanel extends JPanel {
 
         UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
 
-        
+        // Decorative glowing orb in the background.
         int orbSize = 350;
         g2.setPaint(new RadialGradientPaint(
             80f, 60f, orbSize / 2f,
@@ -47,35 +47,35 @@ public class LibraryPanel extends JPanel {
 
         g2.dispose();
     }
-
+    // Helper method to load the empty library icon from resources.
     public LibraryPanel() {
         setLayout(new BorderLayout());
         setBackground(StyleConfig.BACKGROUND_COLOR);
         setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
-        
+        // Top section with page title and search bar.
         JPanel topSection = new JPanel(new BorderLayout());
         topSection.setOpaque(false);
         topSection.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 50));
 
-        
+        // Page title label.
         JLabel pageTitle = new JLabel("Your Library");
         pageTitle.setFont(StyleConfig.FONT_TITLE);
         pageTitle.setForeground(StyleConfig.TEXT_COLOR);
         topSection.add(pageTitle, BorderLayout.NORTH);
 
-        
+        // Filters row with category tabs and search field.
         JPanel filtersRow = new JPanel(new BorderLayout());
         filtersRow.setOpaque(false);
         filtersRow.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
 
-        
+        // Category tabs panel.
         tabsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
         tabsPanel.setOpaque(false);
         refreshTabs();
         filtersRow.add(tabsPanel, BorderLayout.CENTER);
 
-        
+        // Search field for filtering media items.
         searchField = new PlaceholderTextField("Search your library...", "SEARCH");
         searchField.setPreferredSize(new Dimension(280, 42));
         searchField.addActionListener(e -> {
@@ -84,7 +84,7 @@ public class LibraryPanel extends JPanel {
         });
         filtersRow.add(searchField, BorderLayout.EAST);
 
-        
+        // Left spacer to push the search field to the right.
         JPanel leftSpacer = new JPanel();
         leftSpacer.setOpaque(false);
         leftSpacer.setPreferredSize(new Dimension(280, 42));
@@ -93,7 +93,7 @@ public class LibraryPanel extends JPanel {
         topSection.add(filtersRow, BorderLayout.SOUTH);
         add(topSection, BorderLayout.NORTH);
 
-        
+        // Main content area with scrollable card grid.
         class ScrollableCardGrid extends JPanel implements Scrollable {
             private static final long serialVersionUID = 1L;
 
@@ -134,11 +134,11 @@ public class LibraryPanel extends JPanel {
                 return false;
             }
         }
-
+        // Card grid panel for displaying media items.
         cardGrid = new ScrollableCardGrid();
         cardGrid.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 20));
         cardGrid.setOpaque(false);
-
+        // JScrollPane for the card grid.
         JScrollPane scroll = new JScrollPane();
         this.libraryScroll = scroll;
         scroll.setOpaque(false);
@@ -158,7 +158,7 @@ public class LibraryPanel extends JPanel {
 
         refreshLibrary();
     }
-
+    // Helper method to create a category tab.
     private JPanel createTab(String name, boolean active) {
         JPanel tab = new JPanel(new BorderLayout()) {
             boolean hovered = false;

@@ -8,10 +8,12 @@ import com.playtrack.util.PasswordUtil;
 import com.playtrack.util.RememberMeManager;
 import com.playtrack.util.SessionManager;
 
+// Service layer component: coordinates business logic.
 public class AuthService {
     private UserDAO userDAO = new UserDAO();
     private ProfileDAO profileDAO = new ProfileDAO();
 
+    // register.
     public boolean register(String username, String email, String password) {
         if (userDAO.isUsernameTaken(username))
             return false;
@@ -38,10 +40,12 @@ public class AuthService {
         return false;
     }
 
+    // login.
     public boolean login(String identifier, String password) {
         return login(identifier, password, false);
     }
 
+    // login.
     public boolean login(String identifier, String password, boolean rememberMe) {
         String hash = PasswordUtil.hashPassword(password);
         User user = userDAO.login(identifier, hash);
@@ -57,6 +61,7 @@ public class AuthService {
         return false;
     }
 
+    // tryAutoLoginFromRememberMe.
     public boolean tryAutoLoginFromRememberMe() {
         Integer rememberedUserId = RememberMeManager.getRememberedUserId();
         if (rememberedUserId == null) {
@@ -73,10 +78,12 @@ public class AuthService {
         return true;
     }
 
+    // isUsernameTaken.
     public boolean isUsernameTaken(String username) {
         return userDAO.isUsernameTaken(username);
     }
 
+    // updateSettings.
     public boolean updateSettings(User user, String currentPasswordUnHashed, String newPasswordUnHashed) {
         String newHash = null;
         if (newPasswordUnHashed != null && !newPasswordUnHashed.isEmpty()) {

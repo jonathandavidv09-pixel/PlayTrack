@@ -23,7 +23,7 @@ public class RegisterPanel extends JPanel {
     private JLabel commonCheckLabel;
     private JLabel matchCheckLabel;
     private JLabel errorLabel;
-
+    // Constructor for the registration panel.
     public RegisterPanel(ActionListener registerAction, ActionListener switchToLoginAction) {
         setLayout(new GridBagLayout());
         setOpaque(false);
@@ -31,20 +31,20 @@ public class RegisterPanel extends JPanel {
         setPreferredSize(fixedPanel);
         setMinimumSize(fixedPanel);
         setMaximumSize(fixedPanel);
-
+        // GridBagConstraints for consistent component placement and spacing.
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
 
-        
+        // Tab header with "Login" and "Register" options.
         JPanel tabHeader = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         tabHeader.setOpaque(false);
         Dimension tabHeaderSize = new Dimension(330, 36);
         tabHeader.setPreferredSize(tabHeaderSize);
         tabHeader.setMinimumSize(tabHeaderSize);
         tabHeader.setMaximumSize(tabHeaderSize);
-
+        // "Login" tab label with click action to switch to the login form.
         JLabel loginTab = new JLabel("LOGIN");
         loginTab.setFont(new Font("Segoe UI", Font.BOLD, 22));
         loginTab.setForeground(new Color(160, 160, 175));
@@ -56,13 +56,13 @@ public class RegisterPanel extends JPanel {
                 switchToLoginAction.actionPerformed(null);
             }
         });
-
+        // Divider between the "Login" and "Register" tabs.
         JLabel divider = new JLabel("  |  ");
         divider.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         divider.setForeground(new Color(100, 100, 120));
         divider.setPreferredSize(new Dimension(34, 32));
         divider.setHorizontalAlignment(SwingConstants.CENTER);
-
+        // "Register" tab label (active) with primary color.
         JLabel registerTab = new JLabel("REGISTER");
         registerTab.setFont(new Font("Segoe UI", Font.BOLD, 22));
         registerTab.setForeground(StyleConfig.PRIMARY_COLOR);
@@ -77,59 +77,59 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(25, 30, 15, 30);
         add(tabHeader, gbc);
 
-        
+        // Email label and input field with placeholder text.
         JLabel emailLabel = new JLabel("Email Address");
         emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         emailLabel.setForeground(new Color(200, 200, 210));
         gbc.gridy = 1;
         gbc.insets = new Insets(3, 35, 4, 35);
         add(emailLabel, gbc);
-
+        // Email input field with placeholder and preferred size.
         emailField = new PlaceholderTextField("Enter your Email", "EMAIL");
         emailField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 35, 10, 35);
         add(emailField, gbc);
 
-        
+        // Username label and input field with placeholder text.
         JLabel userLabel = new JLabel("Username");
         userLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         userLabel.setForeground(new Color(200, 200, 210));
         gbc.gridy = 3;
         gbc.insets = new Insets(0, 35, 4, 35);
         add(userLabel, gbc);
-
+        // Username input field with placeholder and preferred size.
         usernameField = new PlaceholderTextField("Choose a Username", "USER");
         usernameField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 35, 10, 35);
         add(usernameField, gbc);
 
-        
+        // Password label and input field with placeholder text.
         JLabel passLabel = new JLabel("Password");
         passLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         passLabel.setForeground(new Color(200, 200, 210));
         gbc.gridy = 5;
         gbc.insets = new Insets(0, 35, 4, 35);
         add(passLabel, gbc);
-
+        // Password input field with placeholder and preferred size.
         passwordField = new PlaceholderPasswordField("Create a Password", "LOCK");
         passwordField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 6;
         gbc.insets = new Insets(0, 35, 4, 35);
         add(passwordField, gbc);
 
-        
+        // Checklist panel to display password requirement validations in real-time.
         JPanel checklistPanel = new JPanel();
         checklistPanel.setLayout(new BoxLayout(checklistPanel, BoxLayout.Y_AXIS));
         checklistPanel.setOpaque(false);
         checklistPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-
+        // Individual checklist items for password requirements (length.
         lengthCheckLabel = createCheckLabel("At least 8 characters");
         complexCheckLabel = createCheckLabel("Uppercase, lowercase, numbers & symbols");
         commonCheckLabel = createCheckLabel("Not a common password");
         matchCheckLabel = createCheckLabel("Passwords match");
-
+        // Adding checklist items to the checklist panel with spacing in between.
         checklistPanel.add(lengthCheckLabel);
         checklistPanel.add(Box.createVerticalStrut(4));
         checklistPanel.add(complexCheckLabel);
@@ -142,21 +142,21 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 10, 35);
         add(checklistPanel, gbc);
 
-        
+        // Confirm Password label and input field with placeholder text.
         JLabel confirmLabel = new JLabel("Confirm Password");
         confirmLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         confirmLabel.setForeground(new Color(200, 200, 210));
         gbc.gridy = 8;
         gbc.insets = new Insets(0, 35, 4, 35);
         add(confirmLabel, gbc);
-
+        
         confirmPasswordField = new PlaceholderPasswordField("Confirm your Password", "LOCK");
         confirmPasswordField.setPreferredSize(new Dimension(330, 42));
         gbc.gridy = 9;
         gbc.insets = new Insets(0, 35, 12, 35);
         add(confirmPasswordField, gbc);
 
-        
+        // Error message label to display registration errors.
         errorLabel = new JLabel("", SwingConstants.CENTER);
         errorLabel.setForeground(StyleConfig.ERROR_COLOR);
         errorLabel.setFont(StyleConfig.FONT_SMALL);
@@ -191,12 +191,12 @@ public class RegisterPanel extends JPanel {
         
         JPanel signInRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
         signInRow.setOpaque(false);
-
+        // "Already have an account?" label.
         JLabel alreadyHave = new JLabel("Already have an account?");
         alreadyHave.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         alreadyHave.setForeground(new Color(160, 160, 175));
         signInRow.add(alreadyHave);
-
+        // "Sign in" link label with click action to switch to the login form.
         final String signInText = "Sign in.";
         JLabel signInLink = new JLabel(signInText);
         signInLink.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
@@ -223,7 +223,7 @@ public class RegisterPanel extends JPanel {
         gbc.insets = new Insets(0, 35, 20, 35);
         add(signInRow, gbc);
 
-        
+        // Document listeners for real-time validation of password requirements as the user types in the password.
         passwordField.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { updateChecklist(); }
             public void removeUpdate(DocumentEvent e) { updateChecklist(); }
@@ -294,7 +294,7 @@ public class RegisterPanel extends JPanel {
             this.state = state;
             this.color = color;
         }
-
+        // Custom icon painting based on the check state (neutral.
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g.create();
@@ -341,7 +341,7 @@ public class RegisterPanel extends JPanel {
 
         g2.dispose();
     }
-
+    // Getter methods for retrieving user input from the registration form fields.
     public String getUsername() { return usernameField.getText(); }
     public String getEmail() { return emailField.getText(); }
     public String getPassword() { return new String(passwordField.getPassword()); }

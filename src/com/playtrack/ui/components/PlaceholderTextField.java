@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.geom.RoundRectangle2D;
-
+// Custom text field component.
 public class PlaceholderTextField extends JTextField {
     private static final long serialVersionUID = 1L;
     private String placeholder;
@@ -17,7 +17,7 @@ public class PlaceholderTextField extends JTextField {
     public PlaceholderTextField(String placeholder) {
         this(placeholder, null);
     }
-
+    // Constructor.
     public PlaceholderTextField(String placeholder, String iconText) {
         this.placeholder = placeholder;
         this.showingPlaceholder = true;
@@ -53,7 +53,7 @@ public class PlaceholderTextField extends JTextField {
             }
         });
     }
-
+    // Overrides getText to return an empty string if the placeholder is currently being shown.
     private void superSetText(String value) {
         super.setText(value);
     }

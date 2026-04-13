@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+// System configuration component: manages database and app setup.
 public class AuthDatabaseSetup {
+    // setup.
     public static void setup() {
         String sqlUsers = "CREATE TABLE IF NOT EXISTS users (" +
                      "id INTEGER PRIMARY KEY AUTOINCREMENT," +

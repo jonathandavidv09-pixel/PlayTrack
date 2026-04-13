@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-
+// Home panel.
 public class HomePanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private SummaryService summaryService = new SummaryService();
@@ -28,7 +28,7 @@ public class HomePanel extends JPanel {
     private String username;
     private int userId;
 
-    
+    // Constants for layout and sizing of recent activity cards and statistics cards.
     private static final int RECENT_COLUMNS = 8;
     private static final int RECENT_COLLAPSED_ROWS = 2;
     private static final int RECENT_CARD_WIDTH = 160;
@@ -41,7 +41,7 @@ public class HomePanel extends JPanel {
     private static final int STAT_CARD_COUNT = 3;
     private static final int STATS_ROW_WIDTH =
         (STAT_CARD_WIDTH * STAT_CARD_COUNT) + (STAT_CARD_GAP * (STAT_CARD_COUNT - 1));
-
+    // Method to refresh the statistics displayed in the stats row.
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -50,7 +50,7 @@ public class HomePanel extends JPanel {
 
         UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
 
-        
+        // Draw decorative gradient orbs in the background for visual interest.
         int orbSize = 400;
         g2.setPaint(new RadialGradientPaint(
             getWidth() - 100f, 80f, orbSize / 2f,
@@ -70,7 +70,7 @@ public class HomePanel extends JPanel {
 
         g2.dispose();
     }
-
+    // Method to refresh the statistics displayed in the stats row.
     private Consumer<String> onNavigate;
 
     public HomePanel(Consumer<String> onAddMedia, Consumer<String> onNavigate) {
@@ -82,7 +82,7 @@ public class HomePanel extends JPanel {
         username = (user != null) ? user.getUsername() : "User";
         userId = (user != null) ? user.getId() : 0;
 
-        
+        // Inner class for a scrollable panel with a custom background.
         class ScrollablePanel extends JPanel implements Scrollable {
             private static final long serialVersionUID = 1L;
             @Override
@@ -102,22 +102,22 @@ public class HomePanel extends JPanel {
             public boolean getScrollableTracksViewportWidth() { return true; }
             public boolean getScrollableTracksViewportHeight() { return false; }
         }
-
+        // Top section with welcome message and stats row.
         JPanel topSection = new JPanel();
         topSection.setLayout(new BoxLayout(topSection, BoxLayout.Y_AXIS));
         topSection.setOpaque(false);
         topSection.setBorder(BorderFactory.createEmptyBorder(20, 50, 0, 50));
-
+        // Main content area with recent activity.
         JPanel mainContent = new ScrollablePanel();
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
         mainContent.setOpaque(false);
         mainContent.setBorder(BorderFactory.createEmptyBorder(0, 50, 40, 50));
-
+        // Welcome message at the top of the home panel.
         JPanel welcomeRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
         welcomeRow.setOpaque(false);
         welcomeRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         welcomeRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-
+        // Welcome message at the top of the home panel.
         JLabel welcomeLabel = new JLabel("Welcome Back, " + username + "!", SwingConstants.CENTER);
         welcomeLabel.setFont(StyleConfig.FONT_TITLE);
         welcomeLabel.setForeground(StyleConfig.TEXT_COLOR);
@@ -127,7 +127,7 @@ public class HomePanel extends JPanel {
         topSection.add(Box.createVerticalStrut(20));
 
         
-        
+        // Stats row with key metrics.
         JPanel statsRowWrapper = new JPanel() {
             @Override
             public boolean isOptimizedDrawingEnabled() {
@@ -182,16 +182,16 @@ public class HomePanel extends JPanel {
 
         add(topSection, BorderLayout.NORTH);
 
-        
+        // Recent activity section with expandable cards.
         JPanel recentActivityWrapper = new JPanel(new BorderLayout());
         recentActivityWrapper.setOpaque(false);
         recentActivityWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+        // Header for the recent activity section.
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         headerPanel.setOpaque(false);
         headerPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
+        // Title for the recent activity section.
         JLabel recentTitle = new JLabel("Recent Activity");
         recentTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         recentTitle.setForeground(StyleConfig.TEXT_SECONDARY);
@@ -231,7 +231,7 @@ public class HomePanel extends JPanel {
 
         recentActivityWrapper.add(cardsCenterWrapper, BorderLayout.CENTER);
 
-        
+        // Down arrow button for expanding recent activity.
         downArrow = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -291,13 +291,13 @@ public class HomePanel extends JPanel {
         });
         add(mainScroll, BorderLayout.CENTER);
     }
-
+    // Method to load recent activity cards.
     private void loadRecentCards() {
         recentCardsPanel.removeAll();
         ReviewDAO reviewDAO = new ReviewDAO();
         MediaDAO mediaDAO = new MediaDAO();
         List<com.playtrack.model.Review> recentReviews = reviewDAO.getRecentReviews(userId, 50);
-        
+        // Create a map of media items for quick lookup based on media ID.
         java.util.Map<Integer, MediaItem> mediaMap = new java.util.HashMap<>();
         for (MediaItem mi : mediaDAO.getMediaByUser(userId, "All")) {
             mediaMap.put(mi.getId(), mi);
@@ -315,20 +315,20 @@ public class HomePanel extends JPanel {
             emptyState.setLayout(new BoxLayout(emptyState, BoxLayout.Y_AXIS));
             emptyState.setOpaque(false);
             emptyState.setBorder(BorderFactory.createEmptyBorder(25, 0, 0, 0));
-
+            // Display an empty state message when there are no recent activity items to show.
             JLabel emptyTitle = new JLabel("No activity yet");
             emptyTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
             emptyTitle.setForeground(StyleConfig.TEXT_SECONDARY);
             emptyTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
             emptyState.add(emptyTitle);
-
+            // Display an empty state message when there are no recent activity items to show.
             JLabel emptyHint = new JLabel("Start logging films, games, or books.");
             emptyHint.setFont(new Font("Segoe UI", Font.PLAIN, 14));
             emptyHint.setForeground(StyleConfig.TEXT_LIGHT);
             emptyHint.setAlignmentX(Component.CENTER_ALIGNMENT);
             emptyState.add(Box.createVerticalStrut(8));
             emptyState.add(emptyHint);
-
+            // Display an empty state message when there are no recent activity items to show.
             GridBagConstraints emptyGbc = new GridBagConstraints();
             emptyGbc.gridx = 0;
             emptyGbc.gridy = 0;
@@ -381,7 +381,7 @@ public class HomePanel extends JPanel {
         recentCardsPanel.setPreferredSize(fixedGridSize);
         recentCardsPanel.setMinimumSize(fixedGridSize);
 
-        
+        // Update visibility and tooltip of the down arrow based on whether there are more items to show and the current expanded state.
         if (downArrow != null) {
             downArrow.setVisible(hasOverflow);
             downArrow.setToolTipText(recentExpanded ? "Show less" : "Show more");
@@ -404,7 +404,7 @@ public class HomePanel extends JPanel {
         }
 
         Map<String, Integer> counts = summaryService.getCategoryCounts(user.getId());
-
+        // Create and add StatsCard components for each category (Films.
         statsContainer.add(createHomeStatCard("Films", counts.get("Films")));
         statsContainer.add(Box.createHorizontalStrut(STAT_CARD_GAP));
         statsContainer.add(createHomeStatCard("Games Played", counts.get("Games")));
@@ -448,7 +448,7 @@ public class HomePanel extends JPanel {
         card.setMinimumSize(cardSize);
         card.setMaximumSize(cardSize);
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+        // Determine the category label for the tooltip based on the input label.
         String catLabel = label.contains("Films") ? "Films" : (label.contains("Games") ? "Games" : "Books");
         card.setToolTipText("Open " + catLabel + " in Library");
         
@@ -459,7 +459,7 @@ public class HomePanel extends JPanel {
                 }
             }
         });
-
+        // Icon for the stats card.
         JPanel icon = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -481,7 +481,7 @@ public class HomePanel extends JPanel {
         title.setForeground(StyleConfig.TEXT_COLOR);
         title.setBounds(88, 18, 145, 22);
         card.add(title);
-
+        // Value label for the stats card.
         JLabel val = new JLabel(count + " Logged");
         val.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         val.setForeground(StyleConfig.TEXT_SECONDARY);
@@ -491,4 +491,3 @@ public class HomePanel extends JPanel {
         return card;
     }
 }
-

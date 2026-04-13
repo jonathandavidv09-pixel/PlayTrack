@@ -9,7 +9,7 @@ import javax.imageio.ImageIO;
 
 public class UIUtils {
 
-    
+    // Cache for loaded icons to avoid redundant loading.
     private static final Map<String, BufferedImage> iconCache = new HashMap<>();
     private static BufferedImage authBackgroundImage;
 
@@ -38,7 +38,7 @@ public class UIUtils {
         }
         return iconCache.get(name);
     }
-
+    // Synchronized method to load the authentication background image.
     private static synchronized BufferedImage getAuthBackgroundImage() {
         if (authBackgroundImage != null) {
             return authBackgroundImage;
@@ -59,7 +59,7 @@ public class UIUtils {
         }
         return authBackgroundImage;
     }
-
+    // Method to paint the faded authentication background.
     public static void paintFadedAuthBackground(Graphics2D g2, int width, int height) {
         if (width <= 0 || height <= 0) {
             return;
@@ -113,7 +113,7 @@ public class UIUtils {
 
     
 
-
+    // Method to draw a search icon.
     private static void drawTintedIcon(Graphics2D g2, BufferedImage src, int cx, int cy, int size, Color color) {
         if (src == null) return;
         
@@ -147,7 +147,7 @@ public class UIUtils {
 
     
 
-
+    // Method to draw a rotated and tinted icon.
     private static void drawTintedRotatedIcon(Graphics2D g2, BufferedImage src, int cx, int cy, int size, Color color, double angleRadians) {
         if (src == null) return;
         
@@ -157,7 +157,7 @@ public class UIUtils {
         int drawW = Math.max((int) Math.round(srcW * aspectScale), 1);
         int drawH = Math.max((int) Math.round(srcH * aspectScale), 1);
 
-        
+        // Draw the tinted icon to an off-screen image first.
         java.awt.Image scaledSrc = src.getScaledInstance(drawW, drawH, java.awt.Image.SCALE_SMOOTH);
         BufferedImage tinted = new BufferedImage(drawW, drawH, BufferedImage.TYPE_INT_ARGB);
         Graphics2D tg = tinted.createGraphics();
@@ -184,14 +184,14 @@ public class UIUtils {
         rg.drawImage(tinted, -drawW / 2, -drawH / 2, null);
         rg.dispose();
     }
-    
+    // Method to draw a close icon.
     public static void drawCloseIcon(Graphics2D g2, int x, int y, int size, Color color, float strokeWidth) {
         BufferedImage src = getIcon("close");
         if (src != null) {
             drawTintedIcon(g2, src, x + size / 2, y + size / 2, size, color);
         }
     }
-
+    // Method to draw an eye icon for password visibility.
     public static void drawEyeIcon(Graphics2D g2, int x, int y, int width, int height, Color color, boolean visible) {
         BufferedImage src = getIcon(visible ? "eye" : "eye_crossed");
         if (src != null) {
@@ -201,33 +201,33 @@ public class UIUtils {
             drawTintedIcon(g2, src, cx, cy, size, color);
         }
     }
-
+    // Method to draw a trash icon.
     public static void drawTrashIcon(Graphics2D g2, int x, int y, int size, Color color) {
         BufferedImage src = getIcon("trash");
         if (src != null) {
             drawTintedIcon(g2, src, x + size / 2, y + size / 2, size, color);
         }
     }
-
+    // Method to draw a horizontal arrow icon.
     public static void drawArrowIcon(Graphics2D g2, int x, int y, int width, int height, Color color, boolean right) {
         int cx = x + width / 2;
         int cy = y + height / 2;
         int size = Math.max(Math.min(width, height) * 2 / 3, 16);
 
-        
+        // Attempt to load the base arrow icon and draw it rotated to the correct orientation (right or left).
         BufferedImage base = getIcon("arrow_right");
         if (base != null) {
             drawTintedRotatedIcon(g2, base, cx, cy, size, color, right ? 0 : Math.PI);
             return;
         }
 
-        
+        // Fallback to drawing a simple triangle if the icon cannot be loaded.
         BufferedImage fallback = getIcon(right ? "arrow_right" : "arrow_left");
         if (fallback != null) {
             drawTintedIcon(g2, fallback, cx, cy, size, color);
         }
     }
-
+    // Method to draw a vertical arrow icon.
     public static void drawVerticalArrowIcon(Graphics2D g2, int x, int y, int width, int height, Color color, boolean down) {
         BufferedImage src = getIcon("arrow_right");
         if (src != null) {
@@ -238,25 +238,25 @@ public class UIUtils {
             drawTintedRotatedIcon(g2, src, cx, cy, size, color, angle);
         }
     }
-
+    // Overloaded method to draw an arrow icon with equal width and height parameters for convenience when the icon should be square.
     public static void drawArrowIcon(Graphics2D g2, int x, int y, int size, Color color, boolean right) {
         drawArrowIcon(g2, x, y, size, size, color, right);
     }
-    
+    // Method to draw a search icon.
     public static void drawSearchIcon(Graphics2D g2, int x, int y, int size, Color color) {
         BufferedImage src = getIcon("search");
         if (src != null) {
             drawTintedIcon(g2, src, x + size / 2, y + size / 2, size, color);
         }
     }
-
+    // Method to draw a plus icon.
     public static void drawPlusIcon(Graphics2D g2, int cx, int cy, int size, Color color) {
         BufferedImage src = getIcon("plus");
         if (src != null) {
             drawTintedIcon(g2, src, cx, cy, size, color);
         }
     }
-
+    // Method to draw a menu icon.
     public static void drawMenuIcon(Graphics2D g2, int cx, int cy, int size, Color color) {
         BufferedImage src = getIcon("menu");
         if (src != null) {
@@ -278,7 +278,7 @@ public class UIUtils {
         iconG.drawLine(left, cy + size / 4, right, cy + size / 4);
         iconG.dispose();
     }
-
+    // Method to draw a category icon based on the category name.
     public static void drawCategoryIcon(Graphics2D g2, String category, int cx, int cy, int size, Color color) {
         String iconName = "";
         if ("Films".equals(category)) iconName = "film";

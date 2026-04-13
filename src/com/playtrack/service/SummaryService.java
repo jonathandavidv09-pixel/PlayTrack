@@ -9,10 +9,12 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
+// Service layer component: coordinates business logic.
 public class SummaryService {
     private MediaDAO mediaDAO = new MediaDAO();
     private ReviewDAO reviewDAO = new ReviewDAO();
 
+    // getCategoryCounts.
     public Map<String, Integer> getCategoryCounts(int userId) {
         List<MediaItem> items = mediaDAO.getMediaByUser(userId, "All");
         Map<String, Integer> counts = new HashMap<>();
@@ -25,10 +27,12 @@ public class SummaryService {
         return counts;
     }
 
+    // getRecentActivity.
     public List<Review> getRecentActivity(int userId, int limit) {
         return reviewDAO.getRecentReviews(userId, limit);
     }
 
+    // getAverageRating.
     public double getAverageRating(int userId) {
         List<Review> reviews = reviewDAO.getRecentReviews(userId, 1000);
      
@@ -44,6 +48,7 @@ public class SummaryService {
         return validReviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
     }
 
+    // getTopGenres.
     public Map<String, Integer> getTopGenres(int userId, String category) {
         List<MediaItem> items = mediaDAO.getMediaByUser(userId, category);
         Map<String, Integer> genres = new HashMap<>();
@@ -67,6 +72,7 @@ public class SummaryService {
         }
     }
 
+    // getTopRatedMedia.
     public List<RatedMedia> getTopRatedMedia(int userId, int limit) {
         List<Review> allReviews = reviewDAO.getRecentReviews(userId, 1000);
         
