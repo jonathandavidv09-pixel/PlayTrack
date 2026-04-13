@@ -89,9 +89,21 @@ public class UIUtils {
             }
 
             Composite oldComposite = g2.getComposite();
-            
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.34f));
+            Object oldInterpolation = g2.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            Object oldRenderQuality = g2.getRenderingHint(RenderingHints.KEY_RENDERING);
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+            // Softer alpha + high-quality scaling to avoid visible vertical banding/stripes.
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.20f));
             g2.drawImage(bgImage, drawX, drawY, drawW, drawH, null);
+
+            if (oldInterpolation != null) {
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldInterpolation);
+            }
+            if (oldRenderQuality != null) {
+                g2.setRenderingHint(RenderingHints.KEY_RENDERING, oldRenderQuality);
+            }
             g2.setComposite(oldComposite);
         }
 

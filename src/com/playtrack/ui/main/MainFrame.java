@@ -6,7 +6,6 @@ import com.playtrack.ui.library.LibraryPanel;
 import com.playtrack.ui.summary.SummaryPanel;
 import com.playtrack.ui.profile.ProfilePanel;
 import com.playtrack.ui.review.ReviewFormDialog;
-import com.playtrack.util.RememberMeManager;
 import com.playtrack.util.SessionManager;
 import javax.swing.*;
 import java.awt.*;
@@ -139,7 +138,6 @@ public class MainFrame extends JFrame {
     }
 
     private void logout() {
-        RememberMeManager.clear();
         SessionManager.logout();
         onLogout.run();
         dispose();

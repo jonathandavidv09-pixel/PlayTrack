@@ -138,23 +138,23 @@ public class RegisterPanel extends JPanel {
         checklistPanel.add(Box.createVerticalStrut(4));
         checklistPanel.add(matchCheckLabel);
 
-        gbc.gridy = 7;
-        gbc.insets = new Insets(0, 35, 10, 35);
-        add(checklistPanel, gbc);
-
         // Confirm Password label and input field with placeholder text.
         JLabel confirmLabel = new JLabel("Confirm Password");
         confirmLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         confirmLabel.setForeground(new Color(200, 200, 210));
-        gbc.gridy = 8;
+        gbc.gridy = 7;
         gbc.insets = new Insets(0, 35, 4, 35);
         add(confirmLabel, gbc);
         
         confirmPasswordField = new PlaceholderPasswordField("Confirm your Password", "LOCK");
         confirmPasswordField.setPreferredSize(new Dimension(330, 42));
-        gbc.gridy = 9;
+        gbc.gridy = 8;
         gbc.insets = new Insets(0, 35, 12, 35);
         add(confirmPasswordField, gbc);
+
+        gbc.gridy = 9;
+        gbc.insets = new Insets(0, 35, 10, 35);
+        add(checklistPanel, gbc);
 
         // Error message label to display registration errors.
         errorLabel = new JLabel("", SwingConstants.CENTER);

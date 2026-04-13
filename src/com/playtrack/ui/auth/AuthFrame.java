@@ -17,6 +17,7 @@ import java.sql.PreparedStatement;
 
 public class AuthFrame extends JFrame {
     private static final long serialVersionUID = 1L;
+    private static final char PASSWORD_MASK = '\u25CF';
     private JPanel cardsPanel;
     private CardLayout cardLayout;
     private LoginPanel loginPanel;
@@ -194,7 +195,7 @@ public class AuthFrame extends JFrame {
                 return;
             }
 
-            if (authService.login(identifier, password, loginPanel.isRememberMeSelected())) {
+            if (authService.login(identifier, password)) {
                 onLoginSuccess.run();
                 dispose();
             } else {
@@ -845,7 +846,8 @@ public class AuthFrame extends JFrame {
             private boolean passwordVisible = false;
 
             {
-                char defaultEchoChar = getEchoChar();
+                char defaultEchoChar = PASSWORD_MASK;
+                setEchoChar(defaultEchoChar);
                 addMouseListener(new java.awt.event.MouseAdapter() {
                     public void mouseClicked(java.awt.event.MouseEvent e) {
                         if (eyeBounds.contains(e.getPoint())) {

@@ -127,12 +127,16 @@ public class RoundedButton extends JButton {
             int size = Math.min(getWidth(), getHeight()) / 3;
             g2.drawLine(getWidth()/2 - size/2, getHeight()/2, getWidth()/2 + size/2, getHeight()/2);
             g2.drawLine(getWidth()/2, getHeight()/2 - size/2, getWidth()/2, getHeight()/2 + size/2);
-        } else if ("+ New".equals(getText())) {
+        } else if (getText() != null && getText().startsWith("+ ")) {
+            String ctaText = getText().substring(2).trim();
+            if (ctaText.isEmpty()) {
+                ctaText = "NEW";
+            }
             g2.setFont(getFont());
             g2.setColor(getForeground());
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             FontMetrics fm = g2.getFontMetrics();
-            int textWidth = fm.stringWidth("New");
+            int textWidth = fm.stringWidth(ctaText);
             int iconSize = 14;
             int gap = 8;
             int totalWidth = iconSize + gap + textWidth;
@@ -147,7 +151,7 @@ public class RoundedButton extends JButton {
             
             
             int textY = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
-            g2.drawString("New", startX + iconSize + gap, textY);
+            g2.drawString(ctaText, startX + iconSize + gap, textY);
         } else if (getText() != null && !getText().isEmpty()) {
             g2.setFont(getFont());
             g2.setColor(getForeground());

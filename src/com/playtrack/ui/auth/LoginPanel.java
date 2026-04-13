@@ -14,7 +14,6 @@ public class LoginPanel extends JPanel {
     private PlaceholderPasswordField passwordField;
     private RoundedButton loginButton;
     private JLabel errorLabel;
-    private JCheckBox rememberMeCheck;
     private JLabel forgotPassword;
 
     public LoginPanel(ActionListener loginAction, ActionListener switchToRegisterAction, Runnable forgotPasswordAction) {
@@ -100,15 +99,8 @@ public class LoginPanel extends JPanel {
         add(passwordField, gbc);
 
         
-        JPanel rememberForgotRow = new JPanel(new BorderLayout());
+        JPanel rememberForgotRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         rememberForgotRow.setOpaque(false);
-
-        rememberMeCheck = new JCheckBox("Remember Me");
-        rememberMeCheck.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        rememberMeCheck.setForeground(new Color(170, 170, 185));
-        rememberMeCheck.setOpaque(false);
-        rememberMeCheck.setFocusPainted(false);
-        rememberForgotRow.add(rememberMeCheck, BorderLayout.WEST);
         // Forgot Password? link.
         forgotPassword = new JLabel("Forgot Password?");
         forgotPassword.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -121,7 +113,7 @@ public class LoginPanel extends JPanel {
                 }
             });
         }
-        rememberForgotRow.add(forgotPassword, BorderLayout.EAST);
+        rememberForgotRow.add(forgotPassword);
 
         gbc.gridy = 5;
         gbc.insets = new Insets(0, 35, 15, 35);
@@ -260,10 +252,6 @@ public class LoginPanel extends JPanel {
 
     public String getPassword() {
         return new String(passwordField.getPassword());
-    }
-
-    public boolean isRememberMeSelected() {
-        return rememberMeCheck != null && rememberMeCheck.isSelected();
     }
 
     public void setError(String msg) {

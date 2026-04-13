@@ -91,7 +91,8 @@ public class ReviewFormDialog extends JDialog {
         this.isWatchlist = (defaultCategory != null && defaultCategory.equals("Watchlist"));
         this.category = (defaultCategory != null && !defaultCategory.equals("Watchlist")) ? defaultCategory : "Films";
 
-        setSize(440, isWatchlist ? 390 : 580);
+        int dialogWidth = isWatchlist ? 440 : 470;
+        setSize(dialogWidth, isWatchlist ? 390 : 580);
         setLocationRelativeTo(parent);
         setUndecorated(true);
         setBackground(new Color(0, 0, 0, 0));
@@ -197,6 +198,34 @@ public class ReviewFormDialog extends JDialog {
                     int py = line2Y + 18;
                     g2.drawLine(cx - 7, py, cx + 7, py);
                     g2.drawLine(cx, py - 7, cx, py + 7);
+
+                    String enteredTitle = (titleField != null && titleField.getText() != null)
+                        ? titleField.getText().trim()
+                        : "";
+                    if (!enteredTitle.isEmpty()) {
+                        g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                        FontMetrics tfm = g2.getFontMetrics();
+                        int maxTextWidth = w - 20;
+                        String displayTitle = enteredTitle;
+                        while (displayTitle.length() > 1 && tfm.stringWidth(displayTitle + "...") > maxTextWidth) {
+                            displayTitle = displayTitle.substring(0, displayTitle.length() - 1);
+                        }
+                        if (!displayTitle.equals(enteredTitle)) {
+                            displayTitle = displayTitle + "...";
+                        }
+
+                        int tx = (w - tfm.stringWidth(displayTitle)) / 2;
+                        int ty = h - 14;
+                        int bgX = tx - 6;
+                        int bgY = ty - tfm.getAscent() - 3;
+                        int bgW = tfm.stringWidth(displayTitle) + 12;
+                        int bgH = tfm.getHeight() + 4;
+
+                        g2.setColor(new Color(0, 0, 0, 90));
+                        g2.fillRoundRect(bgX, bgY, bgW, bgH, 10, 10);
+                        g2.setColor(new Color(255, 255, 255, 215));
+                        g2.drawString(displayTitle, tx, ty);
+                    }
                 }
                 g2.dispose();
             }
@@ -291,45 +320,48 @@ public class ReviewFormDialog extends JDialog {
 
         
         if (!isWatchlist) {
+            // Compact interaction row for rating stars and favorite-heart toggle.
             meta.add(Box.createVerticalStrut(4));
             JPanel ratingRow = new JPanel(new GridBagLayout());
             ratingRow.setOpaque(false);
             ratingRow.setAlignmentX(Component.LEFT_ALIGNMENT);
             ratingRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-            GridBagConstraints rc = new GridBagConstraints();
 
-            
-            rc.gridx = 0; rc.gridy = 0;
-            rc.anchor = GridBagConstraints.WEST;
+            GridBagConstraints rc = new GridBagConstraints();
+            rc.gridy = 0;
+            rc.anchor = GridBagConstraints.CENTER;
+
+            rc.gridx = 0;
             rc.insets = new Insets(0, 0, 0, 4);
             JLabel rLbl = new JLabel("Rating");
             rLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             rLbl.setForeground(getReadableAccentColor(catColor));
             ratingRow.add(rLbl, rc);
 
-            
             rc.gridx = 1;
-            rc.insets = new Insets(0, 0, 0, 0);
+            rc.insets = new Insets(0, 0, 0, 12);
             starRating = new StarRating(0, true, 16);
+            Dimension starSize = starRating.getPreferredSize();
+            starRating.setMinimumSize(starSize);
+            starRating.setPreferredSize(starSize);
+            starRating.setMaximumSize(starSize);
             ratingRow.add(starRating, rc);
 
-            
             rc.gridx = 2;
             rc.weightx = 1.0;
             rc.fill = GridBagConstraints.HORIZONTAL;
+            rc.insets = new Insets(0, 0, 0, 0);
             ratingRow.add(Box.createHorizontalGlue(), rc);
 
-            
             rc.gridx = 3;
             rc.weightx = 0;
             rc.fill = GridBagConstraints.NONE;
-            rc.insets = new Insets(0, 0, 0, 4);
+            rc.insets = new Insets(0, 0, 0, 6);
             JLabel fLbl = new JLabel("Favorite");
             fLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             fLbl.setForeground(getReadableAccentColor(catColor));
             ratingRow.add(fLbl, rc);
 
-            
             rc.gridx = 4;
             rc.insets = new Insets(0, 0, 0, 0);
             favoriteToggle = createHeartToggle(getReadableAccentColor(catColor));
@@ -534,7 +566,7 @@ public class ReviewFormDialog extends JDialog {
 
     }
 
-    
+    // Creates a custom toggle button with a heart icon for marking favorites.
     private JToggleButton createHeartToggle(final Color accentColor) {
         JToggleButton btn = new JToggleButton() {
             @Override
@@ -563,7 +595,10 @@ public class ReviewFormDialog extends JDialog {
                 g2.dispose();
             }
         };
-        btn.setPreferredSize(new Dimension(24, 24));
+        Dimension heartSize = new Dimension(24, 24);
+        btn.setMinimumSize(heartSize);
+        btn.setPreferredSize(heartSize);
+        btn.setMaximumSize(heartSize);
         btn.setOpaque(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);

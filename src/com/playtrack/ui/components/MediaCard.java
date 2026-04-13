@@ -513,6 +513,15 @@ public class MediaCard extends JPanel {
         g2.setPaint(new GradientPaint(0, h - 92, new Color(0, 0, 0, 0), 0, h, new Color(0, 0, 0, 145)));
         g2.fillRect(0, h - 92, w, 92);
 
+        // Keep the title visible on placeholder cards (no poster image):
+        // below the icon at rest, and above the icon on hover.
+        if (posterImage == null) {
+            int iconCenterY = (h / 2) - 20;
+            int placeholderTitleY = hovered ? iconCenterY - 38 : iconCenterY + 66;
+            placeholderTitleY = Math.max(22, Math.min(h - 30, placeholderTitleY));
+            drawCardTitle(g2, w, placeholderTitleY, w - 24, item.getTitle());
+        }
+
         
         if (hovered) {
             Color catColor = getCategoryColor(item.getCategory());
@@ -523,7 +532,9 @@ public class MediaCard extends JPanel {
 
             g2.setColor(new Color(255, 255, 255, 20));
             g2.fillRect(0, h - 72, w, 72);
-            drawCardTitle(g2, w, 44, w - 24, item.getTitle());
+            if (posterImage != null) {
+                drawCardTitle(g2, w, 44, w - 24, item.getTitle());
+            }
         }
 
         g2.setClip(originalClip);

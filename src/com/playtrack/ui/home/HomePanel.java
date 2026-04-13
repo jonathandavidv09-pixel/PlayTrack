@@ -10,6 +10,8 @@ import com.playtrack.util.SessionManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
@@ -27,14 +29,14 @@ public class HomePanel extends JPanel {
     private boolean recentExpanded = false;
     private String username;
     private int userId;
+    private JScrollPane mainScroll;
 
     // Constants for layout and sizing of recent activity cards and statistics cards.
-    private static final int RECENT_COLUMNS = 8;
+    private static final int RECENT_MAX_COLUMNS = 8;
     private static final int RECENT_COLLAPSED_ROWS = 2;
     private static final int RECENT_CARD_WIDTH = 160;
     private static final int RECENT_CARD_HEIGHT = 240;
     private static final int RECENT_CARD_GAP = 20;
-    private static final int MAX_VISIBLE_CARDS = RECENT_COLUMNS * RECENT_COLLAPSED_ROWS;
     private static final int STAT_CARD_WIDTH = 240;
     private static final int STAT_CARD_HEIGHT = 80;
     private static final int STAT_CARD_GAP = 30;
@@ -91,6 +93,10 @@ public class HomePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+                // Paint a full, stable background so fast scrolling never leaves ghost trails.
+                g2.setColor(StyleConfig.BACKGROUND_COLOR);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+
                 Point p = SwingUtilities.convertPoint(this, 0, 0, HomePanel.this);
                 g2.translate(-p.x, -p.y);
                 UIUtils.paintFadedAuthBackground(g2, HomePanel.this.getWidth(), HomePanel.this.getHeight());
@@ -110,7 +116,8 @@ public class HomePanel extends JPanel {
         // Main content area with recent activity.
         JPanel mainContent = new ScrollablePanel();
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
-        mainContent.setOpaque(false);
+        mainContent.setOpaque(true);
+        mainContent.setBackground(StyleConfig.BACKGROUND_COLOR);
         mainContent.setBorder(BorderFactory.createEmptyBorder(0, 50, 40, 50));
         // Welcome message at the top of the home panel.
         JPanel welcomeRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -150,9 +157,9 @@ public class HomePanel extends JPanel {
         refreshStats();
 
         // Main CTA button for opening the add-media dropdown.
-        RoundedButton addBtn = new RoundedButton("+ New", StyleConfig.PRIMARY_COLOR, 45);
+        RoundedButton addBtn = new RoundedButton("+ ADD NEW", StyleConfig.PRIMARY_COLOR, 14);
         addBtn.setGradient(StyleConfig.PRIMARY_DARK);
-        addBtn.setPreferredSize(new Dimension(120, 45));
+        addBtn.setPreferredSize(new Dimension(160, 45));
         addBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
         addBtn.setForeground(Color.WHITE);
         addBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -277,19 +284,29 @@ public class HomePanel extends JPanel {
         recentActivityWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         mainContent.add(recentActivityWrapper);
 
-        JScrollPane mainScroll = new JScrollPane(mainContent);
+        mainScroll = new JScrollPane(mainContent);
         mainScroll.setOpaque(false);
-        mainScroll.getViewport().setOpaque(false);
+        mainScroll.getViewport().setOpaque(true);
+        mainScroll.getViewport().setBackground(StyleConfig.BACKGROUND_COLOR);
         mainScroll.setBorder(null);
         mainScroll.getVerticalScrollBar().setUnitIncrement(16);
         mainScroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
         mainScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        // Full repaint on scroll prevents background striping artifacts.
         mainScroll.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-        mainScroll.getViewport().addChangeListener(e -> {
-            Rectangle vr = mainScroll.getViewport().getViewRect();
-            mainContent.repaint(vr.x, vr.y, vr.width, vr.height);
+        mainScroll.getViewport().addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                loadRecentCards();
+            }
         });
         add(mainScroll, BorderLayout.CENTER);
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                loadRecentCards();
+            }
+        });
     }
     // Method to load recent activity cards.
     private void loadRecentCards() {
@@ -349,17 +366,19 @@ public class HomePanel extends JPanel {
             return;
         }
 
-        boolean hasOverflow = recentItems.size() > MAX_VISIBLE_CARDS;
+        int columns = calculateRecentColumns();
+        int collapsedVisible = columns * RECENT_COLLAPSED_ROWS;
+        boolean hasOverflow = recentItems.size() > collapsedVisible;
         if (!hasOverflow) {
             recentExpanded = false;
         }
 
-        int visibleCount = recentExpanded ? recentItems.size() : Math.min(MAX_VISIBLE_CARDS, recentItems.size());
-        int rows = Math.max(1, (visibleCount + RECENT_COLUMNS - 1) / RECENT_COLUMNS);
+        int visibleCount = recentExpanded ? recentItems.size() : Math.min(collapsedVisible, recentItems.size());
+        int rows = Math.max(1, (visibleCount + columns - 1) / columns);
 
         for (int i = 0; i < visibleCount; i++) {
-            int col = i % RECENT_COLUMNS;
-            int row = i / RECENT_COLUMNS;
+            int col = i % columns;
+            int row = i / columns;
 
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridx = col;
@@ -375,7 +394,7 @@ public class HomePanel extends JPanel {
             recentCardsPanel.add(new MediaCard(recentItems.get(i), false, false, this::refreshRecentActivity), gbc);
         }
 
-        int gridWidth = (RECENT_COLUMNS * RECENT_CARD_WIDTH) + ((RECENT_COLUMNS - 1) * RECENT_CARD_GAP);
+        int gridWidth = (columns * RECENT_CARD_WIDTH) + ((columns - 1) * RECENT_CARD_GAP);
         int gridHeight = (rows * RECENT_CARD_HEIGHT) + (Math.max(0, rows - 1) * RECENT_CARD_GAP);
         Dimension fixedGridSize = new Dimension(gridWidth, gridHeight);
         recentCardsPanel.setPreferredSize(fixedGridSize);
@@ -390,6 +409,31 @@ public class HomePanel extends JPanel {
 
         recentCardsPanel.revalidate();
         recentCardsPanel.repaint();
+    }
+
+    private int calculateRecentColumns() {
+        int availableWidth = 0;
+        if (mainScroll != null && mainScroll.getViewport() != null) {
+            availableWidth = mainScroll.getViewport().getWidth() - 100; // mainContent has 50 left + 50 right padding
+        }
+        if (availableWidth <= 0) {
+            availableWidth = getWidth() - 120; // 50+50 side paddings + slack
+        }
+        if (availableWidth <= 0) {
+            availableWidth = 1200;
+        }
+
+        int safety = 16; // keep buffer so last card is fully visible
+        availableWidth = Math.max(RECENT_CARD_WIDTH, availableWidth - safety);
+        int maxColumns = Math.min(RECENT_MAX_COLUMNS,
+                Math.max(1, (availableWidth + RECENT_CARD_GAP) / (RECENT_CARD_WIDTH + RECENT_CARD_GAP)));
+        for (int cols = maxColumns; cols >= 1; cols--) {
+            int needed = (cols * RECENT_CARD_WIDTH) + ((cols - 1) * RECENT_CARD_GAP);
+            if (needed <= availableWidth) {
+                return cols;
+            }
+        }
+        return 1;
     }
 
     public void refreshRecentActivity() {

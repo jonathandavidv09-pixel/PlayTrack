@@ -5,7 +5,6 @@ import com.playtrack.dao.ProfileDAO;
 import com.playtrack.model.User;
 import com.playtrack.model.Profile;
 import com.playtrack.util.PasswordUtil;
-import com.playtrack.util.RememberMeManager;
 import com.playtrack.util.SessionManager;
 
 // Service layer component: coordinates business logic.
@@ -42,40 +41,13 @@ public class AuthService {
 
     // login.
     public boolean login(String identifier, String password) {
-        return login(identifier, password, false);
-    }
-
-    // login.
-    public boolean login(String identifier, String password, boolean rememberMe) {
         String hash = PasswordUtil.hashPassword(password);
         User user = userDAO.login(identifier, hash);
         if (user != null) {
             SessionManager.setCurrentUser(user);
-            if (rememberMe) {
-                RememberMeManager.rememberUser(user.getId());
-            } else {
-                RememberMeManager.clear();
-            }
             return true;
         }
         return false;
-    }
-
-    // tryAutoLoginFromRememberMe.
-    public boolean tryAutoLoginFromRememberMe() {
-        Integer rememberedUserId = RememberMeManager.getRememberedUserId();
-        if (rememberedUserId == null) {
-            return false;
-        }
-
-        User rememberedUser = userDAO.getUserById(rememberedUserId);
-        if (rememberedUser == null) {
-            RememberMeManager.clear();
-            return false;
-        }
-
-        SessionManager.setCurrentUser(rememberedUser);
-        return true;
     }
 
     // isUsernameTaken.

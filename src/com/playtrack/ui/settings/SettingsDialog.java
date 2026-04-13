@@ -26,6 +26,7 @@ import java.util.Set;
 // Settings modal for account info and password updates.
 public class SettingsDialog extends JDialog {
     private static final long serialVersionUID = 1L;
+    private static final char PASSWORD_MASK = '\u25CF';
     private AuthService authService = new AuthService();
     private JTextField emailField;
     private JTextField usernameField;
@@ -216,6 +217,7 @@ public class SettingsDialog extends JDialog {
         fieldWrapper.setBorder(createInputBorder(false));
 
         JPasswordField field = new JPasswordField();
+        field.setEchoChar(PASSWORD_MASK);
         field.setBackground(FIELD_BG);
         field.setForeground(StyleConfig.TEXT_COLOR);
         field.setCaretColor(StyleConfig.TEXT_COLOR);
@@ -257,7 +259,7 @@ public class SettingsDialog extends JDialog {
         eye.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 boolean visible = field.getEchoChar() == (char)0;
-                field.setEchoChar(!visible ? (char)0 : '\u2022');
+                field.setEchoChar(!visible ? (char)0 : PASSWORD_MASK);
                 eye.repaint();
             }
         });

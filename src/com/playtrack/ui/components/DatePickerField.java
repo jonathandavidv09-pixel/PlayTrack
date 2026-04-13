@@ -3,6 +3,7 @@ package com.playtrack.ui.components;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 // Custom date picker component.
@@ -113,6 +114,24 @@ public class DatePickerField extends JTextField {
         JLabel monthLbl = new JLabel(new SimpleDateFormat("MMMM yyyy").format(currentCalendar.getTime()), SwingConstants.CENTER);
         monthLbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
         monthLbl.setForeground(Color.WHITE);
+        monthLbl.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        monthLbl.setToolTipText("Select month and year");
+        monthLbl.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showMonthYearDropdown(monthLbl);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                monthLbl.setForeground(StyleConfig.SECONDARY_COLOR);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                monthLbl.setForeground(Color.WHITE);
+            }
+        });
         
         header.add(prev, BorderLayout.WEST);
         header.add(monthLbl, BorderLayout.CENTER);
@@ -188,5 +207,140 @@ public class DatePickerField extends JTextField {
             public void mouseExited(MouseEvent e) { btn.setForeground(StyleConfig.TEXT_SECONDARY); }
         });
         return btn;
+    }
+
+    private void showMonthYearDropdown(Component anchor) {
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        JDialog chooserDialog = new JDialog(owner instanceof Frame ? (Frame) owner : null, "Select Month and Year", true);
+        chooserDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        JPanel chooser = new JPanel(new GridBagLayout());
+        chooser.setBackground(StyleConfig.BACKGROUND_LIGHT);
+        chooser.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(255, 255, 255, 38), 1, true),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(4, 4, 4, 4);
+        c.anchor = GridBagConstraints.WEST;
+
+        String[] monthsRaw = new DateFormatSymbols().getMonths();
+        String[] months = new String[12];
+        System.arraycopy(monthsRaw, 0, months, 0, 12);
+        JComboBox<String> monthBox = new JComboBox<>(months);
+        styleSelector(monthBox);
+        monthBox.setMaximumRowCount(12);
+        monthBox.setPreferredSize(new Dimension(110, 30));
+        monthBox.setSelectedIndex(currentCalendar.get(Calendar.MONTH));
+
+        int minYear = 1900;
+        int maxYear = Calendar.getInstance().get(Calendar.YEAR) + 5;
+        Integer[] years = new Integer[maxYear - minYear + 1];
+        int idx = 0;
+        for (int y = maxYear; y >= minYear; y--) {
+            years[idx++] = y;
+        }
+        JComboBox<Integer> yearBox = new JComboBox<>(years);
+        styleSelector(yearBox);
+        yearBox.setMaximumRowCount(16);
+        yearBox.setPreferredSize(new Dimension(88, 30));
+        yearBox.setSelectedItem(currentCalendar.get(Calendar.YEAR));
+
+        JButton applyBtn = createPickerActionButton("Go", StyleConfig.SECONDARY_COLOR, StyleConfig.PRIMARY_LIGHT);
+        applyBtn.addActionListener(e -> applyMonthYearSelection(monthBox, yearBox, chooserDialog));
+
+        c.gridx = 0; c.gridy = 0;
+        chooser.add(createPickerLabel("Month"), c);
+        c.gridx = 1;
+        chooser.add(createPickerLabel("Year"), c);
+
+        c.gridx = 0; c.gridy = 1;
+        chooser.add(monthBox, c);
+        c.gridx = 1;
+        chooser.add(yearBox, c);
+
+        JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        actionRow.setOpaque(false);
+        actionRow.add(applyBtn);
+
+        c.gridx = 0; c.gridy = 2; c.gridwidth = 2;
+        c.insets = new Insets(8, 4, 2, 4);
+        c.anchor = GridBagConstraints.EAST;
+        chooser.add(actionRow, c);
+
+        chooserDialog.setContentPane(chooser);
+        chooserDialog.pack();
+        chooserDialog.setResizable(false);
+        try {
+            Point p = anchor.getLocationOnScreen();
+            chooserDialog.setLocation(p.x, p.y + anchor.getHeight() + 4);
+        } catch (Exception ex) {
+            chooserDialog.setLocationRelativeTo(owner != null ? owner : this);
+        }
+        chooserDialog.setVisible(true);
+    }
+
+    private void styleSelector(JComboBox<?> box) {
+        box.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        box.setBackground(StyleConfig.INPUT_BG);
+        box.setForeground(StyleConfig.TEXT_COLOR);
+        box.setFocusable(false);
+        box.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        box.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(255, 255, 255, 28), 1, true),
+                BorderFactory.createEmptyBorder(2, 6, 2, 6)));
+    }
+
+    private JLabel createPickerLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        label.setForeground(StyleConfig.TEXT_SECONDARY);
+        return label;
+    }
+
+    private JButton createPickerActionButton(String text, Color bgColor, Color hoverColor) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(bgColor);
+        btn.setBorder(BorderFactory.createEmptyBorder(5, 14, 5, 14));
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setOpaque(true);
+        btn.setContentAreaFilled(true);
+        btn.setBorderPainted(false);
+        btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                btn.setBackground(hoverColor);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                btn.setBackground(bgColor);
+            }
+        });
+        return btn;
+    }
+
+    private void applyMonthYearSelection(JComboBox<String> monthBox, JComboBox<Integer> yearBox, Window chooserWindow) {
+        int selectedMonth = monthBox.getSelectedIndex();
+        Integer selectedYear = (Integer) yearBox.getSelectedItem();
+        if (selectedMonth < 0 || selectedYear == null) {
+            return;
+        }
+        int currentDay = currentCalendar.get(Calendar.DAY_OF_MONTH);
+        currentCalendar.set(Calendar.DAY_OF_MONTH, 1);
+        currentCalendar.set(Calendar.YEAR, selectedYear);
+        currentCalendar.set(Calendar.MONTH, selectedMonth);
+        int maxDay = currentCalendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+        currentCalendar.set(Calendar.DAY_OF_MONTH, Math.min(currentDay, maxDay));
+
+        if (chooserWindow != null) {
+            chooserWindow.dispose();
+        }
+        if (popup != null) {
+            popup.setVisible(false);
+        }
+        showPicker();
     }
 }

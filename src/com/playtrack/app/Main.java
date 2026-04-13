@@ -3,7 +3,6 @@ package com.playtrack.app;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.playtrack.config.AuthDatabaseSetup;
 import com.playtrack.config.SystemDatabaseSetup;
-import com.playtrack.service.AuthService;
 import com.playtrack.ui.auth.AuthFrame;
 import com.playtrack.ui.main.MainFrame;
 import javax.swing.*;
@@ -60,12 +59,7 @@ public class Main {
         SystemDatabaseSetup.setup();
 
         SwingUtilities.invokeLater(() -> {
-            AuthService authService = new AuthService();
-            if (authService.tryAutoLoginFromRememberMe()) {
-                showMain();
-            } else {
-                showAuth();
-            }
+            showAuth();
         });
     }
 

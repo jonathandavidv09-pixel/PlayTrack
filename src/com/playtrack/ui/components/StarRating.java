@@ -71,7 +71,7 @@ public class StarRating extends JPanel {
             this.filled = f;
             repaint();
         }
-
+        // Custom painting of the star shape.
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);

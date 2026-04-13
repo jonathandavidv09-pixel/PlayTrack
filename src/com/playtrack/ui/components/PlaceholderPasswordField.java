@@ -7,6 +7,7 @@ import java.awt.geom.RoundRectangle2D;
 // Custom password field component.
 public class PlaceholderPasswordField extends JPasswordField {
     private static final long serialVersionUID = 1L;
+    private static final char MASK_DOT = '\u25CF';
     private String placeholder;
     private boolean showingPlaceholder;
     private char defaultEchoChar;
@@ -24,7 +25,7 @@ public class PlaceholderPasswordField extends JPasswordField {
         this.placeholder = placeholder;
         this.showingPlaceholder = true;
         this.iconText = iconText;
-        this.defaultEchoChar = getEchoChar();
+        this.defaultEchoChar = MASK_DOT;
         setEchoChar((char) 0);
         setText(placeholder);
         setForeground(StyleConfig.TEXT_LIGHT);
