@@ -149,6 +149,7 @@ public class HomePanel extends JPanel {
         statsContainer.setMaximumSize(fixedStatsRow);
         refreshStats();
 
+        // Main CTA button for opening the add-media dropdown.
         RoundedButton addBtn = new RoundedButton("+ New", StyleConfig.PRIMARY_COLOR, 45);
         addBtn.setGradient(StyleConfig.PRIMARY_DARK);
         addBtn.setPreferredSize(new Dimension(120, 45));
@@ -156,6 +157,7 @@ public class HomePanel extends JPanel {
         addBtn.setForeground(Color.WHITE);
         addBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
+        // Dropdown menu that lets users choose what type of item to add.
         AddMediaDropdown addMenu = new AddMediaDropdown(onAddMedia);
 
         addBtn.addMouseListener(new MouseAdapter() {

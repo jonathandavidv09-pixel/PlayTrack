@@ -252,6 +252,7 @@ public class ReviewFormDialog extends JDialog {
         String[] baseGenres = getGenresForCategory(category);
         String[] genreOptions = java.util.Arrays.copyOf(baseGenres, baseGenres.length + 1);
         genreOptions[baseGenres.length] = CUSTOM_GENRE_OPTION;
+        // Genre dropdown with an "Others" option for custom input.
         genreBox = new JComboBox<>(genreOptions);
         genreBox.setMaximumRowCount(15);
         styleComboBox(genreBox, catColor);
@@ -280,6 +281,7 @@ public class ReviewFormDialog extends JDialog {
             String datePlaceholder = category.equals("Games") ? "Select played date." : 
                                     (category.equals("Books") ? "Select finished date." : 
                                     "Select watch date.");
+            // Calendar/date picker field used for watched/played/finished dates.
             dateField = new DatePickerField(datePlaceholder);
             dateField.setForeground(INPUT_TEXT_COLOR);
             dateField.setCaretColor(INPUT_TEXT_COLOR);
@@ -448,6 +450,7 @@ public class ReviewFormDialog extends JDialog {
         actionRow.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
         
+        // Secondary cancel button that closes the dialog without saving.
         JPanel cancelBtn = new JPanel() {
             private boolean hover = false;
             {
@@ -485,6 +488,7 @@ public class ReviewFormDialog extends JDialog {
         actionRow.add(cancelBtn);
 
         
+        // Primary save button that submits media and review changes.
         RoundedButton saveBtn = new RoundedButton("Save", catColor, 12);
         saveBtn.setPreferredSize(new Dimension(90, 32));
         saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -618,6 +622,7 @@ public class ReviewFormDialog extends JDialog {
     }
 
     private void styleComboBox(JComboBox<String> box, Color catColor) {
+        // Shared dropdown styling for review form combo boxes.
         box.setPreferredSize(new Dimension(200, 28));
         box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
         box.setFont(new Font("Arial", Font.PLAIN, 12));

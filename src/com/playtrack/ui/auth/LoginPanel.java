@@ -137,6 +137,7 @@ public class LoginPanel extends JPanel {
         add(errorLabel, gbc);
 
         
+        // Primary login action button.
         loginButton = new RoundedButton("SIGN IN", StyleConfig.PRIMARY_COLOR, 22);
         loginButton.setGradient(new Color(220, 130, 50));
         loginButton.setPreferredSize(new Dimension(330, 44));
@@ -154,7 +155,7 @@ public class LoginPanel extends JPanel {
         newTo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         newTo.setForeground(new Color(160, 160, 175));
         createAccRow.add(newTo);
-
+        
         final String createAccountText = "Create an account.";
         JLabel createAccLink = new JLabel(createAccountText);
         createAccLink.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
@@ -183,6 +184,7 @@ public class LoginPanel extends JPanel {
     }
 
     private JButton createSocialButton(String iconLetter, String name, Color iconColor) {
+        // Reusable social sign-in style button.
         JButton btn = new JButton(name) {
             @Override
             protected void paintComponent(Graphics g) {

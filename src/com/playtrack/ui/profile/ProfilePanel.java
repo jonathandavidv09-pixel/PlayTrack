@@ -386,6 +386,7 @@ public class ProfilePanel extends JPanel {
                 }
 
                 public void mouseClicked(java.awt.event.MouseEvent e) {
+                    // Dropdown menu for filtering favorites by category/genre.
                     JPopupMenu popup = createFavoritesGenreMenu(sourceItems, (category, genre) -> {
                         favoritesFilterCategory = category;
                         favoritesFilterGenre = genre;
@@ -1183,12 +1184,14 @@ public class ProfilePanel extends JPanel {
         buttons.setAlignmentX(Component.LEFT_ALIGNMENT);
         buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
 
+        // Secondary button to close the edit-profile dialog without saving.
         RoundedButton cancelBtn = new RoundedButton("Cancel", StyleConfig.SURFACE_SOFT, 14);
         cancelBtn.setPreferredSize(new Dimension(110, 42));
         cancelBtn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         cancelBtn.addActionListener(e -> editDialog.dispose());
         buttons.add(cancelBtn);
 
+        // Primary button that saves profile updates.
         RoundedButton saveBtn = new RoundedButton("Save Changes", StyleConfig.PRIMARY_COLOR, 14);
         saveBtn.setGradient(StyleConfig.PRIMARY_DARK);
         saveBtn.setPreferredSize(new Dimension(150, 42));

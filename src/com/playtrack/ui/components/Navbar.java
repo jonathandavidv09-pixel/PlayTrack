@@ -145,6 +145,7 @@ public class Navbar extends JPanel {
             setActiveNav("Profile");
             onProfile.run();
         };
+        // Dropdown opened from the avatar icon (Profile / Settings / Logout).
         dropdown = new ProfileDropdown(wrappedOnProfile, onLogout);
 
         profileIcon.addMouseListener(new MouseAdapter() {
@@ -252,6 +253,7 @@ public class Navbar extends JPanel {
     }
 
     private void showDropdown(JLabel icon) {
+        // Position and show the profile dropdown under the avatar trigger.
         Point p = icon.getLocationOnScreen();
         SwingUtilities.convertPointFromScreen(p, this);
         int dropdownWidth = dropdown.getPreferredSize().width;

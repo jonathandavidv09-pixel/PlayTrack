@@ -19,6 +19,7 @@ public class RoundedButton extends JButton {
 
     public RoundedButton(String text, Color backgroundColor, int radius) {
         super(text);
+        // Base reusable button style used across auth/forms/dialog actions.
         this.backgroundColor = backgroundColor;
         this.hoverColor = brighter(backgroundColor, 0.15f);
         this.pressedColor = darker(backgroundColor, 0.1f);

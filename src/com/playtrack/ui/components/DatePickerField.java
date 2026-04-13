@@ -72,7 +72,7 @@ public class DatePickerField extends JTextField {
             g2.drawString(placeholder, getInsets().left, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
         }
 
-        
+        // Trailing calendar icon so users know this field opens a date picker.
         int iconSize = 16;
         int cx = getWidth() - iconSize / 2 - 12;
         int cy = getHeight() / 2;
@@ -106,7 +106,7 @@ public class DatePickerField extends JTextField {
         
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
-        
+        // Month navigation buttons for the calendar popup header.
         JButton prev = createHeaderButton("<");
         JButton next = createHeaderButton(">");
         
@@ -142,6 +142,7 @@ public class DatePickerField extends JTextField {
         }
         for (int d = 1; d <= maxDays; d++) {
             final int day = d;
+            // Clickable day button for selecting a specific day in the current month.
             JButton btn = new JButton(String.valueOf(day));
             btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             btn.setOpaque(false);
@@ -173,6 +174,7 @@ public class DatePickerField extends JTextField {
     }
 
     private JButton createHeaderButton(String text) {
+        // Reusable button style for previous/next month navigation.
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btn.setOpaque(false);

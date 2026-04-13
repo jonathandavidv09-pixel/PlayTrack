@@ -360,6 +360,7 @@ public class AuthFrame extends JFrame {
         panel.add(errorLabel, gbc);
 
         
+        // Primary action button for requesting the reset OTP code.
         JButton sendBtn = createGradientButton("SEND VERIFICATION CODE");
         sendBtn.addActionListener(ev -> {
             String email = emailField.getText().trim();
@@ -511,6 +512,7 @@ public class AuthFrame extends JFrame {
         panel.add(errorLabel, gbc);
 
         
+        // Primary action button for verifying the OTP code.
         JButton verifyBtn = createGradientButton("VERIFY CODE");
         verifyBtn.addActionListener(ev -> {
             StringBuilder sb = new StringBuilder();
@@ -637,6 +639,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 50, 5, 50);
         panel.add(errorLabel, gbc);
 
+        // Primary action button for applying the new password.
         JButton resetBtn = createGradientButton("RESET PASSWORD");
         resetBtn.addActionListener(ev -> {
             String p1 = new String(pwdField.getPassword());
@@ -739,6 +742,7 @@ public class AuthFrame extends JFrame {
         panel.add(desc, gbc);
 
         
+        // Navigation button that returns users to the login card.
         JButton loginBtn = createGradientButton("BACK TO LOGIN");
         loginBtn.addActionListener(ev -> {
             dialog.dispose();
@@ -900,6 +904,7 @@ public class AuthFrame extends JFrame {
     }
 
     private JButton createGradientButton(String text) {
+        // Shared rounded gradient button style for auth dialogs.
         JButton btn = new JButton(text) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -1188,6 +1193,7 @@ public class AuthFrame extends JFrame {
         gbc.insets = new Insets(0, 40, 6, 40);
         dialogPanel.add(errorLabel, gbc);
 
+        // Final confirmation button for OTP registration flow.
         JButton verifyBtn = createGradientButton("VERIFY & CREATE ACCOUNT");
         verifyBtn.addActionListener(ev -> {
             StringBuilder sb = new StringBuilder();

@@ -21,7 +21,7 @@ public class AddMediaDropdown extends JPopupMenu {
     private static final int CONTENT_PAD = 12;
 
     public AddMediaDropdown(Consumer<String> onAddMedia) {
-        
+        // Popup dropdown container used by the "+ New" button in Home.
         setLightWeightPopupEnabled(true);
         setDoubleBuffered(true);
         setOpaque(false);
@@ -62,6 +62,7 @@ public class AddMediaDropdown extends JPopupMenu {
         container.setBackground(new Color(0, 0, 0, 0));
         container.setBorder(BorderFactory.createEmptyBorder(CONTENT_PAD, CONTENT_PAD, CONTENT_PAD, CONTENT_PAD));
 
+        // Dropdown action items for each media category.
         container.add(createItem("Film", 1, () -> { setVisible(false); onAddMedia.accept("Films"); }));
         container.add(Box.createVerticalStrut(ITEM_GAP));
         container.add(createItem("Game", 2, () -> { setVisible(false); onAddMedia.accept("Games"); }));

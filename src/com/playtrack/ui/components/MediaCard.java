@@ -128,6 +128,7 @@ public class MediaCard extends JPanel {
     }
 
     private JToggleButton createFavoriteToggle(boolean selected) {
+        // Hover-revealed toggle button for marking/unmarking favorites.
         JToggleButton toggle = new JToggleButton() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -175,6 +176,7 @@ public class MediaCard extends JPanel {
     }
 
     private JButton createDeleteButton() {
+        // Hover-revealed delete button for removing this media card item.
         JButton button = new JButton() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -395,11 +397,13 @@ public class MediaCard extends JPanel {
             }
         }
         
+        // Secondary button in delete confirmation dialog.
         CustomButton cancelBtn = new CustomButton("Cancel", false);
         cancelBtn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) { dialog.dispose(); }
         });
         
+        // Primary destructive button in delete confirmation dialog.
         CustomButton confirmBtn = new CustomButton("Delete", true);
         confirmBtn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {

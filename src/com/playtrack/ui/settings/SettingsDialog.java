@@ -165,6 +165,7 @@ public class SettingsDialog extends JDialog {
 
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         btnRow.setOpaque(false);
+        // Primary action button for persisting account/settings updates.
         RoundedButton saveBtn = new RoundedButton("Save changes", StyleConfig.PRIMARY_COLOR, 12);
         saveBtn.setGradient(StyleConfig.PRIMARY_DARK);
         saveBtn.setPreferredSize(new Dimension(150, 38));

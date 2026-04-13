@@ -169,12 +169,14 @@ public class RegisterPanel extends JPanel {
         JPanel buttonsPanel = new JPanel(new GridLayout(1, 2, 12, 0));
         buttonsPanel.setOpaque(false);
 
+        // Secondary button to switch back to the login form.
         RoundedButton backButton = new RoundedButton("Back", new Color(45, 42, 55), 22);
         backButton.setForeground(new Color(200, 200, 215));
         backButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
         backButton.addActionListener(switchToLoginAction);
         buttonsPanel.add(backButton);
 
+        // Primary button for creating a new account.
         registerButton = new RoundedButton("Create Account", StyleConfig.PRIMARY_COLOR, 22);
         registerButton.setGradient(new Color(220, 130, 50));
         registerButton.setForeground(Color.WHITE);

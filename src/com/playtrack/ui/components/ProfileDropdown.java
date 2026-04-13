@@ -81,7 +81,7 @@ public class ProfileDropdown extends JPopupMenu {
         container.add(divider);
         container.add(Box.createVerticalStrut(12));
 
-        
+        // Profile shortcut button inside the account dropdown.
         PillButton profileBtn = new PillButton("Profile", 1, StyleConfig.TEXT_COLOR, StyleConfig.PRIMARY_COLOR, () -> {
                     setVisible(false);
                     onProfile.run();
@@ -90,6 +90,7 @@ public class ProfileDropdown extends JPopupMenu {
         container.add(profileBtn);
         container.add(Box.createVerticalStrut(10));
 
+        // Settings shortcut button inside the account dropdown.
         PillButton settingsBtn = new PillButton("Settings", 2, StyleConfig.TEXT_COLOR, StyleConfig.SECONDARY_COLOR, () -> {
                     Component invoker = getInvoker();
                     Window window = invoker != null ? SwingUtilities.getWindowAncestor(invoker) : null;
@@ -110,7 +111,7 @@ public class ProfileDropdown extends JPopupMenu {
         container.add(settingsBtn);
         container.add(Box.createVerticalStrut(10)); 
 
-        
+        // Logout action button inside the account dropdown.
         PillButton logoutBtn = new PillButton("Logout", 3, StyleConfig.ERROR_COLOR, StyleConfig.ERROR_COLOR, () -> {
                     setVisible(false);
                     onLogout.run();
