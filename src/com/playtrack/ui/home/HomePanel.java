@@ -112,13 +112,15 @@ public class HomePanel extends JPanel {
         JPanel topSection = new JPanel();
         topSection.setLayout(new BoxLayout(topSection, BoxLayout.Y_AXIS));
         topSection.setOpaque(false);
-        topSection.setBorder(BorderFactory.createEmptyBorder(20, 50, 0, 50));
+        topSection.setBorder(BorderFactory.createEmptyBorder(
+                StyleConfig.PAGE_PAD_TOP, StyleConfig.PAGE_PAD_X, 0, StyleConfig.PAGE_PAD_X));
         // Main content area with recent activity.
         JPanel mainContent = new ScrollablePanel();
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
         mainContent.setOpaque(true);
         mainContent.setBackground(StyleConfig.BACKGROUND_COLOR);
-        mainContent.setBorder(BorderFactory.createEmptyBorder(0, 50, 40, 50));
+        mainContent.setBorder(BorderFactory.createEmptyBorder(
+                0, StyleConfig.PAGE_PAD_X, StyleConfig.PAGE_PAD_BOTTOM, StyleConfig.PAGE_PAD_X));
         // Welcome message at the top of the home panel.
         JPanel welcomeRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
         welcomeRow.setOpaque(false);
@@ -414,10 +416,10 @@ public class HomePanel extends JPanel {
     private int calculateRecentColumns() {
         int availableWidth = 0;
         if (mainScroll != null && mainScroll.getViewport() != null) {
-            availableWidth = mainScroll.getViewport().getWidth() - 100; // mainContent has 50 left + 50 right padding
+            availableWidth = mainScroll.getViewport().getWidth() - (StyleConfig.PAGE_PAD_X * 2);
         }
         if (availableWidth <= 0) {
-            availableWidth = getWidth() - 120; // 50+50 side paddings + slack
+            availableWidth = getWidth() - ((StyleConfig.PAGE_PAD_X * 2) + 20);
         }
         if (availableWidth <= 0) {
             availableWidth = 1200;

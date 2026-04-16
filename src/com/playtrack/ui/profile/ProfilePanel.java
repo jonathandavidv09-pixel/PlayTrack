@@ -247,7 +247,8 @@ public class ProfilePanel extends JPanel {
         content.setOpaque(false);
         
         
-        content.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 0));
+        content.setBorder(BorderFactory.createEmptyBorder(
+                StyleConfig.PAGE_PAD_TOP, StyleConfig.PAGE_PAD_X, StyleConfig.PAGE_PAD_BOTTOM, StyleConfig.PAGE_PAD_X));
 
         content.add(header);
         content.add(Box.createVerticalStrut(30));
@@ -299,7 +300,7 @@ public class ProfilePanel extends JPanel {
 
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);
-        wrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 40, 0));
+        wrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 24, 0));
         wrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel topRow = new JPanel();
@@ -307,7 +308,7 @@ public class ProfilePanel extends JPanel {
         topRow.setOpaque(false);
         
         
-        topRow.setBorder(BorderFactory.createEmptyBorder(0, 5, 15, 55));
+        topRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 24));
         topRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel titleRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -472,7 +473,7 @@ public class ProfilePanel extends JPanel {
             };
             arrowIcon.setForeground(StyleConfig.TEXT_SECONDARY);
             arrowIcon.setPreferredSize(new Dimension(80, 40));
-            arrowIcon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 30)); 
+            arrowIcon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 12)); 
                                                                                
             arrowIcon.setHorizontalAlignment(SwingConstants.CENTER);
             arrowIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -517,7 +518,7 @@ public class ProfilePanel extends JPanel {
 
                     
                     
-                    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 55));
+                    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 24));
                     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
                     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 

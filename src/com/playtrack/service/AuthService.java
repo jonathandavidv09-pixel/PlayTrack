@@ -39,7 +39,7 @@ public class AuthService {
         return false;
     }
 
-    // login.
+    // Root login
     public boolean login(String identifier, String password) {
         String hash = PasswordUtil.hashPassword(password);
         User user = userDAO.login(identifier, hash);

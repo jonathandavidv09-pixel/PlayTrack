@@ -70,4 +70,9 @@ public class StyleConfig {
     public static final Font FONT_LABEL = new Font("Segoe UI", Font.BOLD, 12);
     public static final Font FONT_HERO = new Font("Segoe UI", Font.BOLD, 36);
     public static final Font FONT_LARGE_NUMBER = new Font("Segoe UI", Font.BOLD, 46);
+
+    // Global page spacing (reduced to keep layouts tighter).
+    public static final int PAGE_PAD_X = 24;
+    public static final int PAGE_PAD_TOP = 16;
+    public static final int PAGE_PAD_BOTTOM = 16;
 }

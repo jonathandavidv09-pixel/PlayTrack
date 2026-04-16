@@ -53,12 +53,13 @@ public class LibraryPanel extends JPanel {
     public LibraryPanel() {
         setLayout(new BorderLayout());
         setBackground(StyleConfig.BACKGROUND_COLOR);
-        setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
+        setBorder(BorderFactory.createEmptyBorder(
+                StyleConfig.PAGE_PAD_TOP, StyleConfig.PAGE_PAD_X, StyleConfig.PAGE_PAD_BOTTOM, StyleConfig.PAGE_PAD_X));
 
         // Top section with page title and search bar.
         JPanel topSection = new JPanel(new BorderLayout());
         topSection.setOpaque(false);
-        topSection.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 50));
+        topSection.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
 
         // Page title label.
         JLabel pageTitle = new JLabel("Your Library");
@@ -69,7 +70,7 @@ public class LibraryPanel extends JPanel {
         // Filters row with category tabs and search field.
         JPanel filtersRow = new JPanel(new BorderLayout());
         filtersRow.setOpaque(false);
-        filtersRow.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
+        filtersRow.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
         // Category tabs panel.
         tabsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
@@ -396,13 +397,13 @@ public class LibraryPanel extends JPanel {
         JPanel section = new JPanel(new BorderLayout(0, 20));
         section.setOpaque(false);
         section.setAlignmentX(Component.LEFT_ALIGNMENT);
-        section.setBorder(BorderFactory.createEmptyBorder(0, 0, 40, 0));
+        section.setBorder(BorderFactory.createEmptyBorder(0, 0, 24, 0));
 
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         headerPanel.setOpaque(false);
         headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 55));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 24));
 
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));

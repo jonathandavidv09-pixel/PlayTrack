@@ -34,7 +34,8 @@ public class SummaryPanel extends JPanel {
     public SummaryPanel() {
         setLayout(new BorderLayout());
         setBackground(StyleConfig.BACKGROUND_COLOR);
-        setBorder(BorderFactory.createEmptyBorder(0, 50, 40, 50));
+        setBorder(BorderFactory.createEmptyBorder(
+                0, StyleConfig.PAGE_PAD_X, StyleConfig.PAGE_PAD_BOTTOM, StyleConfig.PAGE_PAD_X));
 
         refreshSummary();
     }
@@ -57,7 +58,7 @@ public class SummaryPanel extends JPanel {
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         headerPanel.setOpaque(false);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(40, 0, 30, 0));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(24, 0, 20, 0));
         headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel title = new JLabel("Your Activity");
@@ -124,7 +125,7 @@ public class SummaryPanel extends JPanel {
         row3Wrapper.add(row3, BorderLayout.NORTH);
 
         mainContent.add(row3Wrapper);
-        mainContent.add(Box.createVerticalStrut(50));
+        mainContent.add(Box.createVerticalStrut(16));
         mainContent.add(Box.createVerticalGlue());
 
         JScrollPane scroll = new JScrollPane(mainContent);
@@ -367,7 +368,7 @@ public class SummaryPanel extends JPanel {
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 36, 36);
                 g2.setColor(hovered ? new Color(255, 255, 255, 70) : StyleConfig.SURFACE_STROKE);
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 36, 36);
-
+                // View All arrow
                 g2.setColor(hovered ? Color.WHITE : StyleConfig.TEXT_COLOR);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
                 FontMetrics fm = g2.getFontMetrics();

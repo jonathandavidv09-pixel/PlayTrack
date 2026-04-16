@@ -64,13 +64,13 @@ public class AuthFrame extends JFrame {
         JPanel brandingPanel = new JPanel();
         brandingPanel.setLayout(new BoxLayout(brandingPanel, BoxLayout.Y_AXIS));
         brandingPanel.setOpaque(false);
-        brandingPanel.setBorder(BorderFactory.createEmptyBorder(28, 56, 0, 50));
+        brandingPanel.setBorder(BorderFactory.createEmptyBorder(20, 32, 0, 24));
 
        
         JPanel logoRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         logoRow.setOpaque(false);
 
-        
+        // logo loading with fallback and error handling
         String[] logoCandidates = { "resources/LogoDarkMode.png", "resources/logo.png" };
         for (String logoPath : logoCandidates) {
             try (InputStream logoStream = getClass().getClassLoader().getResourceAsStream(logoPath)) {
@@ -94,13 +94,13 @@ public class AuthFrame extends JFrame {
         logoRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         brandingPanel.add(logoRow);
         brandingPanel.add(Box.createVerticalStrut(130));
-
+        // "Welcome to" heading.
         JLabel welcomeTo = new JLabel("Welcome to");
         welcomeTo.setFont(new Font("Segoe UI", Font.BOLD, 44));
         welcomeTo.setForeground(Color.WHITE);
         welcomeTo.setAlignmentX(Component.LEFT_ALIGNMENT);
         brandingPanel.add(welcomeTo);
-
+        // "PLAYTRACK" gradient title.
         final String brandTitleText = "PLAYTRACK";
         final Font brandTitleFont = new Font("Segoe UI", Font.BOLD, 112);
         JComponent playTrackGradientTitle = new JComponent() {
@@ -132,14 +132,14 @@ public class AuthFrame extends JFrame {
         playTrackGradientTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         brandingPanel.add(playTrackGradientTitle);
         brandingPanel.add(Box.createVerticalStrut(8));
-
+        // Subtitle text.
         JLabel subtitleHeading = new JLabel("Your personal media journal");
         subtitleHeading.setFont(new Font("Segoe UI", Font.BOLD, 48));
         subtitleHeading.setForeground(new Color(230, 236, 246));
         subtitleHeading.setAlignmentX(Component.LEFT_ALIGNMENT);
         brandingPanel.add(subtitleHeading);
         brandingPanel.add(Box.createVerticalStrut(18));
-
+        // Subtitle description.
         JLabel subtitle = new JLabel(
                 "<html>Track, review, and revisit your movies,<br>games, and books in one personal media journal.</html>");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 20));
@@ -163,7 +163,7 @@ public class AuthFrame extends JFrame {
         cardsPanel.setPreferredSize(fixedAuthCard);
         cardsPanel.setMinimumSize(fixedAuthCard);
         cardsPanel.setMaximumSize(fixedAuthCard);
-
+        // Initialize login and register panels with their respective action handlers and navigation callbacks.
         loginPanel = new LoginPanel(loginAction(), e -> cardLayout.show(cardsPanel, "register"),
                 () -> showForgotPasswordDialog());
         registerPanel = new RegisterPanel(registerAction(), e -> cardLayout.show(cardsPanel, "login"));
@@ -175,7 +175,7 @@ public class AuthFrame extends JFrame {
         rightGbc.fill = GridBagConstraints.NONE;
         rightGbc.weightx = 1;
         rightGbc.weighty = 1;
-        rightGbc.insets = new Insets(30, 10, 30, 90);
+        rightGbc.insets = new Insets(20, 10, 20, 40);
         rightPanel.add(cardsPanel, rightGbc);
 
         
@@ -203,7 +203,7 @@ public class AuthFrame extends JFrame {
             }
         };
     }
-
+    // Registration action handler with validation, user creation, and OTP verification flow initiation.
     private ActionListener registerAction() {
         return e -> {
             String username = registerPanel.getUsername();
@@ -271,7 +271,7 @@ public class AuthFrame extends JFrame {
     private void showForgotPasswordDialog() {
         showForgotStep1_EmailEntry();
     }
-
+    // Local OTP notice dialog for when SMTP is not configured and OTP is generated locally.
     private void showLocalOtpNotice(Component parent, String email, String otp) {
         JOptionPane.showMessageDialog(
                 parent,
@@ -283,7 +283,7 @@ public class AuthFrame extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
-   
+    // Forgot password flow - Step 1: Email entry and OTP request.
     private void showForgotStep1_EmailEntry() {
         JDialog dialog = createStyledDialog("Forgot Password", 460, 420);
         JPanel panel = createDialogPanel();
