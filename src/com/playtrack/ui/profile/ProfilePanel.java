@@ -19,6 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -28,28 +29,66 @@ import java.util.function.BiConsumer;
 
 public class ProfilePanel extends JPanel {
     private static final long serialVersionUID = 1L;
+    private static final int PROFILE_CARD_WIDTH = 160;
+    private static final int PROFILE_CARD_HEIGHT = 240;
+    private static final int PROFILE_CARD_GAP = 20;
+    private static final int PROFILE_CARD_ROW_LEFT_INSET = 24;
+    private static final int PROFILE_SECTION_ARROW_WIDTH = 80;
+    private static final int PROFILE_ARROW_ICON_SIZE = 28;
+    private static final int PROFILE_COLLAPSED_ROWS = 2;
+    private static final int PROFILE_COLLAPSED_COLUMNS = 7;
+    private static final int RECENT_ACTIVITY_COLUMNS = PROFILE_COLLAPSED_COLUMNS;
+    private static final int RECENT_ACTIVITY_ARROW_WIDTH = 128;
+    private static final int RECENT_ACTIVITY_ARROW_GAP = 64;
+    private static final int RECENT_ACTIVITY_SCROLLBAR_GAP = 28;
+    private static final int RECENT_ACTIVITY_SCROLLBAR_HEIGHT = 10;
+    private static final int RECENT_ACTIVITY_TRAILING_SPACE = 36;
     private ProfileService profileService = new ProfileService();
     private Profile profile;
     private JLabel usernameLabel;
     private JLabel bioLabel;
     private String favoritesFilterCategory;
     private String favoritesFilterGenre;
+    private transient BufferedImage cachedBackground;
+    private int cachedBackgroundW = -1;
+    private int cachedBackgroundH = -1;
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
-
-        int orbSize = 360;
-        g2.setPaint(new RadialGradientPaint(
-                getWidth() - 120f, 100f, orbSize / 2f,
-                new float[] { 0f, 0.45f, 1f },
-                new Color[] { StyleConfig.PANEL_GLOW_SECONDARY, new Color(StyleConfig.PALETTE_PEACH.getRed(), StyleConfig.PALETTE_PEACH.getGreen(), StyleConfig.PALETTE_PEACH.getBlue(), 8), new Color(0, 0, 0, 0) }));
-        g2.fillOval(getWidth() - 120 - orbSize / 2, 100 - orbSize / 2, orbSize, orbSize);
+        paintCachedBackground(g2, getWidth(), getHeight());
         g2.dispose();
+    }
+
+    private void paintCachedBackground(Graphics2D g2, int w, int h) {
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+        if (cachedBackground == null || cachedBackgroundW != w || cachedBackgroundH != h) {
+            cachedBackground = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            cachedBackgroundW = w;
+            cachedBackgroundH = h;
+
+            Graphics2D bg = cachedBackground.createGraphics();
+            bg.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            UIUtils.paintFadedAuthBackground(bg, w, h);
+
+            int orbSize = 360;
+            bg.setPaint(new RadialGradientPaint(
+                    w - 120f, 100f, orbSize / 2f,
+                    new float[] { 0f, 0.45f, 1f },
+                    new Color[] {
+                            StyleConfig.PANEL_GLOW_SECONDARY,
+                            new Color(StyleConfig.PALETTE_PEACH.getRed(), StyleConfig.PALETTE_PEACH.getGreen(),
+                                    StyleConfig.PALETTE_PEACH.getBlue(), 8),
+                            new Color(0, 0, 0, 0)
+                    }));
+            bg.fillOval(w - 120 - orbSize / 2, 100 - orbSize / 2, orbSize, orbSize);
+            bg.dispose();
+        }
+        g2.drawImage(cachedBackground, 0, 0, null);
     }
 
     public ProfilePanel() {
@@ -79,6 +118,13 @@ public class ProfilePanel extends JPanel {
         }
         final java.awt.Image finalCachedAvatar = cachedAvatar;
 
+        final int avatarX = 40;
+        final int avatarY = 20;
+        final int avatarSize = 142;
+        final int avatarInset = 4;
+        final int avatarInnerSize = avatarSize - (avatarInset * 2);
+        final int contentStartX = avatarX + avatarSize + 30;
+
         JPanel header = new JPanel();
         header.setLayout(null);
         header.setOpaque(false);
@@ -91,46 +137,45 @@ public class ProfilePanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                 g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                g2.setColor(StyleConfig.BACKGROUND_COLOR);
-                g2.fill(new Ellipse2D.Float(0, 0, 120, 120));
+                g2.setColor(StyleConfig.SURFACE_ELEVATED);
+                g2.fill(new Ellipse2D.Float(0, 0, avatarSize, avatarSize));
+                g2.setColor(StyleConfig.SURFACE_STROKE);
+                g2.setStroke(new BasicStroke(1.4f));
+                g2.draw(new Ellipse2D.Float(0.7f, 0.7f, avatarSize - 1.4f, avatarSize - 1.4f));
 
                 g2.setColor(StyleConfig.TEXT_COLOR);
-                g2.fill(new Ellipse2D.Float(4, 4, 112, 112));
+                g2.fill(new Ellipse2D.Float(avatarInset, avatarInset, avatarInnerSize, avatarInnerSize));
 
                 if (finalCachedAvatar != null) {
-                    g2.setClip(new Ellipse2D.Float(4, 4, 112, 112));
+                    g2.setClip(new Ellipse2D.Float(avatarInset, avatarInset, avatarInnerSize, avatarInnerSize));
                     int imgW = finalCachedAvatar.getWidth(null);
                     int imgH = finalCachedAvatar.getHeight(null);
-                    double scale = Math.max((double) 112 / imgW, (double) 112 / imgH);
+                    double scale = Math.max((double) avatarInnerSize / imgW, (double) avatarInnerSize / imgH);
                     int dw = (int) (imgW * scale);
                     int dh = (int) (imgH * scale);
-                    g2.drawImage(finalCachedAvatar, 4 + (112 - dw) / 2, 4 + (112 - dh) / 2, dw, dh, null);
+                    g2.drawImage(finalCachedAvatar, avatarInset + (avatarInnerSize - dw) / 2,
+                            avatarInset + (avatarInnerSize - dh) / 2, dw, dh, null);
                     g2.setClip(null);
-
-                    
-                    g2.setColor(StyleConfig.BACKGROUND_COLOR);
-                    g2.setStroke(new BasicStroke(1.5f));
-                    g2.draw(new Ellipse2D.Float(4, 4, 112, 112));
                 } else {
                     String initial = profile.getUsername() != null && !profile.getUsername().isEmpty()
                             ? profile.getUsername().substring(0, 1).toUpperCase()
                             : "U";
                     g2.setColor(StyleConfig.BACKGROUND_COLOR);
-                    g2.setFont(new Font("Segoe UI", Font.BOLD, 50));
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 56));
                     FontMetrics fm = g2.getFontMetrics();
-                    g2.drawString(initial, (120 - fm.stringWidth(initial)) / 2,
-                            (120 + fm.getAscent() - fm.getDescent()) / 2);
+                    g2.drawString(initial, (avatarSize - fm.stringWidth(initial)) / 2,
+                            (avatarSize + fm.getAscent() - fm.getDescent()) / 2);
                 }
                 g2.dispose();
             }
         };
-        avatar.setBounds(40, 30, 120, 120);
+        avatar.setBounds(avatarX, avatarY, avatarSize, avatarSize);
         header.add(avatar);
 
         usernameLabel = new JLabel(profile.getUsername());
-        usernameLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        usernameLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
         usernameLabel.setForeground(StyleConfig.TEXT_COLOR);
-        usernameLabel.setBounds(190, 45, usernameLabel.getPreferredSize().width + 20, 30);
+        usernameLabel.setBounds(contentStartX, 42, usernameLabel.getPreferredSize().width + 24, 34);
         header.add(usernameLabel);
 
         JLabel editBtn = new JLabel("Edit your profile", SwingConstants.CENTER) {
@@ -139,7 +184,7 @@ public class ProfilePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 if (getForeground().equals(StyleConfig.PRIMARY_COLOR)) {
-                    g2.setColor(new Color(255, 92, 109, 24));
+                    g2.setColor(StyleConfig.withAlpha(StyleConfig.PRIMARY_COLOR, 24));
                     g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 16, 16));
                     g2.setColor(StyleConfig.PRIMARY_COLOR);
                     g2.setStroke(new BasicStroke(1.2f));
@@ -155,16 +200,17 @@ public class ProfilePanel extends JPanel {
                 g2.dispose();
             }
         };
-        editBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        editBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         editBtn.setForeground(StyleConfig.TEXT_SECONDARY);
         editBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        int editBtnWidth = 115;
-        int editBtnHeight = 28;
-        editBtn.setBounds(190 + usernameLabel.getPreferredSize().width + 20, 46, editBtnWidth, editBtnHeight);
+        int editBtnWidth = 124;
+        int editBtnHeight = 30;
+        editBtn.setBounds(contentStartX + usernameLabel.getPreferredSize().width + 22, 44, editBtnWidth, editBtnHeight);
 
         editBtn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
+                // Button action: open the edit-profile dialog.
                 showEditDialog();
             }
 
@@ -183,16 +229,16 @@ public class ProfilePanel extends JPanel {
         String joinedText = "Joined "
                 + (profile.getJoinedDate() != null ? profile.getJoinedDate().toString().substring(0, 10) : "Unknown");
         JLabel joinedLabel = new JLabel(joinedText);
-        joinedLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        joinedLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         joinedLabel.setForeground(StyleConfig.TEXT_SECONDARY);
-        joinedLabel.setBounds(190, 80, 400, 20);
+        joinedLabel.setBounds(contentStartX, 83, 420, 24);
         header.add(joinedLabel);
 
         String bioText = profile.getBio() != null ? profile.getBio() : "No bio yet";
         bioLabel = new JLabel("<html><p style='width: 600px;'>" + bioText + "</p></html>");
-        bioLabel.setFont(new Font("Segoe UI", Font.ITALIC, 14));
-        bioLabel.setForeground(StyleConfig.TEXT_LIGHT);
-        bioLabel.setBounds(190, 105, 600, 50);
+        bioLabel.setFont(new Font("Segoe UI", Font.ITALIC, 16));
+        bioLabel.setForeground(StyleConfig.TEXT_SECONDARY);
+        bioLabel.setBounds(contentStartX, 112, 640, 52);
         header.add(bioLabel);
 
         header.setMaximumSize(new Dimension(1400, 180));
@@ -221,6 +267,13 @@ public class ProfilePanel extends JPanel {
 
         class ScrollablePanel extends JPanel implements Scrollable {
             private static final long serialVersionUID = 1L;
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension preferred = super.getPreferredSize();
+                preferred.width = Math.max(preferred.width, getFixedProfileContentWidth());
+                return preferred;
+            }
+
             public Dimension getPreferredScrollableViewportSize() {
                 return getPreferredSize();
             }
@@ -234,7 +287,7 @@ public class ProfilePanel extends JPanel {
             }
 
             public boolean getScrollableTracksViewportWidth() {
-                return true;
+                return false;
             }
 
             public boolean getScrollableTracksViewportHeight() {
@@ -255,7 +308,6 @@ public class ProfilePanel extends JPanel {
         content.add(createSection("Watchlists", true, watchlists, reviewDAO, userId));
         content.add(createSection("Favorites", false, favorites, reviewDAO, userId));
         content.add(createSection("Recent Activity", false, recents, reviewDAO, userId));
-        content.add(Box.createVerticalGlue());
 
         JScrollPane scrollPane = new JScrollPane(content);
         scrollPane.setOpaque(false);
@@ -265,6 +317,8 @@ public class ProfilePanel extends JPanel {
         
         scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setWheelScrollingEnabled(true);
+        scrollPane.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
         add(scrollPane, BorderLayout.CENTER);
 
         revalidate();
@@ -284,24 +338,36 @@ public class ProfilePanel extends JPanel {
 
     private JPanel createSection(String title, boolean hasAddBtn, List<MediaItem> items, ReviewDAO reviewDAO,
             int userId) {
-        final int MAX_VISIBLE_CARDS = 16;
-        final int TWO_ROW_HEIGHT = 500;
+        final boolean fixedRecentActivity = "Recent Activity".equals(title);
+        final int maxVisibleCards = fixedRecentActivity
+                ? getRecentActivityCollapsedCardLimit()
+                : calculateCollapsedCardLimit();
 
         final List<MediaItem> sourceItems = new ArrayList<>(items);
         boolean favoritesFiltered = "Favorites".equals(title) && favoritesFilterCategory != null;
         List<MediaItem> visibleItems = "Favorites".equals(title) ? applyFavoritesFilter(sourceItems) : new ArrayList<>(sourceItems);
         final List<MediaItem> allItems = new ArrayList<>(visibleItems);
-
-        boolean hasMore = allItems.size() >= MAX_VISIBLE_CARDS && !favoritesFiltered;
-        if (visibleItems.size() > MAX_VISIBLE_CARDS && !favoritesFiltered) {
-            visibleItems = visibleItems.subList(0, MAX_VISIBLE_CARDS);
+        boolean hasMore = allItems.size() > maxVisibleCards && !favoritesFiltered;
+        if (visibleItems.size() > maxVisibleCards && !favoritesFiltered) {
+            visibleItems = visibleItems.subList(0, maxVisibleCards);
         }
         items = visibleItems;
 
-        JPanel wrapper = new JPanel(new BorderLayout());
+        JPanel wrapper = new JPanel(new BorderLayout()) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public Dimension getMaximumSize() {
+                Dimension preferred = getPreferredSize();
+                preferred.width = Integer.MAX_VALUE;
+                return preferred;
+            }
+        };
         wrapper.setOpaque(false);
         wrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 24, 0));
         wrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+        wrapper.setMinimumSize(new Dimension(Math.min(PROFILE_CARD_WIDTH, getFixedSectionWidth(fixedRecentActivity, hasMore)),
+                0));
 
         JPanel topRow = new JPanel();
         topRow.setLayout(new BoxLayout(topRow, BoxLayout.Y_AXIS));
@@ -350,6 +416,7 @@ public class ProfilePanel extends JPanel {
                 }
 
                 public void mouseClicked(java.awt.event.MouseEvent e) {
+                    // Button action: open the watchlist add dialog.
                     com.playtrack.ui.review.ReviewFormDialog dialog = new com.playtrack.ui.review.ReviewFormDialog(
                             (Frame) SwingUtilities.getWindowAncestor(ProfilePanel.this), "Watchlist",
                             ProfilePanel.this::refreshProfile);
@@ -387,6 +454,7 @@ public class ProfilePanel extends JPanel {
                 }
 
                 public void mouseClicked(java.awt.event.MouseEvent e) {
+                    // Button action: open the favorites filter dropdown.
                     // Dropdown menu for filtering favorites by category/genre.
                     JPopupMenu popup = createFavoritesGenreMenu(sourceItems, (category, genre) -> {
                         favoritesFilterCategory = category;
@@ -446,43 +514,23 @@ public class ProfilePanel extends JPanel {
             return wrapper;
         }
 
-        JPanel rowPanel = new JPanel();
-        rowPanel.setLayout(
-                new com.playtrack.ui.components.WrapLayout(com.playtrack.ui.components.WrapLayout.LEFT, 20, 20));
+        int collapsedColumns = PROFILE_COLLAPSED_COLUMNS;
+        JPanel rowPanel = new JPanel(new BorderLayout());
         rowPanel.setOpaque(false);
-        rowPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        rowPanel.setBorder(BorderFactory.createEmptyBorder(0, PROFILE_CARD_ROW_LEFT_INSET, 0, 0));
 
-        for (MediaItem mi : items) {
-            rowPanel.add(new MediaCard(mi, true, false, this::refreshProfile));
-        }
+        JPanel cardGrid = createProfileCardGrid(items, collapsedColumns, 0, fixedRecentActivity);
+        rowPanel.add(cardGrid, BorderLayout.WEST);
 
         wrapper.add(rowPanel, BorderLayout.CENTER);
-
+        // the"Show more" control Button.
         if (hasMore) {
-            JLabel arrowIcon = new JLabel() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    int size = 28;
-                    int cx = getWidth() / 2;
-                    int cy = getHeight() / 2;
-                    UIUtils.drawArrowIcon(g2, cx - size / 2, cy - size / 2, size, getForeground(), true);
-                    g2.dispose();
-                }
-            };
+            JLabel arrowIcon = createProfileArrowControl(true, () -> false);
             arrowIcon.setForeground(StyleConfig.TEXT_SECONDARY);
-            arrowIcon.setPreferredSize(new Dimension(80, 40));
-            arrowIcon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 12)); 
-                                                                               
-            arrowIcon.setHorizontalAlignment(SwingConstants.CENTER);
             arrowIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));
             arrowIcon.setToolTipText("Show more");
 
-            JPanel arrowWrapper = new JPanel(new GridBagLayout());
-            arrowWrapper.setOpaque(false);
-            arrowWrapper.setPreferredSize(new Dimension(80, TWO_ROW_HEIGHT));
-            arrowWrapper.add(arrowIcon);
+            JPanel arrowWrapper = createSectionArrowWrapper(arrowIcon, fixedRecentActivity);
             wrapper.add(arrowWrapper, BorderLayout.EAST);
 
             arrowIcon.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -497,50 +545,36 @@ public class ProfilePanel extends JPanel {
                 }
 
                 public void mouseClicked(java.awt.event.MouseEvent e) {
+                    // Button action: expand the media row to show all items.
                     wrapper.remove(arrowWrapper);
 
-                    JPanel expandedRowPanel = new JPanel();
-                    expandedRowPanel.setLayout(new GridLayout(2, 0, 20, 20));
-                    expandedRowPanel.setOpaque(false);
-                    expandedRowPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+                    int expandedColumns = Math.max(1,
+                            (allItems.size() + PROFILE_COLLAPSED_ROWS - 1) / PROFILE_COLLAPSED_ROWS);
+                    JPanel expandedRowPanel = createProfileCardGrid(
+                            allItems, expandedColumns, RECENT_ACTIVITY_SCROLLBAR_GAP, fixedRecentActivity);
+                    int expandedHeight = getRecentActivityContentHeight(RECENT_ACTIVITY_SCROLLBAR_GAP);
+                    int expandedSectionHeight = expandedHeight + RECENT_ACTIVITY_SCROLLBAR_HEIGHT;
+                    int expandedViewportWidth = getProfileCardViewportWidth(fixedRecentActivity);
 
-                    for (MediaItem mi : allItems) {
-                        expandedRowPanel.add(new MediaCard(mi, true, false, ProfilePanel.this::refreshProfile));
-                    }
+                    JScrollPane scrollPane = createRecentActivityScrollPane(
+                            expandedRowPanel,
+                            expandedViewportWidth,
+                            expandedSectionHeight,
+                            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-                    JPanel alignPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
-                    alignPanel.setOpaque(false);
-                    alignPanel.add(expandedRowPanel);
-
-                    JScrollPane scrollPane = new JScrollPane(alignPanel);
-                    scrollPane.setOpaque(false);
-                    scrollPane.getViewport().setOpaque(false);
-
-                    
-                    
-                    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 24));
-                    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-                    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-
-                    scrollPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 10));
+                    scrollPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, RECENT_ACTIVITY_SCROLLBAR_HEIGHT));
                     scrollPane.getHorizontalScrollBar().setUnitIncrement(24);
 
-                    
-                    scrollPane.setWheelScrollingEnabled(false);
-                    scrollPane.addMouseWheelListener(evt -> {
-                        JScrollPane parentScroll = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class,
-                                scrollPane);
-                        if (parentScroll != null) {
-                            java.awt.event.MouseWheelEvent mwe = (java.awt.event.MouseWheelEvent) evt;
-                            java.awt.event.MouseWheelEvent cloned = new java.awt.event.MouseWheelEvent(
-                                    parentScroll, mwe.getID(), mwe.getWhen(), mwe.getModifiersEx(),
-                                    0, 0, mwe.getXOnScreen(), mwe.getYOnScreen(),
-                                    mwe.getClickCount(), mwe.isPopupTrigger(), mwe.getScrollType(),
-                                    mwe.getScrollAmount(), mwe.getWheelRotation(), mwe.getPreciseWheelRotation());
-                            parentScroll.dispatchEvent(cloned);
-                        }
-                    });
+                    JPanel scrollArea = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+                    scrollArea.setOpaque(false);
+                    scrollArea.setBorder(BorderFactory.createEmptyBorder(0, PROFILE_CARD_ROW_LEFT_INSET, 0, 0));
+                    scrollArea.setPreferredSize(new Dimension(
+                            expandedViewportWidth + PROFILE_CARD_ROW_LEFT_INSET, expandedSectionHeight));
+                    scrollArea.setMinimumSize(new Dimension(
+                            PROFILE_CARD_WIDTH + PROFILE_CARD_ROW_LEFT_INSET, expandedSectionHeight));
+                    scrollArea.add(scrollPane);
 
+                    
                     
                     java.awt.event.MouseAdapter dragScroll = new java.awt.event.MouseAdapter() {
                         private Point origin;
@@ -557,7 +591,8 @@ public class ProfilePanel extends JPanel {
                                 Point viewPos = viewport.getViewPosition();
                                 int dx = origin.x - e.getLocationOnScreen().x;
                                 int newX = Math.max(0, viewPos.x + dx);
-                                newX = Math.min(newX, viewport.getViewSize().width - viewport.getWidth());
+                                int maxX = Math.max(0, viewport.getViewSize().width - viewport.getWidth());
+                                newX = Math.min(newX, maxX);
                                 viewport.setViewPosition(new Point(newX, viewPos.y));
                                 origin = e.getLocationOnScreen();
                             }
@@ -569,8 +604,6 @@ public class ProfilePanel extends JPanel {
                         }
                     };
 
-                    alignPanel.addMouseListener(dragScroll);
-                    alignPanel.addMouseMotionListener(dragScroll);
                     expandedRowPanel.addMouseListener(dragScroll);
                     expandedRowPanel.addMouseMotionListener(dragScroll);
 
@@ -580,35 +613,14 @@ public class ProfilePanel extends JPanel {
                         c.addMouseMotionListener(dragScroll);
                     }
 
-                    
+                    // the "Show less" control Button
                     final boolean[] showLessHovered = { false };
-                    JLabel showLessControl = new JLabel() {
-                        @Override
-                        protected void paintComponent(Graphics g) {
-                            Graphics2D g2 = (Graphics2D) g.create();
-                            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                            int size = 28;
-                            int cx = getWidth() / 2;
-                            int cy = getHeight() / 2;
-                            UIUtils.drawArrowIcon(g2, cx - size / 2, cy - size / 2, size,
-                                    showLessHovered[0] ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_SECONDARY, false);
-                            g2.dispose();
-                        }
-                    };
-                    showLessControl.setOpaque(false);
+                    JLabel showLessControl = createProfileArrowControl(false, () -> showLessHovered[0]);
+                    showLessControl.setForeground(StyleConfig.TEXT_SECONDARY);
                     showLessControl.setCursor(new Cursor(Cursor.HAND_CURSOR));
-                    showLessControl.setPreferredSize(new Dimension(80, 40));
-                    showLessControl.setMaximumSize(new Dimension(80, 40));
-                    showLessControl.setHorizontalAlignment(SwingConstants.CENTER);
                     showLessControl.setToolTipText("Show less");
 
-                    JPanel navArrows = new JPanel();
-                    navArrows.setOpaque(false);
-                    navArrows.setLayout(new BoxLayout(navArrows, BoxLayout.Y_AXIS));
-                    navArrows.setPreferredSize(new Dimension(80, TWO_ROW_HEIGHT));
-                    navArrows.add(Box.createVerticalGlue());
-                    navArrows.add(showLessControl);
-                    navArrows.add(Box.createVerticalGlue());
+                    JPanel navArrows = createSectionArrowWrapper(showLessControl, fixedRecentActivity);
 
                     java.awt.event.MouseAdapter showLessMouse = new java.awt.event.MouseAdapter() {
                         public void mouseEntered(java.awt.event.MouseEvent e) {
@@ -620,7 +632,8 @@ public class ProfilePanel extends JPanel {
                             showLessControl.repaint();
                         }
                         public void mouseClicked(java.awt.event.MouseEvent e) {
-                            wrapper.remove(scrollPane);
+                            // Button action: collapse the media row back to the default state.
+                            wrapper.remove(scrollArea);
                             wrapper.remove(navArrows);
                             wrapper.add(rowPanel, BorderLayout.CENTER);
                             wrapper.add(arrowWrapper, BorderLayout.EAST);
@@ -632,7 +645,7 @@ public class ProfilePanel extends JPanel {
                     showLessControl.addMouseListener(showLessMouse);
 
                     wrapper.remove(rowPanel);
-                    wrapper.add(scrollPane, BorderLayout.CENTER);
+                    wrapper.add(scrollArea, BorderLayout.CENTER);
                     wrapper.add(navArrows, BorderLayout.EAST);
 
                     wrapper.revalidate();
@@ -642,6 +655,239 @@ public class ProfilePanel extends JPanel {
         }
 
         return wrapper;
+    }
+
+    private JLabel createProfileArrowControl(boolean right, java.util.function.BooleanSupplier hovered) {
+        Dimension arrowSize = new Dimension(PROFILE_ARROW_ICON_SIZE, PROFILE_ARROW_ICON_SIZE);
+        JLabel arrowControl = new JLabel() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                Color color = hovered.getAsBoolean() ? StyleConfig.PRIMARY_COLOR : getForeground();
+                UIUtils.drawArrowIcon(g2, 0, 0, PROFILE_ARROW_ICON_SIZE, color, right);
+                g2.dispose();
+            }
+
+            @Override
+            public boolean contains(int x, int y) {
+                return createArrowHitShape(right, getWidth(), getHeight()).contains(x, y);
+            }
+        };
+        arrowControl.setOpaque(false);
+        arrowControl.setPreferredSize(arrowSize);
+        arrowControl.setMinimumSize(arrowSize);
+        arrowControl.setMaximumSize(arrowSize);
+        return arrowControl;
+    }
+
+    private Shape createArrowHitShape(boolean right, int width, int height) {
+        int w = Math.max(PROFILE_ARROW_ICON_SIZE, width);
+        int h = Math.max(PROFILE_ARROW_ICON_SIZE, height);
+        int midY = h / 2;
+        int pad = 2;
+        int notch = Math.max(6, w / 4);
+
+        Polygon arrow = new Polygon();
+        if (right) {
+            arrow.addPoint(pad, pad);
+            arrow.addPoint(w - pad, midY);
+            arrow.addPoint(pad, h - pad);
+            arrow.addPoint(pad + notch, midY);
+        } else {
+            arrow.addPoint(w - pad, pad);
+            arrow.addPoint(pad, midY);
+            arrow.addPoint(w - pad, h - pad);
+            arrow.addPoint(w - pad - notch, midY);
+        }
+        return arrow;
+    }
+
+    private JPanel createSectionArrowWrapper(JLabel arrowControl, boolean fixedRecentActivity) {
+        int sectionArrowWidth = fixedRecentActivity ? getRecentActivityArrowWidth() : 80;
+        int sectionArrowGap = fixedRecentActivity ? getRecentActivityArrowGap() : 0;
+        JPanel arrowWrapper = new JPanel(null) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void doLayout() {
+                Insets insets = getInsets();
+                Dimension iconSize = arrowControl.getPreferredSize();
+                int x = Math.max(insets.left, getWidth() - insets.right - iconSize.width);
+                int y = Math.max(0,
+                        (getRecentActivityContentHeight(RECENT_ACTIVITY_SCROLLBAR_GAP) - iconSize.height) / 2);
+                arrowControl.setBounds(x, y, iconSize.width, iconSize.height);
+            }
+        };
+        arrowWrapper.setOpaque(false);
+        int sectionHeight = getRecentActivityContentHeight(0);
+        arrowWrapper.setPreferredSize(new Dimension(sectionArrowWidth, sectionHeight));
+        arrowWrapper.setMinimumSize(new Dimension(sectionArrowWidth, sectionHeight));
+        arrowWrapper.setMaximumSize(new Dimension(sectionArrowWidth, sectionHeight));
+        arrowWrapper.setBorder(BorderFactory.createEmptyBorder(0, sectionArrowGap, 0, 0));
+        arrowWrapper.add(arrowControl);
+        return arrowWrapper;
+    }
+
+    private int calculateCollapsedCardLimit() {
+        return getStandardSectionVisibleColumns() * PROFILE_COLLAPSED_ROWS;
+    }
+
+    private int getFixedProfileContentWidth() {
+        return getFixedSectionWidth(true, true) + (StyleConfig.PAGE_PAD_X * 2);
+    }
+
+    private int getFixedSectionWidth(boolean fixedRecentActivity, boolean hasMore) {
+        int arrowWidth = hasMore
+                ? (fixedRecentActivity ? RECENT_ACTIVITY_ARROW_WIDTH : PROFILE_SECTION_ARROW_WIDTH)
+                : 0;
+        return PROFILE_CARD_ROW_LEFT_INSET
+                + getRecentActivityWidthForColumns(PROFILE_COLLAPSED_COLUMNS)
+                + RECENT_ACTIVITY_TRAILING_SPACE
+                + arrowWidth;
+    }
+
+    // Shared card grid keeps every profile section on the same invisible columns.
+    private JPanel createProfileCardGrid(List<MediaItem> mediaItems, int columns, int bottomGap,
+            boolean forceReviewControls) {
+        JPanel strip = new JPanel(null);
+        strip.setOpaque(false);
+        strip.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+        int safeColumns = Math.max(1, columns);
+        int rows = Math.max(1, (mediaItems.size() + safeColumns - 1) / safeColumns);
+        int width = getRecentActivityWidthForColumns(safeColumns);
+        int height = (rows * PROFILE_CARD_HEIGHT) + ((rows - 1) * PROFILE_CARD_GAP) + bottomGap;
+        strip.setPreferredSize(new Dimension(width, height));
+        strip.setMinimumSize(new Dimension(width, height));
+        strip.setMaximumSize(new Dimension(width, height));
+
+        for (int i = 0; i < mediaItems.size(); i++) {
+            MediaCard card = new MediaCard(
+                    mediaItems.get(i), true, false, ProfilePanel.this::refreshProfile, forceReviewControls);
+
+            int column = i % safeColumns;
+            int row = i / safeColumns;
+            int x = column * (PROFILE_CARD_WIDTH + PROFILE_CARD_GAP);
+            int y = row * (PROFILE_CARD_HEIGHT + PROFILE_CARD_GAP);
+            card.setBounds(x, y, PROFILE_CARD_WIDTH, PROFILE_CARD_HEIGHT);
+            strip.add(card);
+        }
+
+        return strip;
+    }
+
+    private int getStandardSectionVisibleColumns() {
+        return PROFILE_COLLAPSED_COLUMNS;
+    }
+
+    private JScrollPane createRecentActivityScrollPane(JPanel cardStrip, int viewportWidth, int viewportHeight,
+            int horizontalPolicy) {
+        JScrollPane scrollPane = new JScrollPane();
+        JViewport viewport = new JViewport() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                Point p = SwingUtilities.convertPoint(this, 0, 0, ProfilePanel.this);
+                g2.translate(-p.x, -p.y);
+                paintCachedBackground(g2, ProfilePanel.this.getWidth(), ProfilePanel.this.getHeight());
+                g2.dispose();
+            }
+        };
+        viewport.setOpaque(true);
+        viewport.setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+        scrollPane.setViewport(viewport);
+        scrollPane.setViewportView(cardStrip);
+        scrollPane.setOpaque(false);
+        scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(horizontalPolicy);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new Dimension(viewportWidth, viewportHeight));
+        scrollPane.setMinimumSize(new Dimension(PROFILE_CARD_WIDTH, viewportHeight));
+        scrollPane.setMaximumSize(new Dimension(viewportWidth, viewportHeight));
+        allowPageWheelScroll(scrollPane);
+        return scrollPane;
+    }
+
+    private void allowPageWheelScroll(JScrollPane innerScrollPane) {
+        innerScrollPane.setWheelScrollingEnabled(false);
+        java.awt.event.MouseWheelListener forwardWheel = evt -> {
+            JScrollPane pageScrollPane = findPageScrollPane(innerScrollPane);
+            if (pageScrollPane == null) {
+                return;
+            }
+
+            JScrollBar pageBar = pageScrollPane.getVerticalScrollBar();
+            int increment = evt.getScrollType() == java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL
+                    ? pageBar.getBlockIncrement()
+                    : pageBar.getUnitIncrement() * Math.max(1, evt.getScrollAmount());
+            int delta = (int) Math.round(evt.getPreciseWheelRotation() * increment);
+            if (delta == 0 && evt.getPreciseWheelRotation() != 0) {
+                delta = evt.getPreciseWheelRotation() > 0 ? 1 : -1;
+            }
+            int max = pageBar.getMaximum() - pageBar.getVisibleAmount();
+            pageBar.setValue(Math.max(pageBar.getMinimum(), Math.min(max, pageBar.getValue() + delta)));
+            evt.consume();
+        };
+        addWheelForwarder(innerScrollPane, forwardWheel);
+    }
+
+    private JScrollPane findPageScrollPane(JScrollPane innerScrollPane) {
+        Container parent = innerScrollPane.getParent();
+        while (parent != null) {
+            if (parent instanceof JScrollPane) {
+                return (JScrollPane) parent;
+            }
+            parent = parent.getParent();
+        }
+        return null;
+    }
+
+    private void addWheelForwarder(Component component, java.awt.event.MouseWheelListener forwardWheel) {
+        component.addMouseWheelListener(forwardWheel);
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                addWheelForwarder(child, forwardWheel);
+            }
+        }
+    }
+
+    private int getRecentActivityContentHeight(int bottomGap) {
+        return (PROFILE_COLLAPSED_ROWS * PROFILE_CARD_HEIGHT)
+                + ((PROFILE_COLLAPSED_ROWS - 1) * PROFILE_CARD_GAP)
+                + bottomGap;
+    }
+
+    private int getRecentActivityCollapsedCardLimit() {
+        return getRecentActivityVisibleColumns() * PROFILE_COLLAPSED_ROWS;
+    }
+
+    private int getProfileCardViewportWidth(boolean fixedRecentActivity) {
+        int columns = fixedRecentActivity ? getRecentActivityVisibleColumns() : getStandardSectionVisibleColumns();
+        return getRecentActivityWidthForColumns(columns);
+    }
+
+    private int getRecentActivityVisibleColumns() {
+        return RECENT_ACTIVITY_COLUMNS;
+    }
+
+    private int getRecentActivityWidthForColumns(int columns) {
+        int safeColumns = Math.max(1, columns);
+        return (PROFILE_CARD_WIDTH * safeColumns)
+                + ((safeColumns - 1) * PROFILE_CARD_GAP);
+    }
+
+    private int getRecentActivityArrowWidth() {
+        return RECENT_ACTIVITY_ARROW_WIDTH;
+    }
+
+    private int getRecentActivityArrowGap() {
+        return RECENT_ACTIVITY_ARROW_GAP;
     }
 
     private JPopupMenu createFavoritesGenreMenu(List<MediaItem> favorites, BiConsumer<String, String> onFilterSelect) {
@@ -654,6 +900,7 @@ public class ProfilePanel extends JPanel {
         allFavorites.setForeground(StyleConfig.TEXT_COLOR);
         allFavorites.setBackground(StyleConfig.BACKGROUND_LIGHT);
         allFavorites.setOpaque(true);
+        // Button action: clear favorites filter.
         allFavorites.addActionListener(e -> onFilterSelect.accept(null, null));
         popup.add(allFavorites);
         popup.addSeparator();
@@ -756,6 +1003,7 @@ public class ProfilePanel extends JPanel {
         allInCategory.setForeground(StyleConfig.TEXT_COLOR);
         allInCategory.setOpaque(true);
         allInCategory.setBackground(StyleConfig.BACKGROUND_LIGHT);
+        // Button action: filter favorites to this category.
         allInCategory.addActionListener(e -> onFilterSelect.accept(category, null));
         categoryMenu.add(allInCategory);
         categoryMenu.addSeparator();
@@ -778,6 +1026,7 @@ public class ProfilePanel extends JPanel {
                         genreItem.setForeground(Color.WHITE);
                         genreItem.setOpaque(true);
                         genreItem.setBackground(StyleConfig.BACKGROUND_LIGHT);
+                        // Button action: filter favorites to this category and genre.
                         genreItem.addActionListener(e -> onFilterSelect.accept(category, entry.getKey()));
                         categoryMenu.add(genreItem);
                     });
@@ -805,7 +1054,7 @@ public class ProfilePanel extends JPanel {
 
                 
                 for (int i = 4; i > 0; i--) {
-                    g2.setColor(new Color(255, 92, 109, 8 * i));
+                    g2.setColor(StyleConfig.withAlpha(StyleConfig.PRIMARY_COLOR, 8 * i));
                     g2.fill(new RoundRectangle2D.Float(4 - i, 4 - i,
                             getWidth() - 8 + 2 * i, getHeight() - 8 + 2 * i, 28 + i * 2, 28 + i * 2));
                 }
@@ -887,7 +1136,7 @@ public class ProfilePanel extends JPanel {
                 
                 if (avatarHovered[0]) {
                     for (int i = 3; i > 0; i--) {
-                        g2.setColor(new Color(255, 92, 109, 20 * i));
+                        g2.setColor(StyleConfig.withAlpha(StyleConfig.PRIMARY_COLOR, 20 * i));
                         g2.setStroke(new BasicStroke(1.5f));
                         g2.draw(new Ellipse2D.Float(pad - i, -i, sz + 2 * i, sz + 2 * i));
                     }
@@ -962,6 +1211,7 @@ public class ProfilePanel extends JPanel {
             }
 
             public void mouseClicked(java.awt.event.MouseEvent e) {
+                // Button action: choose a new profile avatar image.
                 JFileChooser fc = new JFileChooser();
                 fc.setFileFilter(
                         new javax.swing.filechooser.FileNameExtensionFilter("Images", "jpg", "jpeg", "png", "webp"));
@@ -1189,6 +1439,7 @@ public class ProfilePanel extends JPanel {
         RoundedButton cancelBtn = new RoundedButton("Cancel", StyleConfig.SURFACE_SOFT, 14);
         cancelBtn.setPreferredSize(new Dimension(110, 42));
         cancelBtn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        // Button action: close profile editor without saving.
         cancelBtn.addActionListener(e -> editDialog.dispose());
         buttons.add(cancelBtn);
 
@@ -1197,6 +1448,7 @@ public class ProfilePanel extends JPanel {
         saveBtn.setGradient(StyleConfig.PRIMARY_DARK);
         saveBtn.setPreferredSize(new Dimension(150, 42));
         saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        // Button action: validate and save profile edits.
         saveBtn.addActionListener(e -> {
             String newUsername = userField.getText().trim();
             if (!newUsername.equals(profile.getUsername())) {

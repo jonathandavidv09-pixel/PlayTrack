@@ -38,11 +38,11 @@ public class SettingsDialog extends JDialog {
     private ChecklistRow commonRow;
     private ChecklistRow matchRow;
 
-    private static final Color DIALOG_BG_TOP = new Color(30, 35, 64);
-    private static final Color DIALOG_BG_BOTTOM = new Color(20, 24, 46);
-    private static final Color FIELD_BG = new Color(42, 52, 84);
-    private static final Color FIELD_BORDER = new Color(255, 255, 255, 48);
-    private static final Color FIELD_BORDER_FOCUS = new Color(253, 164, 129, 185);
+    private static final Color DIALOG_BG_TOP = StyleConfig.SURFACE_ELEVATED;
+    private static final Color DIALOG_BG_BOTTOM = StyleConfig.SURFACE_COLOR;
+    private static final Color FIELD_BG = StyleConfig.INPUT_BG;
+    private static final Color FIELD_BORDER = StyleConfig.withAlpha(StyleConfig.TEXT_COLOR, 48);
+    private static final Color FIELD_BORDER_FOCUS = StyleConfig.INPUT_FOCUS;
     private static final Set<String> COMMON_PASSWORDS = new HashSet<>(Arrays.asList(
         "password", "password123", "123456", "12345678", "123456789", "qwerty",
         "abc123", "111111", "letmein", "admin", "welcome", "iloveyou"
@@ -112,6 +112,7 @@ public class SettingsDialog extends JDialog {
         closeBtn.setForeground(StyleConfig.TEXT_SECONDARY);
         closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         closeBtn.addMouseListener(new MouseAdapter() {
+            // Button action: close the settings dialog.
             public void mouseClicked(MouseEvent e) { dispose(); }
             public void mouseEntered(MouseEvent e) { closeHovered[0] = true; closeBtn.setForeground(Color.WHITE); closeBtn.repaint(); }
             public void mouseExited(MouseEvent e) { closeHovered[0] = false; closeBtn.setForeground(StyleConfig.TEXT_SECONDARY); closeBtn.repaint(); }
@@ -173,6 +174,7 @@ public class SettingsDialog extends JDialog {
         saveBtn.setGradient(StyleConfig.PRIMARY_DARK);
         saveBtn.setPreferredSize(new Dimension(150, 38));
         saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        // Button action: save account settings.
         saveBtn.addActionListener(e -> saveSettings());
         btnRow.add(saveBtn);
 
@@ -258,6 +260,7 @@ public class SettingsDialog extends JDialog {
         eye.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
         eye.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
+                // Button action: toggle password field visibility.
                 boolean visible = field.getEchoChar() == (char)0;
                 field.setEchoChar(!visible ? (char)0 : PASSWORD_MASK);
                 eye.repaint();

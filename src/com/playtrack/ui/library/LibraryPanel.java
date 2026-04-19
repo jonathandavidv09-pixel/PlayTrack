@@ -21,6 +21,7 @@ public class LibraryPanel extends JPanel {
     private static final int CARD_WIDTH = 160;
     private static final int CARD_HEIGHT = 240;
     private static final int CARD_GAP = 20;
+    private static final int SECTION_ARROW_WIDTH = 54;
     private static final int MAX_CATEGORY_ROWS = 2;
     private MediaService mediaService = new MediaService();
     private JPanel cardGrid;
@@ -29,26 +30,50 @@ public class LibraryPanel extends JPanel {
     private String currentCategory = "All";
     private PlaceholderTextField searchField;
     private JPanel tabsPanel;
-    // Constructor.
+    private Timer resizeRefreshTimer;
+    private transient BufferedImage cachedBackground;
+    private int cachedBackgroundW = -1;
+    private int cachedBackgroundH = -1;
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
-
-        // Decorative glowing orb in the background.
-        int orbSize = 350;
-        g2.setPaint(new RadialGradientPaint(
-            80f, 60f, orbSize / 2f,
-            new float[]{0f, 0.4f, 1f},
-            new Color[]{StyleConfig.PANEL_GLOW_PRIMARY, new Color(StyleConfig.PALETTE_RED.getRed(), StyleConfig.PALETTE_RED.getGreen(), StyleConfig.PALETTE_RED.getBlue(), 8), new Color(0, 0, 0, 0)}
-        ));
-        g2.fillOval(80 - orbSize / 2, 60 - orbSize / 2, orbSize, orbSize);
-
+        paintLibraryBackground(g2, getWidth(), getHeight());
         g2.dispose();
     }
+
+    private void paintLibraryBackground(Graphics2D g2, int w, int h) {
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+        if (cachedBackground == null || cachedBackgroundW != w || cachedBackgroundH != h) {
+            cachedBackground = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            cachedBackgroundW = w;
+            cachedBackgroundH = h;
+
+            Graphics2D bg = cachedBackground.createGraphics();
+            bg.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            UIUtils.paintFadedAuthBackground(bg, w, h);
+
+            int orbSize = 350;
+            bg.setPaint(new RadialGradientPaint(
+                    80f, 60f, orbSize / 2f,
+                    new float[]{0f, 0.4f, 1f},
+                    new Color[]{
+                            StyleConfig.PANEL_GLOW_PRIMARY,
+                            new Color(StyleConfig.PALETTE_RED.getRed(), StyleConfig.PALETTE_RED.getGreen(),
+                                    StyleConfig.PALETTE_RED.getBlue(), 8),
+                            new Color(0, 0, 0, 0)
+                    }
+            ));
+            bg.fillOval(80 - orbSize / 2, 60 - orbSize / 2, orbSize, orbSize);
+            bg.dispose();
+        }
+        g2.drawImage(cachedBackground, 0, 0, null);
+    }
+
     // Helper method to load the empty library icon from resources.
     public LibraryPanel() {
         setLayout(new BorderLayout());
@@ -82,6 +107,7 @@ public class LibraryPanel extends JPanel {
         searchField = new PlaceholderTextField("Search your library...", "SEARCH");
         searchField.setPreferredSize(new Dimension(280, 42));
         searchField.addActionListener(e -> {
+            // Button/action field: submit library search.
             refreshLibrary();
             scrollToTop();
         });
@@ -99,22 +125,6 @@ public class LibraryPanel extends JPanel {
         // Main content area with scrollable card grid.
         class ScrollableCardGrid extends JPanel implements Scrollable {
             private static final long serialVersionUID = 1L;
-
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Paint a full, stable background so fast scrolling never leaves ghost trails.
-                g2.setColor(StyleConfig.BACKGROUND_COLOR);
-                g2.fillRect(0, 0, getWidth(), getHeight());
-
-                Point p = SwingUtilities.convertPoint(this, 0, 0, LibraryPanel.this);
-                g2.translate(-p.x, -p.y);
-                UIUtils.paintFadedAuthBackground(g2, LibraryPanel.this.getWidth(), LibraryPanel.this.getHeight());
-                g2.dispose();
-            }
 
             @Override
             public Dimension getPreferredScrollableViewportSize() {
@@ -144,25 +154,37 @@ public class LibraryPanel extends JPanel {
         // Card grid panel for displaying media items.
         cardGrid = new ScrollableCardGrid();
         cardGrid.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 20));
-        cardGrid.setOpaque(true);
-        cardGrid.setBackground(StyleConfig.BACKGROUND_COLOR);
+        cardGrid.setOpaque(false);
         // JScrollPane for the card grid.
         JScrollPane scroll = new JScrollPane();
         this.libraryScroll = scroll;
         scroll.setOpaque(false);
         scroll.setBorder(null);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        scroll.getVerticalScrollBar().setUnitIncrement(42);
+        scroll.getVerticalScrollBar().setBlockIncrement(260);
         scroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setViewport(new JViewport() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                Point p = SwingUtilities.convertPoint(this, 0, 0, LibraryPanel.this);
+                g2.translate(-p.x, -p.y);
+                paintLibraryBackground(g2, LibraryPanel.this.getWidth(), LibraryPanel.this.getHeight());
+                g2.dispose();
+            }
+        });
         scroll.setViewportView(cardGrid);
         scroll.getViewport().setOpaque(true);
-        scroll.getViewport().setBackground(StyleConfig.BACKGROUND_COLOR);
-        // Full repaint on scroll prevents background striping artifacts.
-        scroll.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+        // BLIT mode is significantly faster than SIMPLE_SCROLL_MODE for wheel scroll.
+        scroll.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
         scroll.getViewport().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                refreshLibrary();
+                scheduleLibraryRefresh();
             }
         });
 
@@ -170,13 +192,14 @@ public class LibraryPanel extends JPanel {
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                refreshLibrary();
+                scheduleLibraryRefresh();
             }
         });
 
         refreshLibrary();
     }
     // Helper method to create a category tab.
+    // Start: library category tab button function.
     private JPanel createTab(String name, boolean active) {
         JPanel tab = new JPanel(new BorderLayout()) {
             boolean hovered = false;
@@ -184,6 +207,7 @@ public class LibraryPanel extends JPanel {
                 addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
+                        // Button action: switch the library category tab.
                         currentCategory = name;
                         refreshTabs();
                         refreshLibrary();
@@ -214,11 +238,19 @@ public class LibraryPanel extends JPanel {
                 if (currentlyActive) {
                     g2.setPaint(new GradientPaint(0, 0, StyleConfig.PRIMARY_COLOR, getWidth(), 0, StyleConfig.SECONDARY_COLOR));
                 } else if (hovered) {
-                    g2.setColor(StyleConfig.SURFACE_SOFT);
+                    g2.setColor(StyleConfig.withAlpha(StyleConfig.SURFACE_SOFT, 238));
                 } else {
-                    g2.setColor(StyleConfig.SURFACE_ELEVATED);
+                    g2.setColor(StyleConfig.withAlpha(StyleConfig.SURFACE_ELEVATED, 226));
                 }
                 g2.fill(shape);
+
+                if (!currentlyActive) {
+                    Shape oldClip = g2.getClip();
+                    g2.clip(shape);
+                    g2.setColor(StyleConfig.withAlpha(Color.WHITE, hovered ? 16 : 10));
+                    g2.fillRect(0, 0, getWidth(), Math.max(1, getHeight() / 2));
+                    g2.setClip(oldClip);
+                }
 
                 g2.setColor(currentlyActive ? new Color(255, 255, 255, 70) : StyleConfig.SURFACE_STROKE);
                 g2.setStroke(new BasicStroke(1f));
@@ -227,7 +259,7 @@ public class LibraryPanel extends JPanel {
             }
         };
         tab.setOpaque(false);
-        tab.setPreferredSize(new Dimension(100, 36));
+        tab.setPreferredSize(new Dimension(108, 38));
         tab.setCursor(new Cursor(Cursor.HAND_CURSOR));
         tab.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10)); 
 
@@ -242,6 +274,7 @@ public class LibraryPanel extends JPanel {
 
         return tab;
     }
+    // End: library category tab button function.
 
     private void refreshTabs() {
         tabsPanel.removeAll();
@@ -253,16 +286,18 @@ public class LibraryPanel extends JPanel {
         tabsPanel.repaint();
     }
 
+    // Start: section jump arrow button function.
     private JLabel createSectionJumpArrow(String targetCategory) {
         JLabel arrow = new JLabel() {
             private boolean hovered = false;
 
             {
-                setPreferredSize(new Dimension(32, 32));
+                setPreferredSize(new Dimension(42, 42));
                 setCursor(new Cursor(Cursor.HAND_CURSOR));
                 addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
+                        // Button action: jump from All view into this category.
                         currentCategory = targetCategory;
                         if (searchField != null) {
                             searchField.setText("");
@@ -289,14 +324,18 @@ public class LibraryPanel extends JPanel {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int size = Math.min(getWidth(), getHeight()) - 12;
+                int x = (getWidth() - size) / 2;
+                int y = (getHeight() - size) / 2;
                 Color iconColor = hovered ? StyleConfig.PRIMARY_COLOR : StyleConfig.TEXT_SECONDARY;
-                UIUtils.drawArrowIcon(g2, 0, 0, getWidth(), getHeight(), iconColor, true);
+                UIUtils.drawArrowIcon(g2, x, y, size, size, iconColor, true);
                 g2.dispose();
             }
         };
         arrow.setToolTipText("Go to " + targetCategory);
         return arrow;
     }
+    // End: section jump arrow button function.
 
     public void reset() {
         currentCategory = "All";
@@ -373,14 +412,6 @@ public class LibraryPanel extends JPanel {
             addSectionToGrid(emptyState);
         }
 
-        GridBagConstraints spacer = new GridBagConstraints();
-        spacer.gridx = 0;
-        spacer.gridy = sectionRowIndex;
-        spacer.weightx = 1.0;
-        spacer.weighty = 1.0;
-        spacer.fill = GridBagConstraints.BOTH;
-        cardGrid.add(Box.createVerticalGlue(), spacer);
-
         cardGrid.revalidate();
         cardGrid.repaint();
     }
@@ -391,13 +422,13 @@ public class LibraryPanel extends JPanel {
 
         boolean isCategorySection = "Films".equals(title) || "Games".equals(title) || "Books".equals(title);
         boolean showSectionArrow = "All".equals(currentCategory) && isCategorySection;
-        boolean reserveTwoRows = isCategorySection || !"All".equals(currentCategory);
         final int itemCount = items.size();
 
         JPanel section = new JPanel(new BorderLayout(0, 20));
         section.setOpaque(false);
         section.setAlignmentX(Component.LEFT_ALIGNMENT);
-        section.setBorder(BorderFactory.createEmptyBorder(0, 0, 24, 0));
+        int topPadding = "Games".equals(title) ? 26 : 0;
+        section.setBorder(BorderFactory.createEmptyBorder(topPadding, 0, 24, 0));
 
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
@@ -431,15 +462,14 @@ public class LibraryPanel extends JPanel {
         
         JPanel centerRow = new JPanel(new BorderLayout(8, 0));
         centerRow.setOpaque(false);
-        centerRow.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        centerRow.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
 
         JPanel lanePanel = new JPanel(new BorderLayout(8, 0));
         lanePanel.setOpaque(false);
-        lanePanel.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
+        lanePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         int columns = calculateCardColumns(showSectionArrow);
         JPanel cardsHost = new JPanel();
         cardsHost.setOpaque(false);
-        cardsHost.setLayout(new BoxLayout(cardsHost, BoxLayout.Y_AXIS));
         cardsHost.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         cardsHost.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -448,42 +478,32 @@ public class LibraryPanel extends JPanel {
             visibleCount = Math.min(itemCount, columns * MAX_CATEGORY_ROWS);
         }
 
-        for (int start = 0; start < visibleCount; start += columns) {
-            JPanel row = new JPanel();
-            row.setOpaque(false);
-            row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
-            row.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-            int end = Math.min(visibleCount, start + columns);
-            for (int i = start; i < end; i++) {
-                row.add(new MediaCard(items.get(i), false, true, this::refreshLibrary));
-                if (i < end - 1) {
-                    row.add(Box.createHorizontalStrut(CARD_GAP));
-                }
-            }
-
-            cardsHost.add(row);
-            if (end < visibleCount) {
-                cardsHost.add(Box.createVerticalStrut(CARD_GAP));
-            }
+        int rowCount = Math.max(1, (visibleCount + columns - 1) / columns);
+        cardsHost.setLayout(new GridLayout(rowCount, columns, CARD_GAP, CARD_GAP));
+        for (int i = 0; i < visibleCount; i++) {
+            cardsHost.add(new MediaCard(items.get(i), false, true, this::refreshLibrary));
+        }
+        int fillerCount = (rowCount * columns) - visibleCount;
+        for (int i = 0; i < fillerCount; i++) {
+            JPanel filler = new JPanel();
+            filler.setOpaque(false);
+            filler.setPreferredSize(new Dimension(CARD_WIDTH, CARD_HEIGHT));
+            cardsHost.add(filler);
         }
 
-        if (reserveTwoRows) {
-            int shownRows = Math.max(1, (visibleCount + columns - 1) / columns);
-            int missingRows = Math.max(0, MAX_CATEGORY_ROWS - shownRows);
-            if (missingRows > 0) {
-                int reservedHeight = missingRows * (CARD_HEIGHT + CARD_GAP);
-                cardsHost.add(Box.createVerticalStrut(reservedHeight));
-            }
-        }
+        int contentWidth = (columns * CARD_WIDTH) + ((columns - 1) * CARD_GAP);
+        int contentHeight = (rowCount * CARD_HEIGHT) + ((rowCount - 1) * CARD_GAP);
+        Dimension cardsHostSize = new Dimension(contentWidth, contentHeight);
+        cardsHost.setPreferredSize(cardsHostSize);
+        cardsHost.setMinimumSize(cardsHostSize);
 
-        lanePanel.add(cardsHost, BorderLayout.CENTER);
+        lanePanel.add(cardsHost, BorderLayout.WEST);
 
         if (showSectionArrow) {
             String targetCategory = title;
             JPanel sectionArrowHost = new JPanel(new GridBagLayout());
             sectionArrowHost.setOpaque(false);
-            sectionArrowHost.setPreferredSize(new Dimension(36, 0));
+            sectionArrowHost.setPreferredSize(new Dimension(SECTION_ARROW_WIDTH, 0));
             sectionArrowHost.add(createSectionJumpArrow(targetCategory));
             lanePanel.add(sectionArrowHost, BorderLayout.EAST);
         }
@@ -520,10 +540,10 @@ public class LibraryPanel extends JPanel {
             viewportWidth = 1200;
         }
 
-        int centerRowHorizontalPadding = 24; // 12 left + 12 right
-        int laneHorizontalPadding = 28; // 14 left + 14 right
-        int arrowReserve = showSectionArrow ? 44 : 0; // arrow host + spacing
-        int safety = 16; // keep a visual buffer so cards never clip at edge
+        int centerRowHorizontalPadding = 0;
+        int laneHorizontalPadding = 0;
+        int arrowReserve = showSectionArrow ? SECTION_ARROW_WIDTH + 8 : 0; // arrow host + spacing
+        int safety = 28; // drop a column before cards get close enough to clip
         int available = Math.max(
                 CARD_WIDTH,
                 viewportWidth - centerRowHorizontalPadding - laneHorizontalPadding - arrowReserve - safety
@@ -536,6 +556,20 @@ public class LibraryPanel extends JPanel {
             }
         }
         return 1;
+    }
+
+    private void scheduleLibraryRefresh() {
+        if (cardGrid == null) {
+            return;
+        }
+        if (resizeRefreshTimer == null) {
+            resizeRefreshTimer = new Timer(140, e -> {
+                ((Timer) e.getSource()).stop();
+                refreshLibrary();
+            });
+            resizeRefreshTimer.setRepeats(false);
+        }
+        resizeRefreshTimer.restart();
     }
 
     private void scrollToTop() {

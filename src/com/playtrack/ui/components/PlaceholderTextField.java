@@ -27,7 +27,7 @@ public class PlaceholderTextField extends JTextField {
         setFont(StyleConfig.FONT_NORMAL);
         setCaretColor(StyleConfig.TEXT_COLOR);
         setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(12, iconText != null ? 40 : 16, 12, 16));
+        setBorder(BorderFactory.createEmptyBorder(13, iconText != null ? 42 : 16, 13, 16));
 
         addFocusListener(new FocusAdapter() {
             @Override
@@ -62,14 +62,25 @@ public class PlaceholderTextField extends JTextField {
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        
+        int arc = StyleConfig.INPUT_RADIUS;
+        Shape fieldShape = new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), arc, arc);
+
+        g2.setColor(StyleConfig.withAlpha(Color.BLACK, focused ? 38 : 24));
+        g2.fill(new RoundRectangle2D.Float(0, 2, getWidth(), getHeight() - 1, arc, arc));
+
         g2.setPaint(new GradientPaint(
                 0, 0, focused ? StyleConfig.INPUT_BG_FOCUS : StyleConfig.INPUT_BG,
-                0, getHeight(), StyleConfig.BACKGROUND_LIGHT));
-        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
+                0, getHeight(), focused ? StyleConfig.SURFACE_COLOR : StyleConfig.BACKGROUND_LIGHT));
+        g2.fill(fieldShape);
 
-        
+        Shape oldClip = g2.getClip();
+        g2.clip(fieldShape);
+        g2.setColor(StyleConfig.withAlpha(Color.WHITE, focused ? 24 : 12));
+        g2.fillRect(0, 0, getWidth(), Math.max(1, getHeight() / 2));
+        g2.setClip(oldClip);
+
         if (focused) {
             g2.setColor(StyleConfig.INPUT_FOCUS);
             g2.setStroke(new BasicStroke(2f));
@@ -77,7 +88,7 @@ public class PlaceholderTextField extends JTextField {
             g2.setColor(StyleConfig.SURFACE_STROKE);
             g2.setStroke(new BasicStroke(1f));
         }
-        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 13, 13));
+        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, arc - 1, arc - 1));
 
         
         if (iconText != null) {

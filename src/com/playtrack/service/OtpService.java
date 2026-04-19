@@ -13,8 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.Random;
 
+// Service layer component: generates, sends, validates, and clears OTP verification codes.
 @Service
-// Service layer component: coordinates business logic.
 public class OtpService {
 
     @Value("${spring.mail.username}")
@@ -42,7 +42,7 @@ public class OtpService {
     private String lastDeliveryMessage = "";
     private static final long OTP_VALIDITY_MS = 5 * 60 * 1000;
 
-    // sendOtp.
+    // Start: send OTP service function.
     public boolean sendOtp(String email) {
         Random random = new Random();
         currentOtp = String.format("%06d", random.nextInt(999999));
@@ -111,8 +111,9 @@ public class OtpService {
             return false;
         }
     }
+    // End: send OTP service function.
 
-    // buildMailSender.
+    // Start: mail sender builder helper function.
     private JavaMailSender buildMailSender(String host, int port, String username, String password) {
         JavaMailSenderImpl sender = new JavaMailSenderImpl();
         sender.setHost(host);
@@ -132,8 +133,9 @@ public class OtpService {
         props.put("mail.smtp.ssl.protocols", "TLSv1.2");
         return sender;
     }
+    // End: mail sender builder helper function.
 
-    // normalizeSmtpPassword.
+    // Start: SMTP password normalization helper function.
     private String normalizeSmtpPassword(String rawPassword) {
         if (rawPassword == null) {
             return "";
@@ -141,8 +143,9 @@ public class OtpService {
         // Gmail app passwords are often shown with spaces.
         return rawPassword.replaceAll("\\s+", "").trim();
     }
+    // End: SMTP password normalization helper function.
 
-    // classifyMailError.
+    // Start: mail error classification helper function.
     private String classifyMailError(Exception e) {
         String details = collectExceptionDetails(e).toLowerCase();
         if (details.contains("authentication")
@@ -165,8 +168,9 @@ public class OtpService {
         }
         return "Unable to send verification code.";
     }
+    // End: mail error classification helper function.
 
-    // buildConfigErrorMessage.
+    // Start: SMTP configuration error message helper function.
     private String buildConfigErrorMessage(String host, String username, String password) {
         boolean missingHost = isBlank(host);
         boolean missingUser = isBlank(username);
@@ -197,8 +201,9 @@ public class OtpService {
         }
         return "SMTP config invalid. Check email settings.";
     }
+    // End: SMTP configuration error message helper function.
 
-    // collectExceptionDetails.
+    // Start: exception detail collection helper function.
     private String collectExceptionDetails(Throwable throwable) {
         StringBuilder sb = new StringBuilder();
         Throwable current = throwable;
@@ -213,16 +218,18 @@ public class OtpService {
         }
         return sb.toString();
     }
+    // End: exception detail collection helper function.
 
-    // isSmtpConfigured.
+    // Start: SMTP configuration check helper function.
     private boolean isSmtpConfigured(String host, String username, String password) {
         return !isBlank(host)
                 && !isBlank(username)
                 && !isBlank(password)
                 && !"your.email@gmail.com".equalsIgnoreCase(username.trim());
     }
+    // End: SMTP configuration check helper function.
 
-    // resolvePort.
+    // Start: SMTP port resolver helper function.
     private int resolvePort() {
         if (smtpPort > 0) {
             return smtpPort;
@@ -234,8 +241,9 @@ public class OtpService {
             return 587;
         }
     }
+    // End: SMTP port resolver helper function.
 
-    // resolveConfigValue.
+    // Start: configuration value resolver helper function.
     private String resolveConfigValue(String injectedValue, String envKey) {
         if (!isBlank(injectedValue)) {
             return injectedValue.trim();
@@ -254,8 +262,9 @@ public class OtpService {
         }
         return "";
     }
+    // End: configuration value resolver helper function.
 
-    // readWindowsUserEnv.
+    // Start: Windows user environment reader helper function.
     private String readWindowsUserEnv(String envKey) {
         String os = System.getProperty("os.name", "").toLowerCase();
         if (!os.contains("win")) {
@@ -283,8 +292,9 @@ public class OtpService {
         }
         return "";
     }
+    // End: Windows user environment reader helper function.
 
-    // useSimulatedDelivery.
+    // Start: simulated OTP delivery helper function.
     private boolean useSimulatedDelivery(String email, String reason) {
         lastDeliverySimulated = true;
         lastDeliveryMessage = reason;
@@ -292,28 +302,33 @@ public class OtpService {
         System.err.println("[OTP Service] Local OTP for " + email + ": " + currentOtp);
         return true;
     }
+    // End: simulated OTP delivery helper function.
 
-    // isBlank.
+    // Start: blank string check helper function.
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
+    // End: blank string check helper function.
 
-    // getCurrentOtp.
+    // Start: current OTP getter function.
     public String getCurrentOtp() {
         return currentOtp;
     }
+    // End: current OTP getter function.
 
-    // wasLastDeliverySimulated.
+    // Start: simulated delivery status getter function.
     public boolean wasLastDeliverySimulated() {
         return lastDeliverySimulated;
     }
+    // End: simulated delivery status getter function.
 
-    // getLastDeliveryMessage.
+    // Start: last delivery message getter function.
     public String getLastDeliveryMessage() {
         return lastDeliveryMessage;
     }
+    // End: last delivery message getter function.
 
-    // verifyOtp.
+    // Start: verify OTP service function.
     public boolean verifyOtp(String email, String otp) {
         if (currentOtp == null || currentEmail == null) return false;
         if (System.currentTimeMillis() - otpTimestamp > OTP_VALIDITY_MS) {
@@ -323,10 +338,12 @@ public class OtpService {
         }
         return currentEmail.equals(email) && currentOtp.equals(otp);
     }
+    // End: verify OTP service function.
 
-    // clearOtp.
+    // Start: clear OTP service function.
     public void clearOtp() {
         currentOtp = null;
         currentEmail = null;
     }
+    // End: clear OTP service function.
 }

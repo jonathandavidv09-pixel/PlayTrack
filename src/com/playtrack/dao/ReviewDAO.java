@@ -6,9 +6,9 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-// Data access component: handles persistence operations.
+// Data access component: reads and writes review, favorite, and watchlist-state records.
 public class ReviewDAO {
-    // addOrUpdateReview.
+    // Start: add or update review database function.
     public boolean addOrUpdateReview(Review review) {
         String checkSql = "SELECT id FROM reviews WHERE media_id = ? AND user_id = ?";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -19,7 +19,7 @@ public class ReviewDAO {
                 if (rs.next()) {
                     String updateSql = "UPDATE reviews SET rating = ?, review_text = ?, is_favorite = ?, is_watchlist = ?, watch_date = ?, review_date = CURRENT_TIMESTAMP WHERE id = ?";
                     try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
-                        updateStmt.setInt(1, review.getRating());
+                        updateStmt.setDouble(1, review.getRating());
                         updateStmt.setString(2, review.getReviewText());
                         updateStmt.setBoolean(3, review.isFavorite());
                         updateStmt.setBoolean(4, review.isWatchlist());
@@ -32,7 +32,7 @@ public class ReviewDAO {
                     try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
                         insertStmt.setInt(1, review.getMediaId());
                         insertStmt.setInt(2, review.getUserId());
-                        insertStmt.setInt(3, review.getRating());
+                        insertStmt.setDouble(3, review.getRating());
                         insertStmt.setString(4, review.getReviewText());
                         insertStmt.setBoolean(5, review.isFavorite());
                         insertStmt.setBoolean(6, review.isWatchlist());
@@ -46,8 +46,9 @@ public class ReviewDAO {
         }
         return false;
     }
+    // End: add or update review database function.
 
-    // getReviewByMedia.
+    // Start: load review by media database function.
     public Review getReviewByMedia(int mediaId, int userId) {
         String sql = "SELECT * FROM reviews WHERE media_id = ? AND user_id = ?";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -60,7 +61,7 @@ public class ReviewDAO {
                         rs.getInt("id"),
                         rs.getInt("media_id"),
                         rs.getInt("user_id"),
-                        rs.getInt("rating"),
+                        rs.getDouble("rating"),
                         rs.getString("review_text"),
                         rs.getBoolean("is_favorite"),
                         hasColumn(rs, "is_watchlist") && rs.getBoolean("is_watchlist"),
@@ -74,8 +75,9 @@ public class ReviewDAO {
         }
         return null;
     }
+    // End: load review by media database function.
     
-    // hasColumn.
+    // Start: result-set column check helper function.
     private boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
         ResultSetMetaData rsmd = rs.getMetaData();
         int columns = rsmd.getColumnCount();
@@ -86,8 +88,9 @@ public class ReviewDAO {
         }
         return false;
     }
+    // End: result-set column check helper function.
 
-    // getRecentReviews.
+    // Start: load recent reviews database function.
     public List<Review> getRecentReviews(int userId, int limit) {
         List<Review> reviews = new ArrayList<>();
         String sql = "SELECT * FROM reviews WHERE user_id = ? ORDER BY review_date DESC LIMIT ?";
@@ -101,7 +104,7 @@ public class ReviewDAO {
                         rs.getInt("id"),
                         rs.getInt("media_id"),
                         rs.getInt("user_id"),
-                        rs.getInt("rating"),
+                        rs.getDouble("rating"),
                         rs.getString("review_text"),
                         rs.getBoolean("is_favorite"),
                         hasColumn(rs, "is_watchlist") && rs.getBoolean("is_watchlist"),
@@ -115,8 +118,9 @@ public class ReviewDAO {
         }
         return reviews;
     }
+    // End: load recent reviews database function.
 
-    // getFavorites.
+    // Start: load favorite reviews database function.
     public List<Review> getFavorites(int userId, int limit) {
         List<Review> reviews = new ArrayList<>();
         String sql = "SELECT * FROM reviews WHERE user_id = ? AND is_favorite = 1 ORDER BY review_date DESC LIMIT ?";
@@ -130,7 +134,7 @@ public class ReviewDAO {
                         rs.getInt("id"),
                         rs.getInt("media_id"),
                         rs.getInt("user_id"),
-                        rs.getInt("rating"),
+                        rs.getDouble("rating"),
                         rs.getString("review_text"),
                         rs.getBoolean("is_favorite"),
                         hasColumn(rs, "is_watchlist") && rs.getBoolean("is_watchlist"),
@@ -144,8 +148,9 @@ public class ReviewDAO {
         }
         return reviews;
     }
+    // End: load favorite reviews database function.
 
-    // getWatchlists.
+    // Start: load watchlist reviews database function.
     public List<Review> getWatchlists(int userId, int limit) {
         List<Review> reviews = new ArrayList<>();
         String sql = "SELECT * FROM reviews WHERE user_id = ? AND is_watchlist = 1 ORDER BY review_date DESC LIMIT ?";
@@ -159,7 +164,7 @@ public class ReviewDAO {
                         rs.getInt("id"),
                         rs.getInt("media_id"),
                         rs.getInt("user_id"),
-                        rs.getInt("rating"),
+                        rs.getDouble("rating"),
                         rs.getString("review_text"),
                         rs.getBoolean("is_favorite"),
                         hasColumn(rs, "is_watchlist") && rs.getBoolean("is_watchlist"),
@@ -173,4 +178,5 @@ public class ReviewDAO {
         }
         return reviews;
     }
+    // End: load watchlist reviews database function.
 }

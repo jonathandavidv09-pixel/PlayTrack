@@ -2,18 +2,21 @@ package com.playtrack.model;
 
 import java.sql.Timestamp;
 
-// Domain model component: represents core application data.
+// Domain model component: represents an authenticated PlayTrack user account.
 public class User {
+    // Start: user account data fields.
     private int id;
     private String username;
     private String email;
     private String passwordHash;
     private Timestamp createdAt;
+    // End: user account data fields.
 
-    // Constructor: initializes User.
+    // Start: empty user constructor.
     public User() {}
+    // End: empty user constructor.
 
-    // Constructor: initializes User.
+    // Start: full user constructor.
     public User(int id, String username, String email, String passwordHash, Timestamp createdAt) {
         this.id = id;
         this.username = username;
@@ -21,8 +24,10 @@ public class User {
         this.passwordHash = passwordHash;
         this.createdAt = createdAt;
     }
+    // End: full user constructor.
 
    
+    // Start: user getters and setters.
     // getId.
     public int getId() { return id; }
     // setId.
@@ -43,4 +48,5 @@ public class User {
     public Timestamp getCreatedAt() { return createdAt; }
     // setCreatedAt.
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    // End: user getters and setters.
 }

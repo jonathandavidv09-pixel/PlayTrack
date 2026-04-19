@@ -47,11 +47,12 @@ public class RegisterPanel extends JPanel {
         // "Login" tab label with click action to switch to the login form.
         JLabel loginTab = new JLabel("LOGIN");
         loginTab.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        loginTab.setForeground(new Color(160, 160, 175));
+        loginTab.setForeground(StyleConfig.TEXT_LIGHT);
         loginTab.setCursor(new Cursor(Cursor.HAND_CURSOR));
         loginTab.setPreferredSize(new Dimension(118, 32));
         loginTab.setHorizontalAlignment(SwingConstants.RIGHT);
         loginTab.addMouseListener(new MouseAdapter() {
+            // Button action: switch from registration to login.
             public void mouseClicked(MouseEvent e) {
                 switchToLoginAction.actionPerformed(null);
             }
@@ -59,7 +60,7 @@ public class RegisterPanel extends JPanel {
         // Divider between the "Login" and "Register" tabs.
         JLabel divider = new JLabel("  |  ");
         divider.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-        divider.setForeground(new Color(100, 100, 120));
+        divider.setForeground(StyleConfig.TEXT_LIGHT);
         divider.setPreferredSize(new Dimension(34, 32));
         divider.setHorizontalAlignment(SwingConstants.CENTER);
         // "Register" tab label (active) with primary color.
@@ -80,7 +81,7 @@ public class RegisterPanel extends JPanel {
         // Email label and input field with placeholder text.
         JLabel emailLabel = new JLabel("Email Address");
         emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        emailLabel.setForeground(new Color(200, 200, 210));
+        emailLabel.setForeground(StyleConfig.TEXT_SECONDARY);
         gbc.gridy = 1;
         gbc.insets = new Insets(3, 35, 4, 35);
         add(emailLabel, gbc);
@@ -94,7 +95,7 @@ public class RegisterPanel extends JPanel {
         // Username label and input field with placeholder text.
         JLabel userLabel = new JLabel("Username");
         userLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        userLabel.setForeground(new Color(200, 200, 210));
+        userLabel.setForeground(StyleConfig.TEXT_SECONDARY);
         gbc.gridy = 3;
         gbc.insets = new Insets(0, 35, 4, 35);
         add(userLabel, gbc);
@@ -108,7 +109,7 @@ public class RegisterPanel extends JPanel {
         // Password label and input field with placeholder text.
         JLabel passLabel = new JLabel("Password");
         passLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        passLabel.setForeground(new Color(200, 200, 210));
+        passLabel.setForeground(StyleConfig.TEXT_SECONDARY);
         gbc.gridy = 5;
         gbc.insets = new Insets(0, 35, 4, 35);
         add(passLabel, gbc);
@@ -141,7 +142,7 @@ public class RegisterPanel extends JPanel {
         // Confirm Password label and input field with placeholder text.
         JLabel confirmLabel = new JLabel("Confirm Password");
         confirmLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        confirmLabel.setForeground(new Color(200, 200, 210));
+        confirmLabel.setForeground(StyleConfig.TEXT_SECONDARY);
         gbc.gridy = 7;
         gbc.insets = new Insets(0, 35, 4, 35);
         add(confirmLabel, gbc);
@@ -170,17 +171,19 @@ public class RegisterPanel extends JPanel {
         buttonsPanel.setOpaque(false);
 
         // Secondary button to switch back to the login form.
-        RoundedButton backButton = new RoundedButton("Back", new Color(45, 42, 55), 22);
-        backButton.setForeground(new Color(200, 200, 215));
+        RoundedButton backButton = new RoundedButton("Back", StyleConfig.SURFACE_SOFT, 22);
+        backButton.setForeground(StyleConfig.TEXT_COLOR);
         backButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        // Button action: return to the login panel.
         backButton.addActionListener(switchToLoginAction);
         buttonsPanel.add(backButton);
 
         // Primary button for creating a new account.
         registerButton = new RoundedButton("Create Account", StyleConfig.PRIMARY_COLOR, 22);
-        registerButton.setGradient(new Color(220, 130, 50));
+        registerButton.setGradient(StyleConfig.SECONDARY_COLOR);
         registerButton.setForeground(Color.WHITE);
         registerButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        // Button action: submit registration details.
         registerButton.addActionListener(registerAction);
         buttonsPanel.add(registerButton);
 
@@ -194,15 +197,16 @@ public class RegisterPanel extends JPanel {
         // "Already have an account?" label.
         JLabel alreadyHave = new JLabel("Already have an account?");
         alreadyHave.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        alreadyHave.setForeground(new Color(160, 160, 175));
+        alreadyHave.setForeground(StyleConfig.TEXT_LIGHT);
         signInRow.add(alreadyHave);
         // "Sign in" link label with click action to switch to the login form.
         final String signInText = "Sign in.";
         JLabel signInLink = new JLabel(signInText);
         signInLink.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
-        signInLink.setForeground(new Color(80, 160, 230));
+        signInLink.setForeground(StyleConfig.SECONDARY_COLOR);
         signInLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
         signInLink.addMouseListener(new MouseAdapter() {
+            // Button action: switch from registration to sign in.
             public void mouseClicked(MouseEvent e) {
                 switchToLoginAction.actionPerformed(null);
             }
@@ -330,14 +334,21 @@ public class RegisterPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        
-        g2.setColor(new Color(28, 25, 35, 180));
-        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 18, 18));
+        int arc = StyleConfig.PANEL_RADIUS;
+        g2.setColor(StyleConfig.withAlpha(Color.BLACK, 50));
+        g2.fill(new RoundRectangle2D.Float(0, 6, getWidth(), getHeight() - 4, arc, arc));
 
-        
-        g2.setColor(new Color(80, 50, 55, 120));
-        g2.setStroke(new BasicStroke(1.5f));
-        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 18, 18));
+        g2.setPaint(new GradientPaint(0, 0, StyleConfig.withAlpha(StyleConfig.SURFACE_ELEVATED, 232),
+                0, getHeight(), StyleConfig.withAlpha(StyleConfig.BACKGROUND_LIGHT, 238)));
+        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), arc, arc));
+
+        g2.setPaint(new GradientPaint(0, 0, StyleConfig.withAlpha(Color.WHITE, 22), 0, 38,
+                StyleConfig.withAlpha(Color.WHITE, 0)));
+        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), arc, arc));
+
+        g2.setColor(StyleConfig.withAlpha(Color.WHITE, 44));
+        g2.setStroke(new BasicStroke(1.2f));
+        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, arc, arc));
 
         g2.dispose();
     }

@@ -10,23 +10,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.io.File;
+
 // Media card component.
 public class MediaCard extends JPanel {
     private static final long serialVersionUID = 1L;
     private final MediaItem item;
     private static final MediaService mediaService = new MediaService();
 
-    
-    private static final java.util.Map<String, java.awt.Image> posterCache =
-        java.util.Collections.synchronizedMap(new java.util.LinkedHashMap<String, java.awt.Image>(100, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(java.util.Map.Entry<String, java.awt.Image> eldest) {
-                return size() > 200;
-            }
-        });
+    private static final java.util.Map<String, java.awt.Image> posterCache = java.util.Collections
+            .synchronizedMap(new java.util.LinkedHashMap<String, java.awt.Image>(100, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<String, java.awt.Image> eldest) {
+                    return size() > 200;
+                }
+            });
     private final Runnable onRefresh;
     private final boolean showDeleteIcon;
+    private final boolean forceReviewControls;
     private boolean hovered = false;
+    private boolean controlsAlwaysVisible = false;
     private java.awt.Image posterImage = null;
 
     private Review review;
@@ -39,12 +41,18 @@ public class MediaCard extends JPanel {
     }
 
     public MediaCard(MediaItem item, boolean compact, boolean showDeleteIcon, Runnable onRefresh) {
+        this(item, compact, showDeleteIcon, onRefresh, false);
+    }
+
+    public MediaCard(MediaItem item, boolean compact, boolean showDeleteIcon, Runnable onRefresh,
+            boolean forceReviewControls) {
         this.item = item;
         this.showDeleteIcon = showDeleteIcon;
         this.onRefresh = onRefresh;
+        this.forceReviewControls = forceReviewControls;
 
         setLayout(null);
-        
+
         setPreferredSize(new Dimension(160, 240));
         setMinimumSize(new Dimension(160, 240));
         setMaximumSize(new Dimension(160, 240));
@@ -83,19 +91,18 @@ public class MediaCard extends JPanel {
     }
 
     private void buildComponents() {
-        int ratingVal = review != null ? review.getRating() : 0;
+        double ratingVal = review != null ? review.getRating() : 0.0;
         boolean isFav = review != null && review.isFavorite();
         boolean isWatch = review != null && review.isWatchlist();
 
-        
         int footerY = 205;
 
-        if (item.getId() >= 0 && !isWatch) {
+        if (item.getId() >= 0 && (!isWatch || forceReviewControls)) {
             starRating = new StarRating(ratingVal, false, 14);
             starRating.setBounds(6, footerY, 85, 14);
             add(starRating);
 
-            int actionX = 98;
+            int actionX = forceReviewControls ? 88 : 98;
 
             favoriteToggle = createFavoriteToggle(isFav);
             favoriteToggle.setBounds(actionX, footerY - 6, 26, 26);
@@ -119,14 +126,22 @@ public class MediaCard extends JPanel {
     }
 
     private void setControlsVisible(boolean visible) {
+        boolean shouldShow = controlsAlwaysVisible || visible;
         if (starRating != null)
-            starRating.setVisible(visible);
+            starRating.setVisible(shouldShow);
         if (favoriteToggle != null)
-            favoriteToggle.setVisible(visible);
+            favoriteToggle.setVisible(shouldShow);
         if (deleteButton != null)
-            deleteButton.setVisible(visible);
+            deleteButton.setVisible(shouldShow);
     }
 
+    public void setControlsAlwaysVisible(boolean controlsAlwaysVisible) {
+        this.controlsAlwaysVisible = controlsAlwaysVisible;
+        setControlsVisible(hovered);
+        repaint();
+    }
+
+    // Start: favorite toggle button function.
     private JToggleButton createFavoriteToggle(boolean selected) {
         // Hover-revealed toggle button for marking/unmarking favorites.
         JToggleButton toggle = new JToggleButton() {
@@ -167,6 +182,7 @@ public class MediaCard extends JPanel {
         };
         styleActionToggle(toggle, selected, "Favorite");
         toggle.addActionListener(e -> {
+            // Button action: save the favorite state for this media item.
             Review currentReview = ensureReview();
             currentReview.setFavorite(toggle.isSelected());
             mediaService.addOrUpdateReview(currentReview);
@@ -174,7 +190,9 @@ public class MediaCard extends JPanel {
         });
         return toggle;
     }
+    // End: favorite toggle button function.
 
+    // Start: delete button function.
     private JButton createDeleteButton() {
         // Hover-revealed delete button for removing this media card item.
         JButton button = new JButton() {
@@ -207,9 +225,11 @@ public class MediaCard extends JPanel {
         button.setBorderPainted(false);
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Button action: open the delete confirmation flow.
         button.addActionListener(e -> deleteCurrentItem());
         return button;
     }
+    // End: delete button function.
 
     private void styleActionToggle(AbstractButton button, boolean selected, String tooltip) {
         button.setOpaque(false);
@@ -222,6 +242,7 @@ public class MediaCard extends JPanel {
         button.setToolTipText(tooltip);
     }
 
+    // Start: media card click interaction function.
     private void registerInteractions() {
         addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -233,16 +254,16 @@ public class MediaCard extends JPanel {
 
             @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
-                
+
                 try {
                     Point screenPt = e.getLocationOnScreen();
                     Point cardLoc = getLocationOnScreen();
                     if (screenPt.x >= cardLoc.x && screenPt.x < cardLoc.x + getWidth()
-                        && screenPt.y >= cardLoc.y && screenPt.y < cardLoc.y + getHeight()) {
-                        return; 
+                            && screenPt.y >= cardLoc.y && screenPt.y < cardLoc.y + getHeight()) {
+                        return;
                     }
                 } catch (Exception ex) {
-                    
+
                 }
                 hovered = false;
                 setControlsVisible(false);
@@ -252,11 +273,14 @@ public class MediaCard extends JPanel {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e)) {
+                    // Button/card action: open review details for this media item.
                     openReviewDialog();
                 }
             }
         });
     }
+
+    // End: media card click interaction function.
     // Opens the review dialog for this media item.
     private void openReviewDialog() {
         Window window = SwingUtilities.getWindowAncestor(this);
@@ -266,6 +290,7 @@ public class MediaCard extends JPanel {
             dialog.setVisible(true);
         }
     }
+
     // Ensures that a Review object exists for this media item and the current user.
     private Review ensureReview() {
         Review currentReview = mediaService.getReviewByMedia(item.getId());
@@ -273,43 +298,44 @@ public class MediaCard extends JPanel {
             currentReview = new Review();
             currentReview.setMediaId(item.getId());
             currentReview.setUserId(SessionManager.getCurrentUser().getId());
-            currentReview.setRating(0);
+            currentReview.setRating(0.0);
             currentReview.setFavorite(false);
             currentReview.setWatchlist(false);
             currentReview.setReviewText("");
         }
         return currentReview;
     }
+
     // Handles the deletion of the current media item.
+    // Start: delete confirmation button flow function.
     private void deleteCurrentItem() {
         String msg = (item.getId() < 0) ? "Remove this from your watchlist?" : "Delete this item from your library?";
-        
+
         Window parentWindow = SwingUtilities.getWindowAncestor(this);
-        JDialog dialog = new JDialog(parentWindow instanceof Frame ? (Frame) parentWindow : null, "Confirm Delete", Dialog.ModalityType.APPLICATION_MODAL);
+        JDialog dialog = new JDialog(parentWindow instanceof Frame ? (Frame) parentWindow : null, "Confirm Delete",
+                Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setSize(420, 200);
         dialog.setLocationRelativeTo(this);
         dialog.setUndecorated(true);
         dialog.setBackground(new Color(0, 0, 0, 0));
-        
-        final boolean[] confirmed = {false};
+
+        final boolean[] confirmed = { false };
 
         JPanel container = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                
+
                 for (int i = 6; i > 0; i--) {
                     g2.setColor(new Color(0, 0, 0, 10 * i));
-                    g2.fill(new RoundRectangle2D.Float(6 - i, 6 - i, getWidth() - 12 + i * 2, getHeight() - 12 + i * 2, 28 + i, 28 + i));
+                    g2.fill(new RoundRectangle2D.Float(6 - i, 6 - i, getWidth() - 12 + i * 2, getHeight() - 12 + i * 2,
+                            28 + i, 28 + i));
                 }
-                
-                
+
                 g2.setColor(new Color(30, 36, 50));
                 g2.fill(new RoundRectangle2D.Float(6, 6, getWidth() - 12, getHeight() - 12, 28, 28));
-                
-                
+
                 g2.setColor(new Color(255, 255, 255, 18));
                 g2.setStroke(new BasicStroke(1.2f));
                 g2.draw(new RoundRectangle2D.Float(6.5f, 6.5f, getWidth() - 13, getHeight() - 13, 27, 27));
@@ -321,13 +347,13 @@ public class MediaCard extends JPanel {
 
         JPanel centerPanel = new JPanel(new BorderLayout(20, 0));
         centerPanel.setOpaque(false);
-        
+
         JLabel iconLbl = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(211, 64, 69, 30));
+                g2.setColor(StyleConfig.withAlpha(StyleConfig.ERROR_COLOR, 30));
                 g2.fillOval(0, 0, 52, 52);
                 UIUtils.drawTrashIcon(g2, 14, 14, 24, StyleConfig.PRIMARY_COLOR);
                 g2.dispose();
@@ -335,26 +361,27 @@ public class MediaCard extends JPanel {
         };
         iconLbl.setPreferredSize(new Dimension(52, 52));
         centerPanel.add(iconLbl, BorderLayout.WEST);
-        
+
         JPanel textPanel = new JPanel();
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
         textPanel.setOpaque(false);
-        
+
         JLabel titleLbl = new JLabel("Confirm Deletion");
         titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 18));
         titleLbl.setForeground(StyleConfig.TEXT_COLOR);
-        
-        JLabel msgLbl = new JLabel("<html><p style='width:250px; line-height: 1.4;'>" + msg + " This action is permanent and cannot be undone.</p></html>");
+
+        JLabel msgLbl = new JLabel("<html><p style='width:250px; line-height: 1.4;'>" + msg
+                + " This action is permanent and cannot be undone.</p></html>");
         msgLbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         msgLbl.setForeground(StyleConfig.TEXT_LIGHT);
-        
+
         textPanel.add(titleLbl);
         textPanel.add(Box.createVerticalStrut(6));
         textPanel.add(msgLbl);
         centerPanel.add(textPanel, BorderLayout.CENTER);
-        
+
         container.add(centerPanel, BorderLayout.CENTER);
-        
+
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         btnPanel.setOpaque(false);
         btnPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
@@ -363,7 +390,7 @@ public class MediaCard extends JPanel {
             private static final long serialVersionUID = 1L;
             private final boolean isPrimary;
             private boolean hovered = false;
-            
+
             public CustomButton(String text, boolean isPrimary) {
                 super(text, SwingConstants.CENTER);
                 this.isPrimary = isPrimary;
@@ -371,13 +398,20 @@ public class MediaCard extends JPanel {
                 setForeground(isPrimary ? Color.WHITE : StyleConfig.TEXT_LIGHT);
                 setPreferredSize(new Dimension(90, 36));
                 setCursor(new Cursor(Cursor.HAND_CURSOR));
-                
+
                 addMouseListener(new java.awt.event.MouseAdapter() {
-                    public void mouseEntered(java.awt.event.MouseEvent e) { hovered = true; repaint(); }
-                    public void mouseExited(java.awt.event.MouseEvent e) { hovered = false; repaint(); }
+                    public void mouseEntered(java.awt.event.MouseEvent e) {
+                        hovered = true;
+                        repaint();
+                    }
+
+                    public void mouseExited(java.awt.event.MouseEvent e) {
+                        hovered = false;
+                        repaint();
+                    }
                 });
             }
-            
+
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -396,28 +430,32 @@ public class MediaCard extends JPanel {
                 super.paintComponent(g);
             }
         }
-        
+
         // Secondary button in delete confirmation dialog.
         CustomButton cancelBtn = new CustomButton("Cancel", false);
         cancelBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent e) { dialog.dispose(); }
+            // Button action: cancel delete confirmation.
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                dialog.dispose();
+            }
         });
-        
+
         // Primary destructive button in delete confirmation dialog.
         CustomButton confirmBtn = new CustomButton("Delete", true);
         confirmBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            // Button action: confirm delete and close the dialog.
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 confirmed[0] = true;
                 dialog.dispose();
             }
         });
-        
+
         btnPanel.add(cancelBtn);
         btnPanel.add(confirmBtn);
-        
+
         container.add(btnPanel, BorderLayout.SOUTH);
         dialog.add(container);
-        
+
         dialog.setVisible(true);
 
         if (confirmed[0]) {
@@ -429,13 +467,12 @@ public class MediaCard extends JPanel {
             triggerRefresh();
         }
     }
+    // End: delete confirmation button flow function.
 
     private void triggerRefresh() {
         Window window = SwingUtilities.getWindowAncestor(this);
         refreshComponentState();
 
-        
-        
         if (window instanceof com.playtrack.ui.main.MainFrame) {
             ((com.playtrack.ui.main.MainFrame) window).refreshAll();
         } else if (onRefresh != null) {
@@ -446,7 +483,6 @@ public class MediaCard extends JPanel {
     private void refreshComponentState() {
         refreshReviewState();
 
-        
         if (starRating != null) {
             remove(starRating);
             starRating = new StarRating(review != null ? review.getRating() : 0, false, 14);
@@ -464,6 +500,7 @@ public class MediaCard extends JPanel {
         revalidate();
         repaint();
     }
+
     // Custom icon painting based on the check state (neutral.
     @Override
     protected void paintComponent(Graphics g) {
@@ -474,14 +511,16 @@ public class MediaCard extends JPanel {
 
         int w = getWidth();
         int h = getHeight();
-        int arc = 14;
+        int arc = 18;
         Shape originalClip = g2.getClip();
         g2.clipRect(0, 0, w, h);
 
-        
+        g2.setColor(StyleConfig.withAlpha(Color.BLACK, hovered ? 42 : 26));
+        g2.fill(new RoundRectangle2D.Float(0, 6, w, h - 4, arc, arc));
+
         if (hovered) {
             Color glowColor = getCategoryColor(item.getCategory());
-            g2.setColor(new Color(glowColor.getRed(), glowColor.getGreen(), glowColor.getBlue(), 52));
+            g2.setColor(new Color(glowColor.getRed(), glowColor.getGreen(), glowColor.getBlue(), 58));
             g2.fill(new RoundRectangle2D.Float(0, 0, w, h, arc + 2, arc + 2));
         }
 
@@ -491,7 +530,7 @@ public class MediaCard extends JPanel {
         if (posterImage != null) {
             g2.drawImage(posterImage, 0, 0, w, h, null);
         } else {
-            
+
             Color catColor = getCategoryColor(item.getCategory());
             g2.setPaint(new GradientPaint(0, 0,
                     new Color(Math.max(catColor.getRed() - 45, 0), Math.max(catColor.getGreen() - 45, 0),
@@ -505,13 +544,8 @@ public class MediaCard extends JPanel {
             drawCategoryIcon(g2, item.getCategory(), w / 2, h / 2 - 20, false);
         }
 
-        
         g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 18), 0, 40, new Color(255, 255, 255, 0)));
         g2.fillRect(0, 0, w, 40);
-
-        
-        g2.setPaint(new GradientPaint(0, h - 92, new Color(0, 0, 0, 0), 0, h, new Color(0, 0, 0, 145)));
-        g2.fillRect(0, h - 92, w, 92);
 
         // Keep the title visible on placeholder cards (no poster image):
         // below the icon at rest, and above the icon on hover.
@@ -522,7 +556,6 @@ public class MediaCard extends JPanel {
             drawCardTitle(g2, w, placeholderTitleY, w - 24, item.getTitle());
         }
 
-        
         if (hovered) {
             Color catColor = getCategoryColor(item.getCategory());
             g2.setPaint(new GradientPaint(0, 0,
@@ -530,8 +563,6 @@ public class MediaCard extends JPanel {
                     w, h, new Color(catColor.getRed(), catColor.getGreen(), catColor.getBlue(), 92)));
             g2.fillRect(0, 0, w, h);
 
-            g2.setColor(new Color(255, 255, 255, 20));
-            g2.fillRect(0, h - 72, w, 72);
             if (posterImage != null) {
                 drawCardTitle(g2, w, 44, w - 24, item.getTitle());
             }
@@ -539,9 +570,8 @@ public class MediaCard extends JPanel {
 
         g2.setClip(originalClip);
 
-        
-        g2.setColor(new Color(255, 255, 255, hovered ? 118 : 36));
-        g2.setStroke(new BasicStroke(hovered ? 1.8f : 1f));
+        g2.setColor(new Color(255, 255, 255, hovered ? 116 : 42));
+        g2.setStroke(new BasicStroke(hovered ? 1.6f : 1f));
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1, h - 1, arc, arc));
 
         g2.dispose();
@@ -606,6 +636,7 @@ public class MediaCard extends JPanel {
             y += lineHeight;
         }
     }
+
     // Utility method to trim a string.
     private String trimToWidth(String value, FontMetrics fm, int maxWidth) {
         if (value == null || value.isEmpty()) {

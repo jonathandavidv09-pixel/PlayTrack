@@ -233,6 +233,7 @@ public class ReviewFormDialog extends JDialog {
         posterPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         posterPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
+                // Button action: choose cover/poster image for this media item.
                 JFileChooser chooser = new JFileChooser();
                 chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Images", "jpg", "jpeg", "png", "gif", "webp"));
                 if (chooser.showOpenDialog(ReviewFormDialog.this) == JFileChooser.APPROVE_OPTION) {
@@ -285,6 +286,7 @@ public class ReviewFormDialog extends JDialog {
         genreBox = new JComboBox<>(genreOptions);
         genreBox.setMaximumRowCount(15);
         styleComboBox(genreBox, catColor);
+        // Button/dropdown action: show custom genre input when needed.
         genreBox.addActionListener(e -> toggleCustomGenreInput());
         
         addFieldToPanel(meta, "Genre", genreBox, catColor);
@@ -492,6 +494,7 @@ public class ReviewFormDialog extends JDialog {
                 addMouseListener(new java.awt.event.MouseAdapter() {
                     public void mouseEntered(java.awt.event.MouseEvent e) { hover = true; repaint(); }
                     public void mouseExited(java.awt.event.MouseEvent e) { hover = false; repaint(); }
+                    // Button action: close the review dialog without saving.
                     public void mouseClicked(java.awt.event.MouseEvent e) { dispose(); }
                 });
             }
@@ -525,6 +528,7 @@ public class ReviewFormDialog extends JDialog {
         saveBtn.setPreferredSize(new Dimension(90, 32));
         saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         saveBtn.setForeground(Color.WHITE);
+        // Button action: save media/review form data.
         saveBtn.addActionListener(e -> save());
         actionRow.add(saveBtn);
 
@@ -566,7 +570,7 @@ public class ReviewFormDialog extends JDialog {
 
     }
 
-    // Creates a custom toggle button with a heart icon for marking favorites.
+    // Start: favorite heart toggle button function.
     private JToggleButton createHeartToggle(final Color accentColor) {
         JToggleButton btn = new JToggleButton() {
             @Override
@@ -606,6 +610,7 @@ public class ReviewFormDialog extends JDialog {
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
+    // End: favorite heart toggle button function.
 
     
     private void addFieldToPanel(JPanel panel, String label, JComponent field, Color catColor) {
@@ -822,7 +827,7 @@ public class ReviewFormDialog extends JDialog {
         Review review = new Review();
         review.setMediaId(mediaId);
         review.setUserId(SessionManager.getCurrentUser().getId());
-        review.setRating(starRating != null ? starRating.getRating() : 0);
+        review.setRating(starRating != null ? starRating.getRating() : 0.0);
         review.setReviewText(reviewArea != null ? reviewArea.getText() : "");
         review.setFavorite(favoriteToggle != null ? favoriteToggle.isSelected() : false);
         review.setWatchDate(dateField != null ? dateField.getText() : null);

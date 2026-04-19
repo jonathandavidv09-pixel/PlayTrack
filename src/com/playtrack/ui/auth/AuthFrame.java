@@ -2,7 +2,9 @@ package com.playtrack.ui.auth;
 
 import com.playtrack.service.AuthService;
 import com.playtrack.service.OtpService;
+import com.playtrack.ui.components.RoundedButton;
 import com.playtrack.ui.components.StyleConfig;
+import com.playtrack.ui.components.UIUtils;
 import com.playtrack.util.Validator;
 import com.playtrack.util.PasswordUtil;
 import com.playtrack.config.AuthDBConnection;
@@ -297,12 +299,12 @@ public class AuthFrame extends JFrame {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 int cx = getWidth() / 2, cy = getHeight() / 2;
                 
-                g2.setColor(new Color(211, 64, 69, 25));
+                g2.setColor(StyleConfig.withAlpha(StyleConfig.PRIMARY_COLOR, 25));
                 g2.fillOval(cx - 40, cy - 40, 80, 80);
-                g2.setColor(new Color(211, 64, 69, 50));
+                g2.setColor(StyleConfig.withAlpha(StyleConfig.PRIMARY_COLOR, 50));
                 g2.fillOval(cx - 30, cy - 30, 60, 60);
                
-                g2.setColor(new Color(211, 64, 69));
+                g2.setColor(StyleConfig.PRIMARY_COLOR);
                 g2.fillOval(cx - 22, cy - 22, 44, 44);
                
                 g2.setColor(Color.WHITE);
@@ -313,7 +315,7 @@ public class AuthFrame extends JFrame {
                 g2.setColor(Color.WHITE);
                 g2.drawArc(cx - 7, cy - 14, 14, 16, 0, 180);
              
-                g2.setColor(new Color(211, 64, 69));
+                g2.setColor(StyleConfig.PRIMARY_COLOR);
                 g2.fillOval(cx - 3, cy + 1, 6, 6);
                 g2.dispose();
             }
@@ -364,6 +366,7 @@ public class AuthFrame extends JFrame {
         // Primary action button for requesting the reset OTP code.
         JButton sendBtn = createGradientButton("SEND VERIFICATION CODE");
         sendBtn.addActionListener(ev -> {
+            // Button action: send password-reset verification code.
             String email = emailField.getText().trim();
             if (email.isEmpty()) {
                 errorLabel.setText("Please enter your email address");
@@ -417,11 +420,11 @@ public class AuthFrame extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 int cx = getWidth() / 2, cy = getHeight() / 2;
-                g2.setColor(new Color(211, 64, 69, 25));
+                g2.setColor(StyleConfig.withAlpha(StyleConfig.PRIMARY_COLOR, 25));
                 g2.fillOval(cx - 40, cy - 40, 80, 80);
-                g2.setColor(new Color(211, 64, 69, 50));
+                g2.setColor(StyleConfig.withAlpha(StyleConfig.PRIMARY_COLOR, 50));
                 g2.fillOval(cx - 30, cy - 30, 60, 60);
-                g2.setColor(new Color(211, 64, 69));
+                g2.setColor(StyleConfig.PRIMARY_COLOR);
                 g2.fillOval(cx - 22, cy - 22, 44, 44);
              
                 g2.setColor(Color.WHITE);
@@ -516,6 +519,7 @@ public class AuthFrame extends JFrame {
         // Primary action button for verifying the OTP code.
         JButton verifyBtn = createGradientButton("VERIFY CODE");
         verifyBtn.addActionListener(ev -> {
+            // Button action: verify reset OTP and continue to password reset.
             StringBuilder sb = new StringBuilder();
             for (JTextField f : otpFields) sb.append(f.getText());
             String otp = sb.toString().trim();
@@ -643,6 +647,7 @@ public class AuthFrame extends JFrame {
         // Primary action button for applying the new password.
         JButton resetBtn = createGradientButton("RESET PASSWORD");
         resetBtn.addActionListener(ev -> {
+            // Button action: validate and save the new password.
             String p1 = new String(pwdField.getPassword());
             String p2 = new String(confirmField.getPassword());
 
@@ -746,6 +751,7 @@ public class AuthFrame extends JFrame {
         // Navigation button that returns users to the login card.
         JButton loginBtn = createGradientButton("BACK TO LOGIN");
         loginBtn.addActionListener(ev -> {
+            // Button action: close success dialog and show login card.
             dialog.dispose();
             cardLayout.show(cardsPanel, "login");
         });
@@ -782,13 +788,21 @@ public class AuthFrame extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                g2.setColor(new Color(25, 22, 30));
-                g2.fill(new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
-                
-                g2.setColor(new Color(80, 60, 70, 100));
-                g2.setStroke(new BasicStroke(1.5f));
-                g2.draw(new java.awt.geom.RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 24, 24));
+
+                int arc = StyleConfig.PANEL_RADIUS;
+                g2.setColor(StyleConfig.withAlpha(Color.BLACK, 56));
+                g2.fill(new java.awt.geom.RoundRectangle2D.Float(0, 8, getWidth(), getHeight() - 6, arc, arc));
+
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_ELEVATED, 0, getHeight(), StyleConfig.SURFACE_COLOR));
+                g2.fill(new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), arc, arc));
+
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.withAlpha(Color.WHITE, 20), 0, 36,
+                        StyleConfig.withAlpha(Color.WHITE, 0)));
+                g2.fill(new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), arc, arc));
+
+                g2.setColor(StyleConfig.withAlpha(Color.WHITE, 44));
+                g2.setStroke(new BasicStroke(1.2f));
+                g2.draw(new java.awt.geom.RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, arc, arc));
                 g2.dispose();
             }
         };
@@ -831,11 +845,12 @@ public class AuthFrame extends JFrame {
         };
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         field.setPreferredSize(new Dimension(300, 44));
-        field.setBackground(new Color(36, 33, 45));
+        field.setBackground(StyleConfig.INPUT_BG);
         field.setForeground(StyleConfig.TEXT_COLOR);
         field.setCaretColor(StyleConfig.TEXT_COLOR);
+        field.setOpaque(true);
         field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(80, 70, 100), 1),
+                BorderFactory.createLineBorder(StyleConfig.withAlpha(StyleConfig.TEXT_COLOR, 42), 1, true),
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)));
         return field;
     }
@@ -889,11 +904,12 @@ public class AuthFrame extends JFrame {
         };
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         field.setPreferredSize(new Dimension(300, 44));
-        field.setBackground(new Color(36, 33, 45));
+        field.setBackground(StyleConfig.INPUT_BG);
         field.setForeground(StyleConfig.TEXT_COLOR);
         field.setCaretColor(StyleConfig.TEXT_COLOR);
+        field.setOpaque(true);
         field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(80, 70, 100), 1),
+                BorderFactory.createLineBorder(StyleConfig.withAlpha(StyleConfig.TEXT_COLOR, 42), 1, true),
                 BorderFactory.createEmptyBorder(8, 12, 8, 40)));
         return field;
     }
@@ -905,43 +921,26 @@ public class AuthFrame extends JFrame {
         return label;
     }
 
+    // Start: shared auth dialog button function.
     private JButton createGradientButton(String text) {
-        // Shared rounded gradient button style for auth dialogs.
-        JButton btn = new JButton(text) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                GradientPaint gp = new GradientPaint(0, 0, new Color(211, 64, 69), getWidth(), 0,
-                        new Color(220, 130, 50));
-                g2.setPaint(isEnabled() ? gp : new Color(80, 80, 90));
-                g2.fill(new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 12, 12));
-                
-                g2.setColor(Color.WHITE);
-                g2.setFont(getFont());
-                FontMetrics fm = g2.getFontMetrics();
-                int tw = fm.stringWidth(getText());
-                g2.drawString(getText(), (getWidth() - tw) / 2, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
-                g2.dispose();
-            }
-        };
+        RoundedButton btn = new RoundedButton(text, StyleConfig.PRIMARY_COLOR, 14);
+        btn.setGradient(StyleConfig.SECONDARY_COLOR);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btn.setForeground(Color.WHITE);
         btn.setPreferredSize(new Dimension(300, 44));
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
+    // End: shared auth dialog button function.
 
+    // Start: cancel/back link button function.
     private JLabel createCancelLink(JDialog dialog) {
         JLabel link = new JLabel("← Back to Login", SwingConstants.CENTER);
         link.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         link.setForeground(StyleConfig.TEXT_LIGHT);
         link.setCursor(new Cursor(Cursor.HAND_CURSOR));
         link.addMouseListener(new java.awt.event.MouseAdapter() {
+            // Button action: close the dialog and return to login.
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 dialog.dispose();
             }
@@ -956,6 +955,7 @@ public class AuthFrame extends JFrame {
         });
         return link;
     }
+    // End: cancel/back link button function.
 
     private JPanel createOtpBoxRow(JTextField[] fields, Runnable onFill) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
@@ -1001,7 +1001,7 @@ public class AuthFrame extends JFrame {
                     float strokeWidth = 3f;
                     float pad = strokeWidth; 
 
-                    g2.setColor(new Color(36, 33, 45));
+                    g2.setColor(StyleConfig.INPUT_BG);
                     g2.fill(new java.awt.geom.RoundRectangle2D.Float(pad, pad, w - pad * 2, h - pad * 2, 12, 12));
 
                     if (glowing) {
@@ -1013,7 +1013,7 @@ public class AuthFrame extends JFrame {
                         g2.setStroke(new BasicStroke(1.5f));
                         g2.draw(new java.awt.geom.RoundRectangle2D.Float(pad, pad, w - pad * 2, h - pad * 2, 12, 12));
                     } else {
-                        g2.setColor(new Color(80, 70, 100));
+                        g2.setColor(StyleConfig.withAlpha(StyleConfig.TEXT_COLOR, 42));
                         g2.setStroke(new BasicStroke(1.5f));
                         g2.draw(new java.awt.geom.RoundRectangle2D.Float(pad, pad, w - pad * 2, h - pad * 2, 12, 12));
                     }
@@ -1105,11 +1105,11 @@ public class AuthFrame extends JFrame {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 int cx = getWidth() / 2;
                 int cy = getHeight() / 2;
-                g2.setColor(new Color(211, 64, 69, 25));
+                g2.setColor(StyleConfig.withAlpha(StyleConfig.PRIMARY_COLOR, 25));
                 g2.fillOval(cx - 40, cy - 40, 80, 80);
-                g2.setColor(new Color(211, 64, 69, 50));
+                g2.setColor(StyleConfig.withAlpha(StyleConfig.PRIMARY_COLOR, 50));
                 g2.fillOval(cx - 30, cy - 30, 60, 60);
-                g2.setColor(new Color(211, 64, 69));
+                g2.setColor(StyleConfig.PRIMARY_COLOR);
                 g2.fillOval(cx - 22, cy - 22, 44, 44);
                 g2.setColor(Color.WHITE);
                 g2.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -1167,6 +1167,7 @@ public class AuthFrame extends JFrame {
         resendLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
+                // Button action: resend registration OTP code.
                 OtpService otpService = com.playtrack.util.SpringContext.getBean(OtpService.class);
                 boolean sent = otpService.sendOtp(pendingEmail);
                 if (!sent) {
@@ -1198,6 +1199,7 @@ public class AuthFrame extends JFrame {
         // Final confirmation button for OTP registration flow.
         JButton verifyBtn = createGradientButton("VERIFY & CREATE ACCOUNT");
         verifyBtn.addActionListener(ev -> {
+            // Button action: verify registration OTP and create the account.
             StringBuilder sb = new StringBuilder();
             for (JTextField f : otpFields) sb.append(f.getText());
             String enteredOtp = sb.toString().trim();
@@ -1248,72 +1250,20 @@ public class AuthFrame extends JFrame {
     
     private static class CinematicBackgroundPanel extends JPanel {
         private static final long serialVersionUID = 1L;
-        private BufferedImage bgImage;
 
         CinematicBackgroundPanel() {
             setOpaque(true);
-            setBackground(new Color(15, 12, 18));
-
-            
-            try {
-                InputStream is = getClass().getClassLoader().getResourceAsStream("resources/auth_bg.png");
-                if (is != null) {
-                    bgImage = ImageIO.read(is);
-                    is.close();
-                } else {
-                    System.err.println("auth_bg.png not found in resources");
-                }
-            } catch (Exception e) {
-                System.err.println("Failed to load auth_bg.png: " + e.getMessage());
-            }
+            setBackground(StyleConfig.BACKGROUND_COLOR);
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
             int w = getWidth();
             int h = getHeight();
 
-            if (bgImage != null) {
-                
-                double panelRatio = (double) w / h;
-                double imgRatio = (double) bgImage.getWidth() / bgImage.getHeight();
-
-                int drawW, drawH, drawX, drawY;
-                if (panelRatio > imgRatio) {
-                    
-                    drawW = w;
-                    drawH = (int) (w / imgRatio);
-                    drawX = 0;
-                    drawY = (h - drawH) / 2;
-                } else {
-                    
-                    drawH = h;
-                    drawW = (int) (h * imgRatio);
-                    drawX = (w - drawW) / 2;
-                    drawY = 0;
-                }
-
-                g2.drawImage(bgImage, drawX, drawY, drawW, drawH, null);
-
-                
-                
-                java.awt.GradientPaint overlayGrad = new java.awt.GradientPaint(
-                        0, 0, new Color(10, 8, 15, 40),
-                        w, 0, new Color(10, 8, 15, 230));
-                g2.setPaint(overlayGrad);
-                g2.fillRect(0, 0, w, h);
-            } else {
-                
-                GradientPaint bgGrad = new GradientPaint(0, 0, new Color(15, 12, 18),
-                        w, h, new Color(25, 18, 28));
-                g2.setPaint(bgGrad);
-                g2.fillRect(0, 0, w, h);
-            }
+            UIUtils.paintAuthBackground(g2, w, h);
 
             g2.dispose();
         }

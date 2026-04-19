@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.io.File;
 
-// System configuration component: manages database and app setup.
+// Configuration component: opens connections to the authentication SQLite database.
 public class AuthDBConnection {
     private static final String URL = "jdbc:sqlite:db/auth.db";
 
@@ -18,8 +18,9 @@ public class AuthDBConnection {
         }
     }
 
-    // getConnection.
+    // Start: authentication database connection function.
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL);
     }
+    // End: authentication database connection function.
 }

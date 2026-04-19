@@ -4,9 +4,9 @@ import com.playtrack.config.AuthDBConnection;
 import com.playtrack.model.User;
 import java.sql.*;
 
-// Data access component: handles persistence operations.
+// Data access component: reads and writes authentication user records.
 public class UserDAO {
-    // register.
+    // Start: register user database function.
     public boolean register(User user) {
         String sql = "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)";
         try (Connection conn = AuthDBConnection.getConnection();
@@ -28,8 +28,9 @@ public class UserDAO {
         }
         return false;
     }
+    // End: register user database function.
 
-    // login.
+    // Start: login lookup database function.
     public User login(String identifier, String passwordHash) {
         String sql = "SELECT * FROM users WHERE (username = ? OR email = ?) AND password_hash = ?";
         try (Connection conn = AuthDBConnection.getConnection();
@@ -53,8 +54,9 @@ public class UserDAO {
         }
         return null;
     }
+    // End: login lookup database function.
 
-    // isUsernameTaken.
+    // Start: username availability database function.
     public boolean isUsernameTaken(String username) {
         String sql = "SELECT COUNT(*) FROM users WHERE username = ?";
         try (Connection conn = AuthDBConnection.getConnection();
@@ -70,8 +72,9 @@ public class UserDAO {
         }
         return false;
     }
+    // End: username availability database function.
 
-    // getUserById.
+    // Start: load user by id database function.
     public User getUserById(int userId) {
         String sql = "SELECT * FROM users WHERE id = ?";
         try (Connection conn = AuthDBConnection.getConnection();
@@ -93,8 +96,9 @@ public class UserDAO {
         }
         return null;
     }
+    // End: load user by id database function.
 
-    // updateUserAndAuth.
+    // Start: update user account database function.
     public boolean updateUserAndAuth(int userId, String newUsername, String newEmail, String newPasswordHash) {
         String baseSql = "UPDATE users SET username = ?, email = ? ";
         boolean updatePassword = (newPasswordHash != null && !newPasswordHash.isEmpty());
@@ -121,4 +125,5 @@ public class UserDAO {
         }
         return false;
     }
+    // End: update user account database function.
 }

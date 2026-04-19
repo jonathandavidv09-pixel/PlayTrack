@@ -17,6 +17,7 @@ public class RoundedButton extends JButton {
     private boolean isGradient = false;
     private Color gradientEnd;
 
+    // Start: reusable rounded button setup function.
     public RoundedButton(String text, Color backgroundColor, int radius) {
         super(text);
         // Base reusable button style used across auth/forms/dialog actions.
@@ -28,7 +29,7 @@ public class RoundedButton extends JButton {
         setFocusPainted(false);
         setBorderPainted(false);
         setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        setBorder(BorderFactory.createEmptyBorder(10, 22, 10, 22));
         setForeground(Color.WHITE);
         setFont(new Font("Segoe UI", Font.BOLD, 14));
         setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -58,6 +59,7 @@ public class RoundedButton extends JButton {
             }
         });
     }
+    // End: reusable rounded button setup function.
 
     public void setGradient(Color end) {
         this.isGradient = true;
@@ -65,20 +67,24 @@ public class RoundedButton extends JButton {
     }
 
     @Override
+    // Start: rounded button hit-area function.
     public boolean contains(int x, int y) {
         Shape shape = new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), radius, radius);
         return shape.contains(x, y);
     }
+    // End: rounded button hit-area function.
 
     @Override
+    // Start: rounded button paint function.
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         Color bg;
         if (!isEnabled()) {
-            bg = new Color(90, 98, 118);
+            bg = new Color(84, 92, 111);
         } else if (isPressed) {
             bg = pressedColor;
         } else if (isHovered) {
@@ -89,37 +95,39 @@ public class RoundedButton extends JButton {
 
         Shape buttonShape = new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), radius, radius);
 
-        
-        if (isEnabled() && (isHovered || isPressed)) {
-            g2.setColor(new Color(0, 0, 0, isPressed ? 22 : 30));
-            g2.fill(new RoundRectangle2D.Float(0, 1.5f, getWidth(), getHeight() - 1.5f, radius, radius));
+        if (isEnabled()) {
+            int shadowAlpha = isPressed ? 18 : (isHovered ? 36 : 26);
+            g2.setColor(new Color(0, 0, 0, shadowAlpha));
+            g2.fill(new RoundRectangle2D.Float(0, 2f, getWidth(), getHeight() - 1f, radius, radius));
         }
 
         if (isGradient && gradientEnd != null) {
             Color end = !isEnabled()
                     ? new Color(80, 86, 104)
                     : (isPressed ? darker(gradientEnd, 0.12f) : (isHovered ? brighter(gradientEnd, 0.08f) : gradientEnd));
-            GradientPaint gp = new GradientPaint(0, 0, bg, getWidth(), getHeight(), end);
+            GradientPaint gp = new GradientPaint(0, 0, brighter(bg, 0.03f), getWidth(), getHeight(), end);
             g2.setPaint(gp);
         } else {
-            g2.setColor(bg);
+            g2.setPaint(new GradientPaint(0, 0, brighter(bg, isHovered ? 0.06f : 0.02f), 0, getHeight(),
+                    darker(bg, isPressed ? 0.16f : 0.05f)));
         }
 
         g2.fill(buttonShape);
 
-        
-        if (isEnabled() && !isPressed) {
-            g2.setColor(new Color(255, 255, 255, isHovered ? 28 : 18));
+        if (isEnabled()) {
+            g2.setColor(new Color(255, 255, 255, isHovered ? 34 : 22));
             Shape oldClip = g2.getClip();
             g2.clip(buttonShape);
-            g2.fill(new Rectangle(0, 0, getWidth(), getHeight() / 2));
+            g2.fill(new Rectangle(0, 0, getWidth(), Math.max(1, getHeight() / 2)));
+            g2.setColor(new Color(255, 255, 255, isPressed ? 0 : 10));
+            g2.fill(new Rectangle(0, getHeight() / 2, getWidth(), Math.max(1, getHeight() / 2)));
             g2.setClip(oldClip);
         }
 
-        
-        g2.setColor(new Color(255, 255, 255, isHovered ? 88 : 58));
+        g2.setColor(new Color(255, 255, 255, isHovered ? 98 : 66));
         g2.setStroke(new BasicStroke(1f));
-        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, radius - 1, radius - 1));
+        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1,
+                Math.max(2, radius - 1), Math.max(2, radius - 1)));
 
         if ("+".equals(getText())) {
             g2.setColor(getForeground());
@@ -164,6 +172,7 @@ public class RoundedButton extends JButton {
         }
         g2.dispose();
     }
+    // End: rounded button paint function.
 
     private Color brighter(Color c, float factor) {
         int r = Math.min(255, (int)(c.getRed() + 255 * factor));

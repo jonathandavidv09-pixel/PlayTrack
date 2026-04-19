@@ -2,23 +2,26 @@ package com.playtrack.model;
 
 import java.sql.Timestamp;
 
-// Domain model component: represents core application data.
+// Domain model component: represents a user's rating, notes, and saved state for media.
 public class Review {
+    // Start: review data fields.
     private int id;
     private int mediaId;
     private int userId;
-    private int rating;
+    private double rating;
     private String reviewText;
     private boolean isFavorite;
     private boolean isWatchlist;
     private Timestamp reviewDate;
     private String watchDate;
+    // End: review data fields.
 
-    // Constructor: initializes Review.
+    // Start: empty review constructor.
     public Review() {}
+    // End: empty review constructor.
 
-    // Constructor: initializes Review.
-    public Review(int id, int mediaId, int userId, int rating, String reviewText, boolean isFavorite, boolean isWatchlist, String watchDate, Timestamp reviewDate) {
+    // Start: full review constructor.
+    public Review(int id, int mediaId, int userId, double rating, String reviewText, boolean isFavorite, boolean isWatchlist, String watchDate, Timestamp reviewDate) {
         this.id = id;
         this.mediaId = mediaId;
         this.userId = userId;
@@ -29,8 +32,10 @@ public class Review {
         this.watchDate = watchDate;
         this.reviewDate = reviewDate;
     }
+    // End: full review constructor.
 
     
+    // Start: review getters and setters.
     // getId.
     public int getId() { return id; }
     // setId.
@@ -44,9 +49,9 @@ public class Review {
     // setUserId.
     public void setUserId(int userId) { this.userId = userId; }
     // getRating.
-    public int getRating() { return rating; }
+    public double getRating() { return rating; }
     // setRating.
-    public void setRating(int rating) { this.rating = rating; }
+    public void setRating(double rating) { this.rating = rating; }
     // getReviewText.
     public String getReviewText() { return reviewText; }
     // setReviewText.
@@ -67,4 +72,5 @@ public class Review {
     public String getWatchDate() { return watchDate; }
     // setWatchDate.
     public void setWatchDate(String watchDate) { this.watchDate = watchDate; }
+    // End: review getters and setters.
 }

@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.io.File;
 
-// System configuration component: manages database and app setup.
+// Configuration component: centralizes authentication and system database setup.
 public class DatabaseConfig {
     private static final String AUTH_DB_URL = "jdbc:sqlite:db/auth.db";
     private static final String SYSTEM_DB_URL = "jdbc:sqlite:db/playtrack.db";
@@ -20,23 +20,26 @@ public class DatabaseConfig {
         }
     }
 
-    // getAuthConnection.
+    // Start: authentication database connection function.
     public static Connection getAuthConnection() throws SQLException {
         return DriverManager.getConnection(AUTH_DB_URL);
     }
+    // End: authentication database connection function.
 
-    // getSystemConnection.
+    // Start: system database connection function.
     public static Connection getSystemConnection() throws SQLException {
         return DriverManager.getConnection(SYSTEM_DB_URL);
     }
+    // End: system database connection function.
 
-    // setupDatabases.
+    // Start: full database setup function.
     public static void setupDatabases() {
         setupAuthDatabase();
         setupSystemDatabase();
     }
+    // End: full database setup function.
 
-    // setupAuthDatabase.
+    // Start: authentication table setup function.
     private static void setupAuthDatabase() {
         String sql = "CREATE TABLE IF NOT EXISTS users (" +
                      "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -52,8 +55,9 @@ public class DatabaseConfig {
             e.printStackTrace();
         }
     }
+    // End: authentication table setup function.
 
-    // setupSystemDatabase.
+    // Start: system table setup function.
     private static void setupSystemDatabase() {
         String[] tables = {
             "CREATE TABLE IF NOT EXISTS profiles (" +
@@ -63,7 +67,7 @@ public class DatabaseConfig {
             "avatar_path TEXT," +
             "joined_date DATETIME DEFAULT CURRENT_TIMESTAMP" +
             ");",
-            
+            // Media items table to store movies, TV shows, and games.
             "CREATE TABLE IF NOT EXISTS media_items (" +
             "id INTEGER PRIMARY KEY AUTOINCREMENT," +
             "user_id INTEGER NOT NULL," +
@@ -73,18 +77,18 @@ public class DatabaseConfig {
             "image_path TEXT," +
             "created_at DATETIME DEFAULT CURRENT_TIMESTAMP" +
             ");",
-            
+            // Reviews table to store user reviews and ratings for media items.
             "CREATE TABLE IF NOT EXISTS reviews (" +
             "id INTEGER PRIMARY KEY AUTOINCREMENT," +
             "media_id INTEGER NOT NULL," +
             "user_id INTEGER NOT NULL," +
-            "rating INTEGER," +
+            "rating REAL," +
             "review_text TEXT," +
             "is_favorite BOOLEAN DEFAULT 0," +
             "review_date DATETIME DEFAULT CURRENT_TIMESTAMP," +
             "FOREIGN KEY(media_id) REFERENCES media_items(id)" +
             ");",
-            
+            // Watchlist table to manage user watchlists.
             "CREATE TABLE IF NOT EXISTS watchlist (" +
             "id INTEGER PRIMARY KEY AUTOINCREMENT," +
             "user_id INTEGER NOT NULL," +
@@ -92,7 +96,7 @@ public class DatabaseConfig {
             "category TEXT NOT NULL," +
             "added_date DATETIME DEFAULT CURRENT_TIMESTAMP" +
             ");",
-            
+            // Activity log table for tracking user actions.
             "CREATE TABLE IF NOT EXISTS activity_log (" +
             "id INTEGER PRIMARY KEY AUTOINCREMENT," +
             "user_id INTEGER NOT NULL," +
@@ -111,4 +115,5 @@ public class DatabaseConfig {
             e.printStackTrace();
         }
     }
+    // End: system table setup function.
 }

@@ -31,11 +31,18 @@ public class ProfileDropdown extends JPopupMenu {
                 int w = getWidth();
                 int h = getHeight();
 
-                g2.setColor(StyleConfig.BACKGROUND_COLOR);
+                g2.setColor(StyleConfig.withAlpha(Color.BLACK, 56));
+                g2.fillRoundRect(0, 4, w, h - 2, 20, 20);
+
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_ELEVATED, 0, h, StyleConfig.SURFACE_COLOR));
+                g2.fillRoundRect(0, 0, w, h, 18, 18);
+
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.withAlpha(Color.WHITE, 18), 0, 24,
+                        StyleConfig.withAlpha(Color.WHITE, 0)));
                 g2.fillRoundRect(0, 0, w, h, 18, 18);
 
                 
-                g2.setColor(new Color(255, 255, 255, 42));
+                g2.setColor(new Color(255, 255, 255, 46));
                 g2.drawRoundRect(0, 0, w - 1, h - 1, 18, 18);
                 g2.dispose();
             }
@@ -52,7 +59,7 @@ public class ProfileDropdown extends JPopupMenu {
         // Labels for displaying the current user's username and email at the top of the dropdown.
         usernameLabel = new JLabel("username");
         usernameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        usernameLabel.setForeground(new Color(245, 218, 140)); 
+        usernameLabel.setForeground(StyleConfig.SECONDARY_COLOR);
         // Email label with default text "email" that will.
         emailLabel = new JLabel("email");
         emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -148,6 +155,7 @@ public class ProfileDropdown extends JPopupMenu {
         private final JLabel lbl;
         private boolean hovered = false;
 
+        // Start: profile dropdown option button function.
         public PillButton(String text, int iconType, Color textColor, Color accentColor, Runnable action) {
             this.text = text;
             this.iconType = iconType;
@@ -187,10 +195,12 @@ public class ProfileDropdown extends JPopupMenu {
                 }
 
                 public void mouseClicked(MouseEvent e) {
+                    // Button action: run the selected profile dropdown command.
                     action.run();
                 }
             });
         }
+        // End: profile dropdown option button function.
 
         @Override
         protected void paintComponent(Graphics g) {
@@ -198,16 +208,16 @@ public class ProfileDropdown extends JPopupMenu {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             Shape shape = new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
-            if (hovered) {
-                if ("Logout".equals(text)) {
-                    g2.setColor(new Color(StyleConfig.ERROR_COLOR.getRed(), StyleConfig.ERROR_COLOR.getGreen(), StyleConfig.ERROR_COLOR.getBlue(), 34));
+                if (hovered) {
+                    if ("Logout".equals(text)) {
+                        g2.setColor(new Color(StyleConfig.ERROR_COLOR.getRed(), StyleConfig.ERROR_COLOR.getGreen(), StyleConfig.ERROR_COLOR.getBlue(), 34));
+                    } else {
+                        g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_SOFT, getWidth(), 0, StyleConfig.CARD_BACKGROUND));
+                    }
                 } else {
-                    g2.setPaint(new GradientPaint(0, 0, new Color(65, 80, 118), getWidth(), 0, StyleConfig.CARD_BACKGROUND));
+                    g2.setColor(StyleConfig.withAlpha(StyleConfig.BACKGROUND_LIGHT, 216));
                 }
-            } else {
-                g2.setColor(StyleConfig.BACKGROUND_LIGHT);
-            }
-            g2.fill(shape);
+                g2.fill(shape);
 
             if (hovered) {
                 g2.setColor(accentColor);

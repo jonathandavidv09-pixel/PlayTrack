@@ -12,6 +12,14 @@ public class UIUtils {
     // Cache for loaded icons to avoid redundant loading.
     private static final Map<String, BufferedImage> iconCache = new HashMap<>();
     private static BufferedImage authBackgroundImage;
+    private static final String[] AUTH_BACKGROUND_RESOURCES = {
+            "resources/auth-bg.png",
+            "resources/auth_bg.png"
+    };
+    private static final String[] AUTH_BACKGROUND_FILES = {
+            "src/resources/auth-bg.png",
+            "src/resources/auth_bg.png"
+    };
 
     private static synchronized BufferedImage getIcon(String name) {
         if (!iconCache.containsKey(name)) {
@@ -44,82 +52,124 @@ public class UIUtils {
             return authBackgroundImage;
         }
         try {
-            InputStream is = UIUtils.class.getClassLoader().getResourceAsStream("resources/auth_bg.png");
-            if (is != null) {
-                authBackgroundImage = ImageIO.read(is);
-                is.close();
-                return authBackgroundImage;
+            for (String resourcePath : AUTH_BACKGROUND_RESOURCES) {
+                try (InputStream is = UIUtils.class.getClassLoader().getResourceAsStream(resourcePath)) {
+                    if (is != null) {
+                        authBackgroundImage = ImageIO.read(is);
+                        if (authBackgroundImage != null) {
+                            return authBackgroundImage;
+                        }
+                    }
+                }
             }
-            java.io.File local = new java.io.File("src/resources/auth_bg.png");
-            if (local.exists()) {
-                authBackgroundImage = ImageIO.read(local);
+
+            for (String filePath : AUTH_BACKGROUND_FILES) {
+                java.io.File local = new java.io.File(filePath);
+                if (local.exists()) {
+                    authBackgroundImage = ImageIO.read(local);
+                    if (authBackgroundImage != null) {
+                        return authBackgroundImage;
+                    }
+                }
             }
         } catch (Exception ignored) {
             authBackgroundImage = null;
         }
         return authBackgroundImage;
     }
+
+    private static void paintAuthBackgroundImage(Graphics2D g2, int width, int height, float alpha) {
+        BufferedImage bgImage = getAuthBackgroundImage();
+        if (bgImage == null) {
+            return;
+        }
+
+        double panelRatio = (double) width / height;
+        double imgRatio = (double) bgImage.getWidth() / bgImage.getHeight();
+
+        int drawW;
+        int drawH;
+        int drawX;
+        int drawY;
+
+        if (panelRatio > imgRatio) {
+            drawW = width;
+            drawH = (int) (width / imgRatio);
+            drawX = 0;
+            drawY = (height - drawH) / 2;
+        } else {
+            drawH = height;
+            drawW = (int) (height * imgRatio);
+            drawX = (width - drawW) / 2;
+            drawY = 0;
+        }
+
+        Composite oldComposite = g2.getComposite();
+        Object oldInterpolation = g2.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        Object oldRenderQuality = g2.getRenderingHint(RenderingHints.KEY_RENDERING);
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, Math.min(1f, alpha))));
+        g2.drawImage(bgImage, drawX, drawY, drawW, drawH, null);
+
+        if (oldInterpolation != null) {
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldInterpolation);
+        }
+        if (oldRenderQuality != null) {
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING, oldRenderQuality);
+        }
+        g2.setComposite(oldComposite);
+    }
+
+    // Method to paint the authentication background image without visual fade.
+    public static void paintAuthBackground(Graphics2D g2, int width, int height) {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+
+        g2.setColor(StyleConfig.BACKGROUND_COLOR);
+        g2.fillRect(0, 0, width, height);
+        paintAuthBackgroundImage(g2, width, height, 1.0f);
+    }
+
     // Method to paint the faded authentication background.
     public static void paintFadedAuthBackground(Graphics2D g2, int width, int height) {
         if (width <= 0 || height <= 0) {
             return;
         }
 
-        BufferedImage bgImage = getAuthBackgroundImage();
+        g2.setColor(StyleConfig.BACKGROUND_COLOR);
+        g2.fillRect(0, 0, width, height);
 
-        if (bgImage != null) {
-            double panelRatio = (double) width / height;
-            double imgRatio = (double) bgImage.getWidth() / bgImage.getHeight();
-
-            int drawW;
-            int drawH;
-            int drawX;
-            int drawY;
-
-            if (panelRatio > imgRatio) {
-                drawW = width;
-                drawH = (int) (width / imgRatio);
-                drawX = 0;
-                drawY = (height - drawH) / 2;
-            } else {
-                drawH = height;
-                drawW = (int) (height * imgRatio);
-                drawX = (width - drawW) / 2;
-                drawY = 0;
-            }
-
-            Composite oldComposite = g2.getComposite();
-            Object oldInterpolation = g2.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-            Object oldRenderQuality = g2.getRenderingHint(RenderingHints.KEY_RENDERING);
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
-            // Softer alpha + high-quality scaling to avoid visible vertical banding/stripes.
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.20f));
-            g2.drawImage(bgImage, drawX, drawY, drawW, drawH, null);
-
-            if (oldInterpolation != null) {
-                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldInterpolation);
-            }
-            if (oldRenderQuality != null) {
-                g2.setRenderingHint(RenderingHints.KEY_RENDERING, oldRenderQuality);
-            }
-            g2.setComposite(oldComposite);
-        }
+        // Soft alpha to keep content foreground readable on non-auth screens.
+        paintAuthBackgroundImage(g2, width, height, 0.16f);
 
         g2.setPaint(new GradientPaint(
-                0, 0, new Color(StyleConfig.BACKGROUND_COLOR.getRed(), StyleConfig.BACKGROUND_COLOR.getGreen(), StyleConfig.BACKGROUND_COLOR.getBlue(), 138),
-                0, height, new Color(StyleConfig.BACKGROUND_LIGHT.getRed(), StyleConfig.BACKGROUND_LIGHT.getGreen(), StyleConfig.BACKGROUND_LIGHT.getBlue(), 172)));
+                0, 0, StyleConfig.withAlpha(StyleConfig.BACKGROUND_COLOR, 128),
+                0, height, StyleConfig.withAlpha(StyleConfig.BACKGROUND_LIGHT, 208)));
         g2.fillRect(0, 0, width, height);
 
         g2.setPaint(new GradientPaint(
-                0, 0, new Color(StyleConfig.PALETTE_WINE.getRed(), StyleConfig.PALETTE_WINE.getGreen(), StyleConfig.PALETTE_WINE.getBlue(), 28),
-                width, 0, new Color(StyleConfig.PALETTE_PEACH.getRed(), StyleConfig.PALETTE_PEACH.getGreen(), StyleConfig.PALETTE_PEACH.getBlue(), 22)));
+                0, 0, StyleConfig.withAlpha(StyleConfig.PALETTE_WINE, 24),
+                width, 0, StyleConfig.withAlpha(StyleConfig.PALETTE_PEACH, 18)));
         g2.fillRect(0, 0, width, height);
 
         g2.setPaint(new GradientPaint(
-                0, 0, new Color(StyleConfig.BACKGROUND_COLOR.getRed(), StyleConfig.BACKGROUND_COLOR.getGreen(), StyleConfig.BACKGROUND_COLOR.getBlue(), 10),
-                width, 0, new Color(StyleConfig.BACKGROUND_COLOR.getRed(), StyleConfig.BACKGROUND_COLOR.getGreen(), StyleConfig.BACKGROUND_COLOR.getBlue(), 70)));
+                0, 0, StyleConfig.withAlpha(StyleConfig.PRIMARY_COLOR, 12),
+                width, height, StyleConfig.withAlpha(StyleConfig.SECONDARY_COLOR, 18)));
+        g2.fillRect(0, 0, width, height);
+
+        g2.setPaint(new RadialGradientPaint(
+                width * 0.5f,
+                height * 0.25f,
+                Math.max(width, height) * 0.8f,
+                new float[] { 0f, 0.7f, 1f },
+                new Color[] {
+                        StyleConfig.withAlpha(StyleConfig.TEXT_COLOR, 0),
+                        StyleConfig.withAlpha(StyleConfig.BACKGROUND_COLOR, 18),
+                        StyleConfig.withAlpha(StyleConfig.BACKGROUND_COLOR, 126)
+                }));
         g2.fillRect(0, 0, width, height);
     }
 

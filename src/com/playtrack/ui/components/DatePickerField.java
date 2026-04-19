@@ -33,6 +33,7 @@ public class DatePickerField extends JTextField {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                // Button action: open the date picker popup.
                 showPicker();
             }
 
@@ -85,6 +86,7 @@ public class DatePickerField extends JTextField {
         g2.dispose();
     }
 
+    // Start: date picker popup button function.
     private void showPicker() {
         if (popup != null && popup.isVisible()) return;
         popup = new JPopupMenu();
@@ -119,6 +121,7 @@ public class DatePickerField extends JTextField {
         monthLbl.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                // Button action: open the month/year chooser.
                 showMonthYearDropdown(monthLbl);
             }
 
@@ -176,6 +179,7 @@ public class DatePickerField extends JTextField {
             });
 
             btn.addActionListener(e -> {
+                // Button action: select the clicked day.
                 Calendar res = (Calendar) currentCalendar.clone();
                 res.set(Calendar.DAY_OF_MONTH, day);
                 setText(new SimpleDateFormat("yyyy-MM-dd").format(res.getTime()));
@@ -184,14 +188,18 @@ public class DatePickerField extends JTextField {
             grid.add(btn);
         }
 
+        // Button action: move calendar to previous month.
         prev.addActionListener(e -> { currentCalendar.add(Calendar.MONTH, -1); popup.setVisible(false); showPicker(); });
+        // Button action: move calendar to next month.
         next.addActionListener(e -> { currentCalendar.add(Calendar.MONTH, 1); popup.setVisible(false); showPicker(); });
 
         panel.add(grid, BorderLayout.CENTER);
         popup.add(panel);
         popup.show(this, 0, getHeight());
     }
+    // End: date picker popup button function.
 
+    // Start: month navigation button function.
     private JButton createHeaderButton(String text) {
         // Reusable button style for previous/next month navigation.
         JButton btn = new JButton(text);
@@ -208,7 +216,9 @@ public class DatePickerField extends JTextField {
         });
         return btn;
     }
+    // End: month navigation button function.
 
+    // Start: month/year chooser button flow function.
     private void showMonthYearDropdown(Component anchor) {
         Window owner = SwingUtilities.getWindowAncestor(this);
         JDialog chooserDialog = new JDialog(owner instanceof Frame ? (Frame) owner : null, "Select Month and Year", true);
@@ -246,6 +256,7 @@ public class DatePickerField extends JTextField {
         yearBox.setSelectedItem(currentCalendar.get(Calendar.YEAR));
 
         JButton applyBtn = createPickerActionButton("Go", StyleConfig.SECONDARY_COLOR, StyleConfig.PRIMARY_LIGHT);
+        // Button action: apply the selected month and year.
         applyBtn.addActionListener(e -> applyMonthYearSelection(monthBox, yearBox, chooserDialog));
 
         c.gridx = 0; c.gridy = 0;
@@ -278,6 +289,7 @@ public class DatePickerField extends JTextField {
         }
         chooserDialog.setVisible(true);
     }
+    // End: month/year chooser button flow function.
 
     private void styleSelector(JComboBox<?> box) {
         box.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -297,6 +309,7 @@ public class DatePickerField extends JTextField {
         return label;
     }
 
+    // Start: picker action button function.
     private JButton createPickerActionButton(String text, Color bgColor, Color hoverColor) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -321,6 +334,7 @@ public class DatePickerField extends JTextField {
         });
         return btn;
     }
+    // End: picker action button function.
 
     private void applyMonthYearSelection(JComboBox<String> monthBox, JComboBox<Integer> yearBox, Window chooserWindow) {
         int selectedMonth = monthBox.getSelectedIndex();

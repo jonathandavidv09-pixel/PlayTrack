@@ -6,9 +6,9 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-// Data access component: handles persistence operations.
+// Data access component: reads and writes media records in the system database.
 public class MediaDAO {
-    // addMedia.
+    // Start: add media database function.
     public int addMedia(MediaItem item) {
         String sql = "INSERT INTO media_items (user_id, title, category, genre, author, image_path) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -32,8 +32,9 @@ public class MediaDAO {
         }
         return -1;
     }
+    // End: add media database function.
 
-    // getMediaByUser.
+    // Start: load media by user database function.
     public List<MediaItem> getMediaByUser(int userId, String category) {
         List<MediaItem> items = new ArrayList<>();
         String sql = "SELECT * FROM media_items WHERE user_id = ?";
@@ -67,8 +68,9 @@ public class MediaDAO {
         }
         return items;
     }
+    // End: load media by user database function.
 
-    // getMediaById.
+    // Start: load media by id database function.
     public MediaItem getMediaById(int id) {
         String sql = "SELECT * FROM media_items WHERE id = ?";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -93,8 +95,9 @@ public class MediaDAO {
         }
         return null;
     }
+    // End: load media by id database function.
 
-    // searchMedia.
+    // Start: search media database function.
     public List<MediaItem> searchMedia(int userId, String query) {
         List<MediaItem> items = new ArrayList<>();
         String sql = "SELECT * FROM media_items WHERE user_id = ? AND title LIKE ? ORDER BY created_at DESC";
@@ -121,8 +124,9 @@ public class MediaDAO {
         }
         return items;
     }
+    // End: search media database function.
 
-    // updateMedia.
+    // Start: update media database function.
     public boolean updateMedia(MediaItem item) {
         String sql = "UPDATE media_items SET title=?, category=?, genre=?, author=?, image_path=? WHERE id=?";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -139,8 +143,9 @@ public class MediaDAO {
         }
         return false;
     }
+    // End: update media database function.
 
-    // deleteMedia.
+    // Start: delete media database function.
     public boolean deleteMedia(int id) {
        
         String deleteReviews = "DELETE FROM reviews WHERE media_id = ?";
@@ -159,4 +164,5 @@ public class MediaDAO {
         }
         return false;
     }
+    // End: delete media database function.
 }

@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.io.File;
 
-// System configuration component: manages database and app setup.
+// Configuration component: opens connections to the main PlayTrack SQLite database.
 public class SystemDBConnection {
     private static final String URL = "jdbc:sqlite:db/playtrack.db";
 
@@ -18,8 +18,9 @@ public class SystemDBConnection {
         }
     }
 
-    // getConnection.
+    // Start: system database connection function.
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL);
     }
+    // End: system database connection function.
 }

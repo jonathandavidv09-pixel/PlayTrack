@@ -12,8 +12,8 @@ public class AddMediaDropdown extends JPopupMenu {
 
     private static final Color ITEM_BG = StyleConfig.SURFACE_ELEVATED;
     private static final Color ITEM_HOVER_BG = StyleConfig.SURFACE_SOFT;
-    private static final Color ITEM_PRESSED_BG = new Color(72, 84, 116);
-    private static final Color DROPDOWN_BG = StyleConfig.BACKGROUND_LIGHT;
+    private static final Color ITEM_PRESSED_BG = new Color(63, 82, 112);
+    private static final Color DROPDOWN_BG = StyleConfig.SURFACE_ELEVATED;
     private static final int ARC = 14;
     private static final int ITEM_WIDTH = 220;
     private static final int ITEM_HEIGHT = 40;
@@ -38,11 +38,11 @@ public class AddMediaDropdown extends JPopupMenu {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 
-                g2.setColor(DROPDOWN_BG);
-                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setColor(StyleConfig.withAlpha(Color.BLACK, 54));
+                g2.fillRoundRect(0, 4, getWidth(), getHeight() - 2, ARC, ARC);
 
                 
-                g2.setColor(DROPDOWN_BG);
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_ELEVATED, 0, getHeight(), StyleConfig.SURFACE_COLOR));
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), ARC, ARC));
 
                 
@@ -51,9 +51,10 @@ public class AddMediaDropdown extends JPopupMenu {
                 g2.fillRect(0, 0, getWidth(), 3);
                 g2.setClip(null);
 
-                
-                g2.setColor(new Color(255, 255, 255, 30));
-                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, ARC - 1, ARC - 1));
+                g2.setColor(new Color(255, 255, 255, 22));
+                g2.drawLine(0, ARC / 2, 0, getHeight() - ARC / 2);
+                g2.drawLine(getWidth() - 1, ARC / 2, getWidth() - 1, getHeight() - ARC / 2);
+                g2.drawLine(ARC / 2, getHeight() - 1, getWidth() - ARC / 2, getHeight() - 1);
                 g2.dispose();
             }
         };
@@ -84,6 +85,7 @@ public class AddMediaDropdown extends JPopupMenu {
         super.show(invoker, x, y);
     }
 
+    // Start: dropdown item button function.
     private JPanel createItem(String text, int iconType, Runnable action) {
         class ItemPanel extends JPanel {
             private static final long serialVersionUID = 1L;
@@ -114,11 +116,8 @@ public class AddMediaDropdown extends JPopupMenu {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 
-                g2.setColor(DROPDOWN_BG);
-                g2.fillRect(0, 0, getWidth(), getHeight());
-
-                RoundRectangle2D.Float shape = new RoundRectangle2D.Float(
-                        0, 0, getWidth(), getHeight(), ARC, ARC);
+                    RoundRectangle2D.Float shape = new RoundRectangle2D.Float(
+                            0, 0, getWidth(), getHeight(), ARC, ARC);
 
                 if (pressed) {
                     g2.setPaint(new GradientPaint(0, 0, ITEM_PRESSED_BG, getWidth(), 0, ITEM_HOVER_BG));
@@ -207,6 +206,7 @@ public class AddMediaDropdown extends JPopupMenu {
                 item.setHovered(item.contains(p));
                 lbl.setForeground(item.contains(p) ? Color.WHITE : StyleConfig.TEXT_COLOR);
                 if (item.contains(p)) {
+                    // Button action: run the selected add-media category command.
                     action.run();
                 }
             }
@@ -218,6 +218,7 @@ public class AddMediaDropdown extends JPopupMenu {
         item.setAlignmentX(Component.LEFT_ALIGNMENT);
         return item;
     }
+    // End: dropdown item button function.
 
     private Icon createIcon(int type, Color color) {
         return new CategoryIcon(type, color);

@@ -6,9 +6,9 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-// Data access component: handles persistence operations.
+// Data access component: reads and writes standalone watchlist records.
 public class WatchlistDAO {
-    // addToWatchlist.
+    // Start: add item to watchlist database function.
     public boolean addToWatchlist(WatchlistItem item) {
         String sql = "INSERT INTO watchlist (user_id, title, category) VALUES (?, ?, ?)";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -22,8 +22,9 @@ public class WatchlistDAO {
         }
         return false;
     }
+    // End: add item to watchlist database function.
 
-    // getWatchlistByUser.
+    // Start: load watchlist by user database function.
     public List<WatchlistItem> getWatchlistByUser(int userId) {
         List<WatchlistItem> items = new ArrayList<>();
         String sql = "SELECT * FROM watchlist WHERE user_id = ? ORDER BY added_date DESC";
@@ -46,8 +47,9 @@ public class WatchlistDAO {
         }
         return items;
     }
+    // End: load watchlist by user database function.
 
-    // removeFromWatchlist.
+    // Start: remove item from watchlist database function.
     public boolean removeFromWatchlist(int id) {
         String sql = "DELETE FROM watchlist WHERE id = ?";
         try (Connection conn = SystemDBConnection.getConnection();
@@ -59,4 +61,5 @@ public class WatchlistDAO {
         }
         return false;
     }
+    // End: remove item from watchlist database function.
 }

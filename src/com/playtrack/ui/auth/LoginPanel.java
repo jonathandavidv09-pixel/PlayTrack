@@ -46,17 +46,18 @@ public class LoginPanel extends JPanel {
 
         JLabel divider = new JLabel("  |  ");
         divider.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-        divider.setForeground(new Color(100, 100, 120));
+        divider.setForeground(StyleConfig.TEXT_LIGHT);
         divider.setPreferredSize(new Dimension(34, 32));
         divider.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel registerTab = new JLabel("REGISTER");
         registerTab.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        registerTab.setForeground(new Color(160, 160, 175));
+        registerTab.setForeground(StyleConfig.TEXT_LIGHT);
         registerTab.setCursor(new Cursor(Cursor.HAND_CURSOR));
         registerTab.setPreferredSize(new Dimension(168, 32));
         registerTab.setHorizontalAlignment(SwingConstants.LEFT);
         registerTab.addMouseListener(new MouseAdapter() {
+            // Button action: switch from login to registration.
             public void mouseClicked(MouseEvent e) {
                 switchToRegisterAction.actionPerformed(null);
             }
@@ -73,7 +74,7 @@ public class LoginPanel extends JPanel {
         
         JLabel emailLabel = new JLabel("Email or Username");
         emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        emailLabel.setForeground(new Color(200, 200, 210));
+        emailLabel.setForeground(StyleConfig.TEXT_SECONDARY);
         gbc.gridy = 1;
         gbc.insets = new Insets(5, 35, 5, 35);
         add(emailLabel, gbc);
@@ -87,7 +88,7 @@ public class LoginPanel extends JPanel {
         
         JLabel passLabel = new JLabel("Password");
         passLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        passLabel.setForeground(new Color(200, 200, 210));
+        passLabel.setForeground(StyleConfig.TEXT_SECONDARY);
         gbc.gridy = 3;
         gbc.insets = new Insets(0, 35, 5, 35);
         add(passLabel, gbc);
@@ -101,18 +102,35 @@ public class LoginPanel extends JPanel {
         
         JPanel rememberForgotRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         rememberForgotRow.setOpaque(false);
+        Dimension forgotRowSize = new Dimension(330, 22);
+        rememberForgotRow.setPreferredSize(forgotRowSize);
+        rememberForgotRow.setMinimumSize(forgotRowSize);
         // Forgot Password? link.
-        forgotPassword = new JLabel("Forgot Password?");
-        forgotPassword.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        forgotPassword.setForeground(new Color(211, 64, 69));
+        final String forgotPasswordText = "Forgot Password?";
+        forgotPassword = new JLabel(forgotPasswordText, SwingConstants.RIGHT);
+        forgotPassword.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
+        forgotPassword.setForeground(StyleConfig.SECONDARY_COLOR);
         forgotPassword.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        if (forgotPasswordAction != null) {
-            forgotPassword.addMouseListener(new MouseAdapter() {
-                public void mouseClicked(MouseEvent e) {
+        forgotPassword.setPreferredSize(new Dimension(160, 22));
+        forgotPassword.setMinimumSize(new Dimension(160, 22));
+        forgotPassword.addMouseListener(new MouseAdapter() {
+            // Button action: open forgot-password flow.
+            public void mouseClicked(MouseEvent e) {
+                if (forgotPasswordAction != null) {
                     forgotPasswordAction.run();
                 }
-            });
-        }
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                forgotPassword.setText("<html><u>" + forgotPasswordText + "</u></html>");
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                forgotPassword.setText(forgotPasswordText);
+            }
+        });
         rememberForgotRow.add(forgotPassword);
 
         gbc.gridy = 5;
@@ -131,10 +149,11 @@ public class LoginPanel extends JPanel {
         
         // Primary login action button.
         loginButton = new RoundedButton("SIGN IN", StyleConfig.PRIMARY_COLOR, 22);
-        loginButton.setGradient(new Color(220, 130, 50));
+        loginButton.setGradient(StyleConfig.SECONDARY_COLOR);
         loginButton.setPreferredSize(new Dimension(330, 44));
         loginButton.setFont(new Font("Segoe UI", Font.BOLD, 15));
         loginButton.setForeground(Color.WHITE);
+        // Button action: submit login credentials.
         loginButton.addActionListener(loginAction);
         gbc.gridy = 7;
         gbc.insets = new Insets(0, 35, 15, 35);
@@ -145,15 +164,16 @@ public class LoginPanel extends JPanel {
         // "New to Playtrack?" label.
         JLabel newTo = new JLabel("New to Playtrack?");
         newTo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        newTo.setForeground(new Color(160, 160, 175));
+        newTo.setForeground(StyleConfig.TEXT_LIGHT);
         createAccRow.add(newTo);
         // Create an account button.
         final String createAccountText = "Create an account.";
         JLabel createAccLink = new JLabel(createAccountText);
         createAccLink.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
-        createAccLink.setForeground(new Color(80, 160, 230));
+        createAccLink.setForeground(StyleConfig.SECONDARY_COLOR);
         createAccLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
         createAccLink.addMouseListener(new MouseAdapter() {
+            // Button action: switch from login to account creation.
             public void mouseClicked(MouseEvent e) {
                 switchToRegisterAction.actionPerformed(null);
             }
@@ -175,6 +195,7 @@ public class LoginPanel extends JPanel {
         add(createAccRow, gbc);
     }
 
+    // Start: social sign-in button function.
     private JButton createSocialButton(String iconLetter, String name, Color iconColor) {
         // Reusable social sign-in style button.
         JButton btn = new JButton(name) {
@@ -227,6 +248,7 @@ public class LoginPanel extends JPanel {
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
+    // End: social sign-in button function.
     // Custom panel background with rounded corners and semi-transparent fill.
     @Override
     protected void paintComponent(Graphics g) {
@@ -234,14 +256,21 @@ public class LoginPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        
-        g2.setColor(new Color(28, 25, 35, 180));
-        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 18, 18));
+        int arc = StyleConfig.PANEL_RADIUS;
+        g2.setColor(StyleConfig.withAlpha(Color.BLACK, 50));
+        g2.fill(new RoundRectangle2D.Float(0, 6, getWidth(), getHeight() - 4, arc, arc));
 
-        
-        g2.setColor(new Color(80, 50, 55, 120));
-        g2.setStroke(new BasicStroke(1.5f));
-        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 18, 18));
+        g2.setPaint(new GradientPaint(0, 0, StyleConfig.withAlpha(StyleConfig.SURFACE_ELEVATED, 232),
+                0, getHeight(), StyleConfig.withAlpha(StyleConfig.BACKGROUND_LIGHT, 238)));
+        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), arc, arc));
+
+        g2.setPaint(new GradientPaint(0, 0, StyleConfig.withAlpha(Color.WHITE, 22), 0, 38,
+                StyleConfig.withAlpha(Color.WHITE, 0)));
+        g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), arc, arc));
+
+        g2.setColor(StyleConfig.withAlpha(Color.WHITE, 44));
+        g2.setStroke(new BasicStroke(1.2f));
+        g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, arc, arc));
 
         g2.dispose();
     }

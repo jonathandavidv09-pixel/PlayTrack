@@ -15,6 +15,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,9 @@ public class HomePanel extends JPanel {
     private String username;
     private int userId;
     private JScrollPane mainScroll;
+    private transient BufferedImage cachedBackground;
+    private int cachedBackgroundW = -1;
+    private int cachedBackgroundH = -1;
 
     // Constants for layout and sizing of recent activity cards and statistics cards.
     private static final int RECENT_MAX_COLUMNS = 8;
@@ -49,28 +53,49 @@ public class HomePanel extends JPanel {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        UIUtils.paintFadedAuthBackground(g2, getWidth(), getHeight());
-
-        // Draw decorative gradient orbs in the background for visual interest.
-        int orbSize = 400;
-        g2.setPaint(new RadialGradientPaint(
-            getWidth() - 100f, 80f, orbSize / 2f,
-            new float[]{0f, 0.4f, 1f},
-            new Color[]{StyleConfig.PANEL_GLOW_SECONDARY, new Color(StyleConfig.PALETTE_PEACH.getRed(), StyleConfig.PALETTE_PEACH.getGreen(), StyleConfig.PALETTE_PEACH.getBlue(), 8), new Color(0, 0, 0, 0)}
-        ));
-        g2.fillOval(getWidth() - 100 - orbSize / 2, 80 - orbSize / 2, orbSize, orbSize);
-
-        
-        int orb2 = 300;
-        g2.setPaint(new RadialGradientPaint(
-            120f, getHeight() - 120f, orb2 / 2f,
-            new float[]{0f, 0.5f, 1f},
-            new Color[]{StyleConfig.PANEL_GLOW_PRIMARY, new Color(StyleConfig.PALETTE_RED.getRed(), StyleConfig.PALETTE_RED.getGreen(), StyleConfig.PALETTE_RED.getBlue(), 8), new Color(0, 0, 0, 0)}
-        ));
-        g2.fillOval(120 - orb2 / 2, getHeight() - 120 - orb2 / 2, orb2, orb2);
-
+        paintHomeBackground(g2, getWidth(), getHeight());
         g2.dispose();
+    }
+
+    private void paintHomeBackground(Graphics2D g2, int w, int h) {
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+        if (cachedBackground == null || cachedBackgroundW != w || cachedBackgroundH != h) {
+            cachedBackground = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            cachedBackgroundW = w;
+            cachedBackgroundH = h;
+
+            Graphics2D bg = cachedBackground.createGraphics();
+            bg.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            UIUtils.paintFadedAuthBackground(bg, w, h);
+
+            int orbSize = 400;
+            bg.setPaint(new RadialGradientPaint(
+                    w - 100f, 80f, orbSize / 2f,
+                    new float[] { 0f, 0.4f, 1f },
+                    new Color[] {
+                            StyleConfig.PANEL_GLOW_SECONDARY,
+                            new Color(StyleConfig.PALETTE_PEACH.getRed(), StyleConfig.PALETTE_PEACH.getGreen(),
+                                    StyleConfig.PALETTE_PEACH.getBlue(), 8),
+                            new Color(0, 0, 0, 0)
+                    }));
+            bg.fillOval(w - 100 - orbSize / 2, 80 - orbSize / 2, orbSize, orbSize);
+
+            int orb2 = 300;
+            bg.setPaint(new RadialGradientPaint(
+                    120f, h - 120f, orb2 / 2f,
+                    new float[] { 0f, 0.5f, 1f },
+                    new Color[] {
+                            StyleConfig.PANEL_GLOW_PRIMARY,
+                            new Color(StyleConfig.PALETTE_RED.getRed(), StyleConfig.PALETTE_RED.getGreen(),
+                                    StyleConfig.PALETTE_RED.getBlue(), 8),
+                            new Color(0, 0, 0, 0)
+                    }));
+            bg.fillOval(120 - orb2 / 2, h - 120 - orb2 / 2, orb2, orb2);
+            bg.dispose();
+        }
+        g2.drawImage(cachedBackground, 0, 0, null);
     }
     // Method to refresh the statistics displayed in the stats row.
     private Consumer<String> onNavigate;
@@ -87,21 +112,6 @@ public class HomePanel extends JPanel {
         // Inner class for a scrollable panel with a custom background.
         class ScrollablePanel extends JPanel implements Scrollable {
             private static final long serialVersionUID = 1L;
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Paint a full, stable background so fast scrolling never leaves ghost trails.
-                g2.setColor(StyleConfig.BACKGROUND_COLOR);
-                g2.fillRect(0, 0, getWidth(), getHeight());
-
-                Point p = SwingUtilities.convertPoint(this, 0, 0, HomePanel.this);
-                g2.translate(-p.x, -p.y);
-                UIUtils.paintFadedAuthBackground(g2, HomePanel.this.getWidth(), HomePanel.this.getHeight());
-                g2.dispose();
-            }
             public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
             public int getScrollableUnitIncrement(Rectangle r, int o, int d) { return 20; }
             public int getScrollableBlockIncrement(Rectangle r, int o, int d) { return 60; }
@@ -117,7 +127,7 @@ public class HomePanel extends JPanel {
         // Main content area with recent activity.
         JPanel mainContent = new ScrollablePanel();
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
-        mainContent.setOpaque(true);
+        mainContent.setOpaque(false);
         mainContent.setBackground(StyleConfig.BACKGROUND_COLOR);
         mainContent.setBorder(BorderFactory.createEmptyBorder(
                 0, StyleConfig.PAGE_PAD_X, StyleConfig.PAGE_PAD_BOTTOM, StyleConfig.PAGE_PAD_X));
@@ -137,15 +147,10 @@ public class HomePanel extends JPanel {
 
         
         // Stats row with key metrics.
-        JPanel statsRowWrapper = new JPanel() {
-            @Override
-            public boolean isOptimizedDrawingEnabled() {
-                return false;
-            }
-        };
-        statsRowWrapper.setLayout(new OverlayLayout(statsRowWrapper));
+        JPanel statsRowWrapper = new JPanel(new GridBagLayout());
         statsRowWrapper.setOpaque(false);
         statsRowWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+        statsRowWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, STAT_CARD_HEIGHT));
 
         statsContainer = new JPanel();
         statsContainer.setLayout(new BoxLayout(statsContainer, BoxLayout.X_AXIS));
@@ -172,20 +177,33 @@ public class HomePanel extends JPanel {
         addBtn.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                // Button action: open the add-media dropdown menu.
                 int popupWidth = addMenu.getPreferredSize().width;
                 if (popupWidth == 0) popupWidth = 150;
                 addMenu.show(addBtn, addBtn.getWidth() - popupWidth, addBtn.getHeight() + 8);
             }
         });
 
-        JPanel addBtnLayer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        addBtnLayer.setOpaque(false);
-        addBtnLayer.setAlignmentX(0.5f);
-        addBtnLayer.setAlignmentY(0.5f);
-        addBtnLayer.add(addBtn);
+        int actionColumnWidth = 280;
+        JPanel leftBalance = new JPanel();
+        leftBalance.setOpaque(false);
+        leftBalance.setPreferredSize(new Dimension(actionColumnWidth, STAT_CARD_HEIGHT));
 
-        statsRowWrapper.add(addBtnLayer);
-        statsRowWrapper.add(statsContainer);
+        JPanel actionColumn = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, (STAT_CARD_HEIGHT - 45) / 2));
+        actionColumn.setOpaque(false);
+        actionColumn.setPreferredSize(new Dimension(actionColumnWidth, STAT_CARD_HEIGHT));
+        actionColumn.add(addBtn);
+
+        GridBagConstraints statsGbc = new GridBagConstraints();
+        statsGbc.gridy = 0;
+        statsGbc.anchor = GridBagConstraints.CENTER;
+
+        statsGbc.gridx = 0;
+        statsRowWrapper.add(leftBalance, statsGbc);
+        statsGbc.gridx = 1;
+        statsRowWrapper.add(statsContainer, statsGbc);
+        statsGbc.gridx = 2;
+        statsRowWrapper.add(actionColumn, statsGbc);
         topSection.add(statsRowWrapper);
         topSection.add(Box.createVerticalStrut(30));
 
@@ -263,6 +281,7 @@ public class HomePanel extends JPanel {
 
         downArrow.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
+                // Button action: expand or collapse recent activity.
                 recentExpanded = !recentExpanded;
                 loadRecentCards();
             }
@@ -288,14 +307,28 @@ public class HomePanel extends JPanel {
 
         mainScroll = new JScrollPane(mainContent);
         mainScroll.setOpaque(false);
+        mainScroll.setViewport(new JViewport() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                Point p = SwingUtilities.convertPoint(this, 0, 0, HomePanel.this);
+                g2.translate(-p.x, -p.y);
+                paintHomeBackground(g2, HomePanel.this.getWidth(), HomePanel.this.getHeight());
+                g2.dispose();
+            }
+        });
+        mainScroll.setViewportView(mainContent);
         mainScroll.getViewport().setOpaque(true);
-        mainScroll.getViewport().setBackground(StyleConfig.BACKGROUND_COLOR);
         mainScroll.setBorder(null);
-        mainScroll.getVerticalScrollBar().setUnitIncrement(16);
+        mainScroll.getVerticalScrollBar().setUnitIncrement(42);
+        mainScroll.getVerticalScrollBar().setBlockIncrement(260);
         mainScroll.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
         mainScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        // Full repaint on scroll prevents background striping artifacts.
-        mainScroll.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+        // BLIT mode is significantly faster than SIMPLE_SCROLL_MODE for wheel scroll.
+        mainScroll.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
         mainScroll.getViewport().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -451,7 +484,7 @@ public class HomePanel extends JPanel {
 
         Map<String, Integer> counts = summaryService.getCategoryCounts(user.getId());
         // Create and add StatsCard components for each category (Films.
-        statsContainer.add(createHomeStatCard("Films", counts.get("Films")));
+        statsContainer.add(createHomeStatCard("Films Watched", counts.get("Films")));
         statsContainer.add(Box.createHorizontalStrut(STAT_CARD_GAP));
         statsContainer.add(createHomeStatCard("Games Played", counts.get("Games")));
         statsContainer.add(Box.createHorizontalStrut(STAT_CARD_GAP));
@@ -460,6 +493,7 @@ public class HomePanel extends JPanel {
         statsContainer.repaint();
     }
 
+    // Start: home stat navigation button function.
     private JPanel createHomeStatCard(String label, int count) {
         JPanel card = new JPanel() {
             @Override
@@ -467,23 +501,21 @@ public class HomePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                for (int i = 3; i > 0; i--) {
-                    g2.setColor(new Color(0, 0, 0, 10 * i));
-                    g2.fill(new RoundRectangle2D.Float(1 - i, 1 - i, getWidth() - 2 + i * 2, getHeight() - 2 + i * 2, 24 + i, 24 + i));
-                }
+                int arc = StyleConfig.PANEL_RADIUS;
+                g2.setColor(StyleConfig.withAlpha(Color.BLACK, 30));
+                g2.fill(new RoundRectangle2D.Float(0, 8, getWidth(), getHeight() - 6, arc, arc));
 
-                
-                g2.setPaint(new GradientPaint(0, 0, StyleConfig.SURFACE_ELEVATED, 0, getHeight(), StyleConfig.SURFACE_COLOR));
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.withAlpha(StyleConfig.SURFACE_ELEVATED, 226),
+                        0, getHeight(), StyleConfig.withAlpha(StyleConfig.SURFACE_COLOR, 236)));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), arc, arc));
 
-                
-                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 16), 0, getHeight() / 2, new Color(255, 255, 255, 0)));
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 24, 24));
+                g2.setPaint(new GradientPaint(0, 0, StyleConfig.withAlpha(Color.WHITE, 18), 0, getHeight() / 2,
+                        StyleConfig.withAlpha(Color.WHITE, 0)));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), arc, arc));
 
-                
                 g2.setColor(StyleConfig.SURFACE_STROKE);
-                g2.setStroke(new BasicStroke(1.5f));
-                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 24, 24));
+                g2.setStroke(new BasicStroke(1.1f));
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 1, getHeight() - 1, arc, arc));
                 g2.dispose();
             }
         };
@@ -501,6 +533,7 @@ public class HomePanel extends JPanel {
         card.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (onNavigate != null) {
+                    // Button action: open the matching library category.
                     onNavigate.accept(catLabel);
                 }
             }
@@ -536,4 +569,5 @@ public class HomePanel extends JPanel {
 
         return card;
     }
+    // End: home stat navigation button function.
 }

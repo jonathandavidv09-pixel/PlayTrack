@@ -7,12 +7,12 @@ import com.playtrack.model.Profile;
 import com.playtrack.util.PasswordUtil;
 import com.playtrack.util.SessionManager;
 
-// Service layer component: coordinates business logic.
+// Service layer component: coordinates account registration, login, and settings updates.
 public class AuthService {
     private UserDAO userDAO = new UserDAO();
     private ProfileDAO profileDAO = new ProfileDAO();
 
-    // register.
+    // Start: register account service function.
     public boolean register(String username, String email, String password) {
         if (userDAO.isUsernameTaken(username))
             return false;
@@ -38,8 +38,9 @@ public class AuthService {
         }
         return false;
     }
+    // End: register account service function.
 
-    // Root login
+    // Start: login service function.
     public boolean login(String identifier, String password) {
         String hash = PasswordUtil.hashPassword(password);
         User user = userDAO.login(identifier, hash);
@@ -49,13 +50,15 @@ public class AuthService {
         }
         return false;
     }
+    // End: login service function.
 
-    // isUsernameTaken.
+    // Start: username availability service function.
     public boolean isUsernameTaken(String username) {
         return userDAO.isUsernameTaken(username);
     }
+    // End: username availability service function.
 
-    // updateSettings.
+    // Start: account settings update service function.
     public boolean updateSettings(User user, String currentPasswordUnHashed, String newPasswordUnHashed) {
         String newHash = null;
         if (newPasswordUnHashed != null && !newPasswordUnHashed.isEmpty()) {
@@ -77,4 +80,5 @@ public class AuthService {
         }
         return success;
     }
+    // End: account settings update service function.
 }

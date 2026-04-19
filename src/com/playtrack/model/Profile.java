@@ -2,18 +2,21 @@ package com.playtrack.model;
 
 import java.sql.Timestamp;
 
-// Domain model component: represents core application data.
+// Domain model component: represents the public profile details for one user.
 public class Profile {
+    // Start: profile data fields.
     private int userId;
     private String username;
     private String bio;
     private String avatarPath;
     private Timestamp joinedDate;
+    // End: profile data fields.
 
-    // Constructor: initializes Profile.
+    // Start: empty profile constructor.
     public Profile() {}
+    // End: empty profile constructor.
 
-    // Constructor: initializes Profile.
+    // Start: full profile constructor.
     public Profile(int userId, String username, String bio, String avatarPath, Timestamp joinedDate) {
         this.userId = userId;
         this.username = username;
@@ -21,8 +24,10 @@ public class Profile {
         this.avatarPath = avatarPath;
         this.joinedDate = joinedDate;
     }
+    // End: full profile constructor.
 
     
+    // Start: profile getters and setters.
     // getUserId.
     public int getUserId() { return userId; }
     // setUserId.
@@ -43,4 +48,5 @@ public class Profile {
     public Timestamp getJoinedDate() { return joinedDate; }
     // setJoinedDate.
     public void setJoinedDate(Timestamp joinedDate) { this.joinedDate = joinedDate; }
+    // End: profile getters and setters.
 }
